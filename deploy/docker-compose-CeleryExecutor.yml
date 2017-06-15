@@ -1,0 +1,87 @@
+version: '2'
+services:
+    redis:
+        image: 'redis:3.2.7'
+
+    postgres:
+        image: postgres:9.6
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+
+    webserver:
+        image: wongwill86/air-tasks:latest
+        restart: always
+        depends_on:
+            - postgres
+            - redis
+        environment:
+            - LOAD_EX=y
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+            - AIRFLOW_HOME=/usr/local/airflow
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+        volumes:
+            - ../dags/:/usr/local/airflow/dags
+            - /var/run/docker.sock:/var/run/docker.sock
+        ports:
+            - "8080:8080"
+        command: webserver
+
+    flower:
+        image: wongwill86/air-tasks:latest
+        restart: always
+        depends_on:
+            - redis
+        environment:
+            - EXECUTOR=Celery
+        ports:
+            - "5555:5555"
+        command: flower
+
+    scheduler:
+        image: wongwill86/air-tasks:latest
+        restart: always
+        depends_on:
+            - webserver
+        volumes:
+            - ../dags/:/usr/local/airflow/dags
+            - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            - LOAD_EX=y
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+            - AIRFLOW_HOME=/usr/local/airflow
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+        command: scheduler
+
+    worker:
+        image: wongwill86/air-tasks:latest
+        restart: always
+        depends_on:
+            - scheduler
+        volumes:
+            - ../dags/:/usr/local/airflow/dags
+            - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+            - AIRFLOW_HOME=/usr/local/airflow
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+        command: worker
