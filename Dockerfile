@@ -5,7 +5,7 @@
 # SOURCE: https://github.com/wongwill86/air-tasks
 
 # Compile AWS credential helper
-FROM golang:1.8.3
+FROM golang:1.8.3 as aws_ecr_credential_helper
 WORKDIR /go/src/github.com/awslabs/
 RUN git clone https://github.com/awslabs/amazon-ecr-credential-helper.git
 WORKDIR /go/src/github.com/awslabs/amazon-ecr-credential-helper
@@ -42,7 +42,7 @@ WORKDIR ${AIRFLOW_HOME}/.docker
 # this is to enable aws ecr credentials helpers to reauthorize docker
 RUN echo '{\n    "credsStore": "ecr-login"\n}' > config.json
 # copy the built docker credentials module to this container
-COPY --from=0 \
+COPY --from=aws_ecr_credential_helper \
     /go/src/github.com/awslabs/amazon-ecr-credential-helper/bin/local/docker-credential-ecr-login \
     /usr/local/bin
 
