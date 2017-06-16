@@ -19,11 +19,22 @@ ENV AIRFLOW_HOME ${AIRFLOW_HOME}
 ENV AIRFLOW_USER airflow
 
 USER root
-RUN curl -fsSL https://get.docker.com/ | sh
-RUN pip install docker-py
-RUN apt-get install sudo
-
-RUN apt-get clean \
+RUN curl -fsSL https://get.docker.com/ | sh \
+    && pip install docker-py \
+    && apt-get install sudo \
+    && buildDeps=' \
+        python-dev \
+        libkrb5-dev \
+        libsasl2-dev \
+        libssl-dev \
+        libffi-dev \
+        build-essential \
+        libblas-dev \
+        liblapack-dev \
+        libpq-dev \
+        git \
+    ' && apt-get remove --purge -yqq $buildDeps \
+    && apt-get clean \
     && rm -rf \
         /var/lib/apt/lists/* \
         /tmp/* \
@@ -37,10 +48,13 @@ RUN usermod -aG docker airflow
 # unfortunately this is required to update the container docker gid to match the
 # host's gid, we remove this permission from entrypoint-dood.sh script
 RUN echo "airflow ALL=NOPASSWD: ALL" >> /etc/sudoers
-WORKDIR ${AIRFLOW_HOME}/.docker
 
 # this is to enable aws ecr credentials helpers to reauthorize docker
-RUN echo '{\n    "credsStore": "ecr-login"\n}' > config.json
+RUN mkdir -p ${AIRFLOW_HOME}/.docker/ \
+    && echo '{\n    "credsStore": "ecr-login"\n}' > \
+        ${AIRFLOW_HOME}/.docker/config.json
+RUN chown airflow ${AIRFLOW_HOME}/.docker/config.json
+
 # copy the built docker credentials module to this container
 COPY --from=aws_ecr_credential_helper \
     /go/src/github.com/awslabs/amazon-ecr-credential-helper/bin/local/docker-credential-ecr-login \
@@ -48,8 +62,8 @@ COPY --from=aws_ecr_credential_helper \
 
 COPY deploy/scripts/entrypoint-dood.sh /entrypoint-dood.sh
 COPY deploy/config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+RUN chown airflow ${AIRFLOW_HOME}/airflow.cfg
 
-RUN chown -R airflow: ${AIRFLOW_HOME}
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
