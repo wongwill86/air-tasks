@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
     postgres:
         image: postgres:9.6
@@ -8,7 +8,7 @@ services:
             - POSTGRES_DB=airflow
 
     webserver:
-        image: puckel/docker-airflow:latest
+        image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - postgres
@@ -20,7 +20,7 @@ services:
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
         volumes:
-            - ../dags/:/usr/local/airflow/dags
+            - ./dags:/usr/local/airflow/dags
             - /var/run/docker.sock:/var/run/docker.sock
         ports:
             - "8080:8080"

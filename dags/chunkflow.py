@@ -12,26 +12,26 @@ PARAMETER_ORIGIN = 'origin'
 PARAMETER_STRIDE = 'stride'
 PARAMETER_CONTINUE_FROM = 'continue_from'
 
-def get_origin_set(parameters):
-    grid_dimensions = len(parameters[PARAMETER_GRID_SIZE])
-    grid_index_list = []
-    origin_set = set()
-    if PARAMETER_CONTINUE_FROM in parameters:
-        should_continue = true
-    else:
-        should_continue = false
+# def get_origin_set(parameters):
+    # grid_dimensions = len(parameters[PARAMETER_GRID_SIZE])
+    # grid_index_list = []
+    # origin_set = set()
+    # if PARAMETER_CONTINUE_FROM in parameters:
+        # should_continue = true
+    # else:
+        # should_continue = false
 
-    grid = parameters[PARAMETER_GRID_SIZE]
+    # grid = parameters[PARAMETER_GRID_SIZE]
 
-    for grid_z in 1:grid[3]:
-        for grid_y in 1:grid[2]:
-            for grid_x in 1:grid[1]:
-                grid_index = (grid_x, grid_y, grid_z)
-                if grid_dimensions > 3:
-                    grid_index = grid_index + tuple(
-                            1 for a in range(0, grid_dimensions - 3))
+    # for grid_z in 1:grid[3]:
+        # for grid_y in 1:grid[2]:
+            # for grid_x in 1:grid[1]:
+                # grid_index = (grid_x, grid_y, grid_z)
+                # if grid_dimensions > 3:
+                    # grid_index = grid_index + tuple(
+                            # 1 for a in range(0, grid_dimensions - 3))
 
-                origin = parameters[PARAMETER_ORIGIN] + 
+                # origin = parameters[PARAMETER_ORIGIN] + 
 
 default_args = {
     'owner': 'airflow',
