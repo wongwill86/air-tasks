@@ -63,6 +63,7 @@ COPY --from=aws_ecr_credential_helper \
 COPY scripts/entrypoint-dood.sh /entrypoint-dood.sh
 COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 RUN chown airflow ${AIRFLOW_HOME}/airflow.cfg
+COPY dags/ ${AIRFLOW_HOME}/dags/
 
 
 USER airflow
