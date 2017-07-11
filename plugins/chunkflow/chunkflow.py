@@ -12,7 +12,8 @@ DEFAULT_VERSION = 'v1.7.8'
 
 def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
                             tasks_filename):
-    chunkflow_subdag = DAG(dag_id='%s.%s' % (parent_dag_name, child_dag_name),
+    chunkflow_subdag = DAG(dag_id='%s.%s' % (parent_dag_name,
+                                             child_dag_name),
                            default_args=subdag_args,
                            schedule_interval=None)
 
@@ -43,6 +44,7 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
                 task_id='%s-task-%s' % (child_dag_name,
                                         '_'.join(str(x) for x in task_origin)),
                 task_json=task_json, dag=chunkflow_subdag)
+    return chunkflow_subdag
 
 
 class ChunkFlowOperator(DockerOperator):
@@ -62,15 +64,21 @@ class ChunkFlowOperator(DockerOperator):
 
 
 class ChunkFlowTasksFileOperator(SubDagOperator):
-    def __init__(self, parent_dag_id, task_id, tasks_filename,
+    def __init__(self, task_id, tasks_filename,
                  image_id=DEFAULT_IMAGE_ID, version=DEFAULT_VERSION,
                  *args, **kwargs):
 
+        subdag = create_chunkflow_subdag(
+            kwargs['dag'].dag_id, task_id,
+            {} if 'default_args' not in kwargs else kwargs['default_args'],
+            tasks_filename),
+        print('subdag is')
+        print(subdag)
+
         super(ChunkFlowTasksFileOperator, self).__init__(
-            task_id=task_id, subdag=create_chunkflow_subdag(
-                parent_dag_id, task_id,
-                {} if 'default_args' not in kwargs else kwargs['default_args'],
-                tasks_filename), *args, **kwargs)
+            task_id=task_id,
+            subdag=subdag,
+            *args, **kwargs)
 
 
 class ChunkFlowPlugin(AirflowPlugin):
@@ -82,4 +90,3 @@ class ChunkFlowPlugin(AirflowPlugin):
     admin_views = []
     flask_blueprints = []
     menu_links = []
-
