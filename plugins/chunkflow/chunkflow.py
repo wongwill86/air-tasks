@@ -20,12 +20,14 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
     with open(tasks_filename, "r") as tasks_file:
         line = tasks_file.readline()
         # skip lines that are irrelevant
-        while line:
+        while line.strip():
             line = tasks_file.readline()
             if tasks_file.readline().startswith("PRINT TASK JSONS"):
                 break
-        while line.strip():
-            task_json = tasks_file.readline()
+
+        task_json = tasks_file.readline()
+
+        while task_json.strip():
             try:
                 task = json.loads(task_json)
                 task_origin = task['input']['params']['origin']
@@ -37,6 +39,7 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
             except ValueError:
                 logger = logging.getLogger(__name__)
                 logger.error("Unable to parse task as json: \n %s", task_json)
+                raise
             print task_origin
             # print task_input_params
             print('chunkflow_' + '_'.join(str(x) for x in task_origin))
@@ -44,6 +47,8 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
                 task_id='%s-task-%s' % (child_dag_name,
                                         '_'.join(str(x) for x in task_origin)),
                 task_json=task_json, dag=chunkflow_subdag)
+            task_json = tasks_file.readline()
+
     return chunkflow_subdag
 
 
@@ -71,10 +76,9 @@ class ChunkFlowTasksFileOperator(SubDagOperator):
         subdag = create_chunkflow_subdag(
             kwargs['dag'].dag_id, task_id,
             {} if 'default_args' not in kwargs else kwargs['default_args'],
-            tasks_filename),
-        print('subdag is')
-        print(subdag)
+            tasks_filename)
 
+        # SubDagOperator.downstream_list
         super(ChunkFlowTasksFileOperator, self).__init__(
             task_id=task_id,
             subdag=subdag,
