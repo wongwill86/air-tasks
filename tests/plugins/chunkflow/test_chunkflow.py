@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from airflow.operators.chunkflow_plugin import ChunkFlowOperator
 from airflow.operators.chunkflow_plugin import ChunkFlowTasksFileOperator
+
 from airflow.models import DAG
 from datetime import datetime, timedelta
 from pytest import fixture
@@ -39,10 +40,12 @@ def datadir(tmpdir, request):
 
 class TestChunkFlowOperator(object):
     def test_create(self):
-        operator = ChunkFlowOperator(DEFAULT_TASK_ID, '{}',
-                                     task_id=DEFAULT_TASK_ID)
+        operator = ChunkFlowOperator(task_id=DEFAULT_TASK_ID,
+                                     default_args=DEFAULT_DAG_ARGS)
         assert operator
         assert operator.task_id == DEFAULT_TASK_ID
+        assert operator.image == "%s:%s" % (ChunkFlowOperator.DEFAULT_IMAGE_ID,
+                                            ChunkFlowOperator.DEFAULT_VERSION)
 
 
 class TestChunkFlowTasksFileOperator(object):
@@ -89,6 +92,10 @@ class TestChunkFlowTasksFileOperator(object):
         assert operator
         assert operator.task_id == DEFAULT_TASK_ID
         assert len(operator.subdag.task_ids) == 1
+        assert operator.subdag.tasks[0].image == "%s:%s" % (
+            ChunkFlowOperator.DEFAULT_IMAGE_ID,
+            ChunkFlowOperator.DEFAULT_VERSION
+            )
 
     def test_many(self, datadir):
         task_filename = str(datadir.join('many.txt'))
@@ -97,4 +104,7 @@ class TestChunkFlowTasksFileOperator(object):
 
         assert operator
         assert operator.task_id == DEFAULT_TASK_ID
-        assert len(operator.subdag.task_ids) == 8
+        assert len(operator.subdag.tasks) == 8
+        for task in operator.subdag.tasks:
+            assert task.image == "%s:%s" % (ChunkFlowOperator.DEFAULT_IMAGE_ID,
+                                            ChunkFlowOperator.DEFAULT_VERSION)

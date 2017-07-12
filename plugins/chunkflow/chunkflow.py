@@ -5,10 +5,6 @@ from airflow.operators.subdag_operator import SubDagOperator
 import logging
 import json
 
-DEFAULT_IMAGE_ID = \
-    '098703261575.dkr.ecr.us-east-1.amazonaws.com/chunkflow'
-DEFAULT_VERSION = 'v1.7.8'
-
 
 def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
                             tasks_filename):
@@ -34,7 +30,8 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
             except KeyError:
                 logger = logging.getLogger(__name__)
                 logger.error("Unable to find chunk input origin key " +
-                             "(json.input.params.origin) from \n %s", task_json)
+                             "(json.input.params.origin) from \n %s",
+                             task_json)
                 raise
             except ValueError:
                 logger = logging.getLogger(__name__)
@@ -53,13 +50,17 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
 
 
 class ChunkFlowOperator(DockerOperator):
+    DEFAULT_IMAGE_ID = \
+        '098703261575.dkr.ecr.us-east-1.amazonaws.com/chunkflow'
+    DEFAULT_VERSION = 'v1.7.8'
+
     def __init__(self,
                  image_id=DEFAULT_IMAGE_ID,
                  image_version=DEFAULT_VERSION,
                  task_json="{}",
                  *args, **kwargs
                  ):
-
+        print("using " + image_id + ':' + image_version)
         super(ChunkFlowOperator, self).__init__(
             image=image_id + ':' + image_version,
             command='julia ~/.julia/v0.5/ChunkFlow/scripts/main.jl -t ' +
@@ -70,7 +71,8 @@ class ChunkFlowOperator(DockerOperator):
 
 class ChunkFlowTasksFileOperator(SubDagOperator):
     def __init__(self, task_id, tasks_filename,
-                 image_id=DEFAULT_IMAGE_ID, version=DEFAULT_VERSION,
+                 image_id=ChunkFlowOperator.DEFAULT_IMAGE_ID,
+                 version=ChunkFlowOperator.DEFAULT_VERSION,
                  *args, **kwargs):
 
         subdag = create_chunkflow_subdag(
