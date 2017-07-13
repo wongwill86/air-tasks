@@ -60,10 +60,12 @@ COPY --from=aws_ecr_credential_helper \
     /go/src/github.com/awslabs/amazon-ecr-credential-helper/bin/local/docker-credential-ecr-login \
     /usr/local/bin
 
-COPY scripts/entrypoint-dood.sh /entrypoint-dood.sh
-COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+COPY docker/scripts/entrypoint-dood.sh /entrypoint-dood.sh
+COPY docker/config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 RUN chown airflow ${AIRFLOW_HOME}/airflow.cfg
+COPY plugins/ ${AIRFLOW_HOME}/plugins/
 COPY dags/ ${AIRFLOW_HOME}/dags/
+RUN chown airflow ${AIRFLOW_HOME}/dags
 
 
 USER airflow
