@@ -3,9 +3,10 @@ services:
     sut:
         build:
             context: ../
-            dockerfile: docker/Dockerfile
+            dockerfile: docker/Dockerfile.test
             cache_from: ${CACHE_TAG}
-
+            args:
+                - my_img_name = $IMAGE_NAME
         volumes:
             - ../tests:/usr/local/airflow/tests
         entrypoint: pytest

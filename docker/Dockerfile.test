@@ -1,0 +1,8 @@
+ARG IMAGE_NAME
+ARG my_img_name
+FROM $IMAGE_NAME
+ENV
+RUN pip install pytest && pip install tox
+RUN echo $IMAGE_NAME
+RUN echo $my_img_name
+CMD ["pytest"]
