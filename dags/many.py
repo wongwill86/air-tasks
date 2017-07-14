@@ -1,10 +1,7 @@
-import logging
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.docker_operator import DockerOperator
-
-from airflow.operators import PythonOperator
 
 
 default_args = {
@@ -18,17 +15,20 @@ default_args = {
     }
 dag = DAG("many_ws", default_args=default_args, schedule_interval=None)
 
+
 def create_print_date(dag, count_print_date):
     return BashOperator(
         task_id='print_date_' + str(count_print_date),
         bash_command='date',
         dag=dag)
 
+
 def create_print_hello(dag, count_print_hello):
     return BashOperator(
         task_id='print_hello_' + str(count_print_hello),
         bash_command='echo "hello world!"',
         dag=dag)
+
 
 def create_docker_print(dag, count_docker_print):
     return DockerOperator(
@@ -38,15 +38,16 @@ def create_docker_print(dag, count_docker_print):
         network_mode='bridge',
         dag=dag)
 
+
 begin_task = BashOperator(
     task_id='begin_task',
     bash_command='echo "Start here"',
     dag=dag)
 
 width = 5
-print_date_tasks = [ create_print_date(dag, i) for i in range(width)]
-print_hello_tasks = [ create_print_hello(dag, i) for i in range(width)]
-docker_print_tasks = [ create_docker_print(dag, i) for i in range(width)]
+print_date_tasks = [create_print_date(dag, i) for i in range(width)]
+print_hello_tasks = [create_print_hello(dag, i) for i in range(width)]
+docker_print_tasks = [create_docker_print(dag, i) for i in range(width)]
 
 done_task = BashOperator(
     task_id='end_task',
@@ -77,5 +78,3 @@ print_hello_tasks[-1].set_downstream(docker_print_tasks[-1])
 
 for docker_print_task in docker_print_tasks:
     docker_print_task.set_downstream(done_task)
-
-
