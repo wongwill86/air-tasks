@@ -1,9 +1,11 @@
-version: '3'
+version: '3.3'
 services:
     sut:
         build:
             context: ../
             dockerfile: docker/Dockerfile
+            cache_from: ${CACHE_TAG}
+
         volumes:
             - ../tests:/usr/local/airflow/tests
         entrypoint: pytest
