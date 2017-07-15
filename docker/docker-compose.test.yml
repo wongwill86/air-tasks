@@ -4,7 +4,8 @@ services:
         build:
             context: ../
             dockerfile: docker/Dockerfile
-            cache_from: ${CACHE_TAG}
+            cache_from:
+                - ${CACHE_TAG}
             args:
                 - my_img_name = $IMAGE_NAME
         volumes:
