@@ -1,6 +1,6 @@
 ARG IMAGE_NAME
 ARG my_img_name
-FROM $IMAGE_NAME
+FROM $my_img_name
 ENV
 RUN pip install pytest && pip install tox
 RUN echo $IMAGE_NAME
