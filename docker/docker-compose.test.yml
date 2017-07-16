@@ -3,9 +3,9 @@ services:
     sut:
         build:
             args:
-                cache_tag: $CACHE_TAG
+                image_name: $IMAGE_NAME
             context: ../
-            dockerfile: docker/Dockerfile
+            dockerfile: docker/Dockerfile.test
             cache_from:
                 - $CACHE_TAG
                 - $IMAGE_NAME
