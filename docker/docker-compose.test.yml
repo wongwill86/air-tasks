@@ -11,4 +11,6 @@ services:
                 - $IMAGE_NAME
         volumes:
             - ../tests:/usr/local/airflow/tests
-        entrypoint: pytest
+        entrypoint: /bin/sh -c
+        command:
+            - pytest && flake8 .
