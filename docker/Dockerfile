@@ -21,6 +21,7 @@ ENV AIRFLOW_USER airflow
 USER root
 RUN curl -fsSL https://get.docker.com/ | sh \
     && pip install docker-py \
+    && pip install pytest \
     && apt-get install sudo \
     && buildDeps=' \
         python-dev \
