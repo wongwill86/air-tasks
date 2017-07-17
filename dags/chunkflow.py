@@ -29,8 +29,11 @@ start = DummyOperator(
     dag=dag
 )
 
-chunkflow_subdag = ChunkFlowTasksFileOperator(DAG_NAME, "chunkflow_tasks",
-                                              TASKS_FILENAME, dag=dag)
+chunkflow_subdag = ChunkFlowTasksFileOperator(TASKS_FILENAME,
+                                              task_id="chunkflow_tasks",
+                                              IMAGE_VERSION='json_task_test',
+                                              default_args=default_args,
+                                              dag=dag)
 
 end = DummyOperator(task_id='end', default_args=default_args, dag=dag)
 

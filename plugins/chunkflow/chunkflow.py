@@ -40,6 +40,7 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
             print task_origin
             # print task_input_params
             print('chunkflow_' + '_'.join(str(x) for x in task_origin))
+            print(task_json)
             ChunkFlowOperator(
                 task_id='%s-task-%s' % (child_dag_name,
                                         '_'.join(str(x) for x in task_origin)),
@@ -52,7 +53,8 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
 class ChunkFlowOperator(DockerOperator):
     DEFAULT_IMAGE_ID = \
         '098703261575.dkr.ecr.us-east-1.amazonaws.com/chunkflow'
-    DEFAULT_VERSION = 'v1.7.8'
+    DEFAULT_VERSION = 'json_task_test'
+    # DEFAULT_VERSION = 'v1.7.8'
 
     def __init__(self,
                  image_id=DEFAULT_IMAGE_ID,
@@ -63,26 +65,25 @@ class ChunkFlowOperator(DockerOperator):
         print("using " + image_id + ':' + image_version)
         super(ChunkFlowOperator, self).__init__(
             image=image_id + ':' + image_version,
-            command='julia ~/.julia/v0.5/ChunkFlow/scripts/main.jl -t ' +
-            task_json.replace('"', '\"'),
+            # command='julia ~/.julia/v0.5/ChunkFlow/scripts/main.jl -t ' +
+            command='julia -e print("' + task_json.replace('"', '\"') + '")',
             network_mode='bridge',
             *args, **kwargs)
 
 
 class ChunkFlowTasksFileOperator(SubDagOperator):
-    def __init__(self, task_id, tasks_filename,
+    def __init__(self, tasks_filename,
                  image_id=ChunkFlowOperator.DEFAULT_IMAGE_ID,
                  version=ChunkFlowOperator.DEFAULT_VERSION,
                  *args, **kwargs):
 
         subdag = create_chunkflow_subdag(
-            kwargs['dag'].dag_id, task_id,
+            kwargs['dag'].dag_id, kwargs['task_id'],
             {} if 'default_args' not in kwargs else kwargs['default_args'],
             tasks_filename)
 
         # SubDagOperator.downstream_list
         super(ChunkFlowTasksFileOperator, self).__init__(
-            task_id=task_id,
             subdag=subdag,
             *args, **kwargs)
 

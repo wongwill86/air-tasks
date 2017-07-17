@@ -45,7 +45,17 @@ class TestChunkFlowOperator(object):
         assert operator
         assert operator.task_id == DEFAULT_TASK_ID
         assert operator.image == "%s:%s" % (ChunkFlowOperator.DEFAULT_IMAGE_ID,
-                                            ChunkFlowOperator.DEFAULT_VERSION)
+
+     def test_run_single(self, datadir):
+        task_filename = str(datadir.join('single.txt'))
+        operator = \
+            TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
+        context = {
+            'execution_date': datetime(2016, 5, 1)
+        }
+        res = operator.execute(context)
+        print("RESAULT IS " + res)
+        assert 1 == 0                                           ChunkFlowOperator.DEFAULT_VERSION)
 
 
 class TestChunkFlowTasksFileOperator(object):
@@ -60,8 +70,8 @@ class TestChunkFlowTasksFileOperator(object):
         parent_dag = TestChunkFlowTasksFileOperator.create_parent_dag(
             DEFAULT_PARENT_DAG_ID)
 
-        operator = ChunkFlowTasksFileOperator(DEFAULT_TASK_ID,
-                                              filename,
+        operator = ChunkFlowTasksFileOperator(filename,
+                                              task_id=DEFAULT_TASK_ID,
                                               default_args=DEFAULT_DAG_ARGS,
                                               dag=parent_dag)
         return operator
@@ -108,3 +118,14 @@ class TestChunkFlowTasksFileOperator(object):
         for task in operator.subdag.tasks:
             assert task.image == "%s:%s" % (ChunkFlowOperator.DEFAULT_IMAGE_ID,
                                             ChunkFlowOperator.DEFAULT_VERSION)
+
+    def test_run_single(self, datadir):
+        task_filename = str(datadir.join('single.txt'))
+        operator = \
+            TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
+        context = {
+            'execution_date': datetime(2016, 5, 1)
+        }
+        res = operator.execute(context)
+        print("RESAULT IS " + res)
+        assert 1 == 0

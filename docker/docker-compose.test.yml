@@ -11,6 +11,44 @@ services:
                 - $IMAGE_NAME
         volumes:
             - ../tests:/usr/local/airflow/tests
+            - ../plugins:/usr/local/airflow/plugins
+            - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+        depends_on:
+            - postgres
+            - webserver
         entrypoint: /bin/sh -c
         command:
-            - pytest && flake8 .
+            - ptw
+        #command:
+            #- pytest && flake8 .
+
+    postgres:
+        image: postgres:9.6
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+
+    webserver:
+        image: wongwill86/air-tasks:chunkflow
+        restart: always
+        depends_on:
+            - postgres
+        environment:
+            - LOAD_EX=y
+            - EXECUTOR=Local
+            - AIRFLOW_HOME=/usr/local/airflow
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+            - ./plugins:/usr/local/airflow/plugins
+            - /var/run/docker.sock:/var/run/docker.sock
+        ports:
+            - "8080:8080"
+        command: webserver
