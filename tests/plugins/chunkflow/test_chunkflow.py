@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from airflow.operators.chunkflow_plugin import ChunkFlowOperator
-from airflow.operators.chunkflow_plugin import ChunkFlowTasksFileOperator
+from airflow.operators.chunkflow_plugin import chunkflow_subdag_from_file
 
 from airflow.models import DAG
 from datetime import datetime, timedelta
@@ -45,17 +45,12 @@ class TestChunkFlowOperator(object):
         assert operator
         assert operator.task_id == DEFAULT_TASK_ID
         assert operator.image == "%s:%s" % (ChunkFlowOperator.DEFAULT_IMAGE_ID,
+                                            ChunkFlowOperator.DEFAULT_VERSION)
 
-     def test_run_single(self, datadir):
-        task_filename = str(datadir.join('single.txt'))
-        operator = \
-            TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
-        context = {
-            'execution_date': datetime(2016, 5, 1)
-        }
-        res = operator.execute(context)
-        print("RESAULT IS " + res)
-        assert 1 == 0                                           ChunkFlowOperator.DEFAULT_VERSION)
+    def test_run_single(self, datadir):
+        operator = ChunkFlowOperator(task_id=DEFAULT_TASK_ID,
+                                     default_args=DEFAULT_DAG_ARGS)
+        operator.execute(None)
 
 
 class TestChunkFlowTasksFileOperator(object):
@@ -70,7 +65,7 @@ class TestChunkFlowTasksFileOperator(object):
         parent_dag = TestChunkFlowTasksFileOperator.create_parent_dag(
             DEFAULT_PARENT_DAG_ID)
 
-        operator = ChunkFlowTasksFileOperator(filename,
+        operator = chunkflow_subdag_from_file(filename,
                                               task_id=DEFAULT_TASK_ID,
                                               default_args=DEFAULT_DAG_ARGS,
                                               dag=parent_dag)
@@ -118,14 +113,3 @@ class TestChunkFlowTasksFileOperator(object):
         for task in operator.subdag.tasks:
             assert task.image == "%s:%s" % (ChunkFlowOperator.DEFAULT_IMAGE_ID,
                                             ChunkFlowOperator.DEFAULT_VERSION)
-
-    def test_run_single(self, datadir):
-        task_filename = str(datadir.join('single.txt'))
-        operator = \
-            TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
-        context = {
-            'execution_date': datetime(2016, 5, 1)
-        }
-        res = operator.execute(context)
-        print("RESAULT IS " + res)
-        assert 1 == 0

@@ -8,7 +8,7 @@ services:
             - POSTGRES_DB=airflow
 
     webserver:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:chunkflow
         restart: always
         depends_on:
             - postgres
@@ -20,8 +20,8 @@ services:
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
         volumes:
-            - ./dags:/usr/local/airflow/dags
-            - ./plugins:/usr/local/airflow/plugins
+            - ../dags:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         ports:
             - "8080:8080"

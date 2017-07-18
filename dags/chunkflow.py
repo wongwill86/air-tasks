@@ -2,7 +2,8 @@ from airflow import DAG
 from datetime import datetime, timedelta
 # logging.basicConfig(level=logging.INFO)
 from airflow.operators import DummyOperator
-from airflow.operators.chunkflow_plugin import ChunkFlowTasksFileOperator
+from airflow.operators.chunkflow_plugin import chunkflow_subdag_from_file
+
 DAG_NAME = 'will_chunkflow_test'
 
 TASKS_FILENAME = "./dags/chunkflow/tasks.txt"
@@ -29,7 +30,7 @@ start = DummyOperator(
     dag=dag
 )
 
-chunkflow_subdag = ChunkFlowTasksFileOperator(TASKS_FILENAME,
+chunkflow_subdag = chunkflow_subdag_from_file(TASKS_FILENAME,
                                               task_id="chunkflow_tasks",
                                               IMAGE_VERSION='json_task_test',
                                               default_args=default_args,

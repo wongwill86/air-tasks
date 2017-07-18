@@ -6,12 +6,38 @@ import logging
 import json
 
 
+class ChunkFlowOperator(DockerOperator):
+    # DEFAULT_IMAGE_ID = \
+        # 'julia'
+    # DEFAULT_VERSION = '0.5.2'
+    DEFAULT_IMAGE_ID = '098703261575.dkr.ecr.us-east-1.amazonaws.com/chunkflow'
+    DEFAULT_VERSION = 'json_task_test'
+    DEFAULT_VERSION = 'v1.7.8'
+
+    def __init__(self,
+                 image_id=DEFAULT_IMAGE_ID,
+                 image_version=DEFAULT_VERSION,
+                 task_json="{}",
+                 *args, **kwargs
+                 ):
+        print("using " + image_id + ':' + image_version)
+        super(ChunkFlowOperator, self).__init__(
+            image=image_id + ':' + image_version,
+            # command='julia ~/.julia/v0.5/ChunkFlow/scripts/main.jl -t "' +
+            command='julia -e \'print("json is: \\n' +
+            task_json.replace('"', '\\"') +
+            '")\'',
+            # '"',
+            network_mode='bridge',
+            *args, **kwargs)
+
+
 def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
                             tasks_filename):
-    chunkflow_subdag = DAG(dag_id='%s.%s' % (parent_dag_name,
-                                             child_dag_name),
-                           default_args=subdag_args,
-                           schedule_interval=None)
+    subdag_name = '%s.%s' % (parent_dag_name, child_dag_name)
+    subdag = DAG(dag_id=subdag_name, default_args=subdag_args,
+                 schedule_interval='@once')
+    print('Generating subdag: <%s>' % subdag_name)
 
     with open(tasks_filename, "r") as tasks_file:
         line = tasks_file.readline()
@@ -37,60 +63,35 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
                 logger = logging.getLogger(__name__)
                 logger.error("Unable to parse task as json: \n %s", task_json)
                 raise
-            print task_origin
+
+            print(task_origin)
             # print task_input_params
             print('chunkflow_' + '_'.join(str(x) for x in task_origin))
             print(task_json)
             ChunkFlowOperator(
                 task_id='%s-task-%s' % (child_dag_name,
                                         '_'.join(str(x) for x in task_origin)),
-                task_json=task_json, dag=chunkflow_subdag)
+                task_json=task_json, dag=subdag)
             task_json = tasks_file.readline()
 
-    return chunkflow_subdag
+    return subdag
 
 
-class ChunkFlowOperator(DockerOperator):
-    DEFAULT_IMAGE_ID = \
-        '098703261575.dkr.ecr.us-east-1.amazonaws.com/chunkflow'
-    DEFAULT_VERSION = 'json_task_test'
-    # DEFAULT_VERSION = 'v1.7.8'
-
-    def __init__(self,
-                 image_id=DEFAULT_IMAGE_ID,
-                 image_version=DEFAULT_VERSION,
-                 task_json="{}",
-                 *args, **kwargs
-                 ):
-        print("using " + image_id + ':' + image_version)
-        super(ChunkFlowOperator, self).__init__(
-            image=image_id + ':' + image_version,
-            # command='julia ~/.julia/v0.5/ChunkFlow/scripts/main.jl -t ' +
-            command='julia -e print("' + task_json.replace('"', '\"') + '")',
-            network_mode='bridge',
-            *args, **kwargs)
-
-
-class ChunkFlowTasksFileOperator(SubDagOperator):
-    def __init__(self, tasks_filename,
-                 image_id=ChunkFlowOperator.DEFAULT_IMAGE_ID,
-                 version=ChunkFlowOperator.DEFAULT_VERSION,
-                 *args, **kwargs):
-
-        subdag = create_chunkflow_subdag(
-            kwargs['dag'].dag_id, kwargs['task_id'],
-            {} if 'default_args' not in kwargs else kwargs['default_args'],
-            tasks_filename)
-
-        # SubDagOperator.downstream_list
-        super(ChunkFlowTasksFileOperator, self).__init__(
-            subdag=subdag,
-            *args, **kwargs)
+def chunkflow_subdag_from_file(tasks_filename,
+                               image_id=ChunkFlowOperator.DEFAULT_IMAGE_ID,
+                               version=ChunkFlowOperator.DEFAULT_VERSION,
+                               *args, **kwargs):
+    subdag = create_chunkflow_subdag(
+        kwargs['dag'].dag_id, kwargs['task_id'],
+        {} if 'default_args' not in kwargs else kwargs['default_args'],
+        tasks_filename
+    )
+    return SubDagOperator(subdag=subdag, *args, **kwargs)
 
 
 class ChunkFlowPlugin(AirflowPlugin):
     name = "chunkflow_plugin"
-    operators = [ChunkFlowOperator, ChunkFlowTasksFileOperator]
+    operators = [ChunkFlowOperator, chunkflow_subdag_from_file]
     hooks = []
     executors = []
     macros = []
