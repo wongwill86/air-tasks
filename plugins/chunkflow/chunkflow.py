@@ -7,27 +7,21 @@ import json
 
 
 class ChunkFlowOperator(DockerOperator):
-    # DEFAULT_IMAGE_ID = \
-        # 'julia'
-    # DEFAULT_VERSION = '0.5.2'
     DEFAULT_IMAGE_ID = '098703261575.dkr.ecr.us-east-1.amazonaws.com/chunkflow'
-    DEFAULT_VERSION = 'json_task_test'
     DEFAULT_VERSION = 'v1.7.8'
+    DEFAULT_COMMAND = 'julia ~/.julia/v0.5/ChunkFlow/scripts/main.jl -t "%s"'
 
     def __init__(self,
                  image_id=DEFAULT_IMAGE_ID,
                  image_version=DEFAULT_VERSION,
+                 command=DEFAULT_COMMAND,
                  task_json="{}",
                  *args, **kwargs
                  ):
         print("using " + image_id + ':' + image_version)
         super(ChunkFlowOperator, self).__init__(
             image=image_id + ':' + image_version,
-            # command='julia ~/.julia/v0.5/ChunkFlow/scripts/main.jl -t "' +
-            command='julia -e \'print("json is: \\n' +
-            task_json.replace('"', '\\"') +
-            '")\'',
-            # '"',
+            command=command % task_json.replace('"', '\\"'),
             network_mode='bridge',
             *args, **kwargs)
 

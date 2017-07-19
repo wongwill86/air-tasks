@@ -8,7 +8,7 @@ from pytest import fixture
 from distutils import dir_util
 import os
 
-DEFAULT_DAG_ARGS = {
+DAG_ARGS = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2017, 5, 1),
@@ -17,8 +17,11 @@ DEFAULT_DAG_ARGS = {
     'retry_delay': timedelta(seconds=2),
     'retry_exponential_backoff': True,
 }
-DEFAULT_TASK_ID = 'test_run_task'
-DEFAULT_PARENT_DAG_ID = 'parent_dag'
+TASK_ID = 'test_run_task'
+PARENT_DAG_ID = 'parent_dag'
+IMAGE_ID = 'julia'
+IMAGE_VERSION = '0.5.2'
+COMMAND = 'julia -e \'print("json is: \\n %s")\''
 
 
 @fixture
@@ -40,16 +43,21 @@ def datadir(tmpdir, request):
 
 class TestChunkFlowOperator(object):
     def test_create(self):
-        operator = ChunkFlowOperator(task_id=DEFAULT_TASK_ID,
-                                     default_args=DEFAULT_DAG_ARGS)
+        operator = ChunkFlowOperator(task_id=TASK_ID,
+                                     default_args=DAG_ARGS)
         assert operator
-        assert operator.task_id == DEFAULT_TASK_ID
+        assert operator.task_id == TASK_ID
         assert operator.image == "%s:%s" % (ChunkFlowOperator.DEFAULT_IMAGE_ID,
                                             ChunkFlowOperator.DEFAULT_VERSION)
 
     def test_run_single(self, datadir):
-        operator = ChunkFlowOperator(task_id=DEFAULT_TASK_ID,
-                                     default_args=DEFAULT_DAG_ARGS)
+        operator = ChunkFlowOperator(task_id=TASK_ID,
+                                     default_args=DAG_ARGS,
+                                     command=COMMAND,
+                                     task_json='{"test":1}',
+                                     image_id=IMAGE_ID,
+                                     image_version=IMAGE_VERSION
+                                     )
         operator.execute(None)
 
 
@@ -57,17 +65,17 @@ class TestChunkFlowTasksFileOperator(object):
     @staticmethod
     def create_parent_dag(parent_dag_id):
         return DAG(dag_id=parent_dag_id,
-                   default_args=DEFAULT_DAG_ARGS,
+                   default_args=DAG_ARGS,
                    schedule_interval=None)
 
     @staticmethod
     def create_task(filename):
         parent_dag = TestChunkFlowTasksFileOperator.create_parent_dag(
-            DEFAULT_PARENT_DAG_ID)
+            PARENT_DAG_ID)
 
         operator = chunkflow_subdag_from_file(filename,
-                                              task_id=DEFAULT_TASK_ID,
-                                              default_args=DEFAULT_DAG_ARGS,
+                                              task_id=TASK_ID,
+                                              default_args=DAG_ARGS,
                                               dag=parent_dag)
         return operator
 
@@ -77,7 +85,7 @@ class TestChunkFlowTasksFileOperator(object):
             TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
 
         assert operator
-        assert operator.task_id == DEFAULT_TASK_ID
+        assert operator.task_id == TASK_ID
         assert len(operator.subdag.task_ids) == 0
 
     def test_none(self, datadir):
@@ -86,7 +94,7 @@ class TestChunkFlowTasksFileOperator(object):
             TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
 
         assert operator
-        assert operator.task_id == DEFAULT_TASK_ID
+        assert operator.task_id == TASK_ID
         assert len(operator.subdag.task_ids) == 0
 
     def test_single(self, datadir):
@@ -95,7 +103,7 @@ class TestChunkFlowTasksFileOperator(object):
             TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
 
         assert operator
-        assert operator.task_id == DEFAULT_TASK_ID
+        assert operator.task_id == TASK_ID
         assert len(operator.subdag.task_ids) == 1
         assert operator.subdag.tasks[0].image == "%s:%s" % (
             ChunkFlowOperator.DEFAULT_IMAGE_ID,
@@ -108,7 +116,7 @@ class TestChunkFlowTasksFileOperator(object):
             TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
 
         assert operator
-        assert operator.task_id == DEFAULT_TASK_ID
+        assert operator.task_id == TASK_ID
         assert len(operator.subdag.tasks) == 8
         for task in operator.subdag.tasks:
             assert task.image == "%s:%s" % (ChunkFlowOperator.DEFAULT_IMAGE_ID,
