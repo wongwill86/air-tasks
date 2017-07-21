@@ -1,8 +1,8 @@
 from airflow import DAG
 from datetime import datetime, timedelta
-# logging.basicConfig(level=logging.INFO)
-from airflow.operators import DummyOperator
+from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.chunkflow_plugin import chunkflow_subdag_from_file
+# logging.basicConfig(level=logging.INFO)
 
 DAG_NAME = 'will_chunkflow_test'
 
@@ -32,7 +32,7 @@ start = DummyOperator(
 
 chunkflow_subdag = chunkflow_subdag_from_file(TASKS_FILENAME,
                                               task_id="chunkflow_tasks",
-                                              IMAGE_VERSION='json_task_test',
+                                              image_version='raw_json_task',
                                               default_args=default_args,
                                               dag=dag)
 

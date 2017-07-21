@@ -9,7 +9,8 @@ import json
 class ChunkFlowOperator(DockerOperator):
     DEFAULT_IMAGE_ID = '098703261575.dkr.ecr.us-east-1.amazonaws.com/chunkflow'
     DEFAULT_VERSION = 'v1.7.8'
-    DEFAULT_COMMAND = 'julia ~/.julia/v0.5/ChunkFlow/scripts/main.jl -t "%s"'
+    DEFAULT_COMMAND = 'julia /root/.julia/v0.5/ChunkFlow/scripts/main.jl ' + \
+        '-t "%s"'
 
     def __init__(self,
                  image_id=DEFAULT_IMAGE_ID,
@@ -27,7 +28,7 @@ class ChunkFlowOperator(DockerOperator):
 
 
 def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
-                            tasks_filename):
+                            tasks_filename, image_id, image_version):
     subdag_name = '%s.%s' % (parent_dag_name, child_dag_name)
     subdag = DAG(dag_id=subdag_name, default_args=subdag_args,
                  schedule_interval='@once')
@@ -65,7 +66,10 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
             ChunkFlowOperator(
                 task_id='%s-task-%s' % (child_dag_name,
                                         '_'.join(str(x) for x in task_origin)),
-                task_json=task_json, dag=subdag)
+                task_json=task_json, dag=subdag,
+                image_id=image_id,
+                image_version=image_version
+            )
             task_json = tasks_file.readline()
 
     return subdag
@@ -73,12 +77,14 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
 
 def chunkflow_subdag_from_file(tasks_filename,
                                image_id=ChunkFlowOperator.DEFAULT_IMAGE_ID,
-                               version=ChunkFlowOperator.DEFAULT_VERSION,
+                               image_version=ChunkFlowOperator.DEFAULT_VERSION,
                                *args, **kwargs):
     subdag = create_chunkflow_subdag(
         kwargs['dag'].dag_id, kwargs['task_id'],
         {} if 'default_args' not in kwargs else kwargs['default_args'],
-        tasks_filename
+        tasks_filename,
+        image_id,
+        image_version
     )
     return SubDagOperator(subdag=subdag, *args, **kwargs)
 

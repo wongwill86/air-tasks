@@ -75,6 +75,8 @@ class TestChunkFlowTasksFileOperator(object):
 
         operator = chunkflow_subdag_from_file(filename,
                                               task_id=TASK_ID,
+                                              image_id=IMAGE_ID,
+                                              image_version=IMAGE_VERSION,
                                               default_args=DAG_ARGS,
                                               dag=parent_dag)
         return operator
@@ -106,8 +108,8 @@ class TestChunkFlowTasksFileOperator(object):
         assert operator.task_id == TASK_ID
         assert len(operator.subdag.task_ids) == 1
         assert operator.subdag.tasks[0].image == "%s:%s" % (
-            ChunkFlowOperator.DEFAULT_IMAGE_ID,
-            ChunkFlowOperator.DEFAULT_VERSION
+            IMAGE_ID,
+            IMAGE_VERSION
             )
 
     def test_many(self, datadir):
@@ -119,5 +121,5 @@ class TestChunkFlowTasksFileOperator(object):
         assert operator.task_id == TASK_ID
         assert len(operator.subdag.tasks) == 8
         for task in operator.subdag.tasks:
-            assert task.image == "%s:%s" % (ChunkFlowOperator.DEFAULT_IMAGE_ID,
-                                            ChunkFlowOperator.DEFAULT_VERSION)
+            assert task.image == "%s:%s" % (IMAGE_ID,
+                                            IMAGE_VERSION)
