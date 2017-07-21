@@ -4,9 +4,9 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.chunkflow_plugin import chunkflow_subdag_from_file
 # logging.basicConfig(level=logging.INFO)
 
-DAG_NAME = 'will_chunkflow_test'
+DAG_NAME = 'chunkflow_noop'
 
-TASKS_FILENAME = "./dags/chunkflow/tasks.txt"
+TASKS_FILENAME = "./dags/chunkflow/tasks/noop_tasks.txt"
 
 default_args = {
     'owner': 'airflow',
@@ -31,7 +31,7 @@ start = DummyOperator(
 )
 
 chunkflow_subdag = chunkflow_subdag_from_file(TASKS_FILENAME,
-                                              task_id="chunkflow_tasks",
+                                              task_id="noop_tasks",
                                               image_version='raw_json_task',
                                               default_args=default_args,
                                               dag=dag)
