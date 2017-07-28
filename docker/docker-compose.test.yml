@@ -1,0 +1,21 @@
+version: '3.2'
+services:
+    sut:
+        build:
+            args:
+                image_name: $IMAGE_NAME
+            context: ../
+            dockerfile: docker/Dockerfile.test
+            cache_from:
+                - $CACHE_TAG
+                - $IMAGE_NAME
+        volumes:
+            - ../tests:/usr/local/airflow/tests
+            - ../plugins:/usr/local/airflow/plugins
+            - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+        command:
+            - pytest && flake8 .
