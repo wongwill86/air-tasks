@@ -6,7 +6,7 @@ services:
             - "6380:6380"
         deploy:
             placement:
-                constraints: [node.role == manager || engine.label == manager]
+                constraints: [ engine.labels.infrakit-role == manager ]
 
     postgres:
         image: postgres:9.6
@@ -18,10 +18,10 @@ services:
             - "5432:5432"
         deploy:
             placement:
-                constraints: [node.role == manager || engine.label == manager]
+                constraints: [ engine.labels.infrakit-role == manager ]
 
     webserver:
-        image: wongwill86/air-tasks:chunkflow
+        image: wongwill86/air-tasks:infra
         restart: always
         depends_on:
             - postgres
@@ -46,10 +46,10 @@ services:
         command: webserver
         deploy:
             placement:
-                constraints: [node.role == manager || engine.label == manager]
+                constraints: [ engine.labels.infrakit-role == manager ]
 
     flower:
-        image: wongwill86/air-tasks:chunkflow
+        image: wongwill86/air-tasks:infra
         restart: always
         depends_on:
             - redis
@@ -58,9 +58,12 @@ services:
         ports:
             - "5555:5555"
         command: flower
+        deploy:
+            placement:
+                constraints: [ engine.labels.infrakit-role.infrakit-role == manager ]
 
     scheduler:
-        image: wongwill86/air-tasks:chunkflow
+        image: wongwill86/air-tasks:infra
         restart: always
         depends_on:
             - webserver
@@ -82,10 +85,19 @@ services:
         command: scheduler
         deploy:
             placement:
-                constraints: [node.role == manager || engine.label == manager]
+                constraints: [ engine.labels.infrakit-role == manager ]
+    visualizer:
+        image: dockersamples/visualizer:stable
+        ports:
+            - "81:8080"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        deploy:
+            placement:
+                constraints: [ engine.labels.infrakit-role == manager ]
 
     worker:
-        image: wongwill86/air-tasks:chunkflow
+        image: wongwill86/air-tasks:infra
         restart: always
         depends_on:
             - scheduler
@@ -106,14 +118,4 @@ services:
         command: worker
         deploy:
             placement:
-                constraints: [node.role != manager && engine.label != manager]
-    
-    visualizer:
-        image: dockersamples/visualizer:stable
-        ports:
-            - "81:8080"
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-        deploy:
-            placement:
-                constraints: [node.role == manager || engine.label == manager]
+                constraints: [ engine.labels.infrakit-role == worker ]
