@@ -60,7 +60,7 @@ services:
         command: flower
         deploy:
             placement:
-                constraints: [ engine.labels.infrakit-role.infrakit-role == manager ]
+                constraints: [ engine.labels.infrakit-role == manager ]
 
     scheduler:
         image: wongwill86/air-tasks:infra
