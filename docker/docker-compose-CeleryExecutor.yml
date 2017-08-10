@@ -21,7 +21,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     webserver:
-        image: wongwill86/air-tasks:infra
+        image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - postgres
@@ -49,7 +49,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     flower:
-        image: wongwill86/air-tasks:infra
+        image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - redis
@@ -63,7 +63,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     scheduler:
-        image: wongwill86/air-tasks:infra
+        image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - webserver
@@ -97,7 +97,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     worker:
-        image: wongwill86/air-tasks:infra
+        image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - scheduler
