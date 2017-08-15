@@ -2,8 +2,8 @@ version: '3'
 services:
     redis:
         image: 'redis:3.2.7'
-        ports:
-            - "6380:6380"
+        #ports:
+            #- "6380:6380"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -41,8 +41,8 @@ services:
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
-        ports:
-            - "80:8080"
+        #ports:
+            #- "8080:8080"
         command: webserver
         deploy:
             placement:
@@ -55,8 +55,8 @@ services:
             - redis
         environment:
             - EXECUTOR=Celery
-        ports:
-            - "5555:5555"
+        #ports:
+            #- "5555:5555"
         command: flower
         deploy:
             placement:
@@ -86,10 +86,9 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
+
     visualizer:
         image: dockersamples/visualizer:stable
-        ports:
-            - "81:8080"
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
         deploy:
@@ -119,3 +118,36 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == worker ]
+
+    proxy:
+        image: nginx:latest
+        ports:
+            - "80:80"
+            - "81:81"
+            - "82:82"
+        deploy:
+            placement:
+                constraints: [ engine.labels.infrakit-role == worker ]
+        command: "bash -c \"sed -i \
+                  -e 's/include \\\\/etc\\\\/nginx\\\\/conf\\\\.d\\\\/\\\\*\\\\.conf;//' \
+                  -e '$$s/}/\
+                      server {\\\\n\
+                          listen 80;\\\\n\
+                          location \\\\/ {\\\\n\
+                              proxy_pass http:\\\\/\\\\/webserver:8080;\\\\n\
+                          }\\\\n\
+                      }\\\\n\
+                      server {\\\\n\
+                          listen 81;\\\\n\
+                          location \\\\/ {\\\\n\
+                              proxy_pass http:\\\\/\\\\/flower:5555;\\\\n\
+                          }\\\\n\
+                      }\\\\n\
+                      server {\\\\n\
+                          listen 82;\\\\n\
+                          location \\\\/ {\\\\n\
+                              proxy_pass http:\\\\/\\\\/visualizer:8080;\\\\n\
+                          }\\\\n\
+                      }\\\\n\
+                  }\\\\n/' \
+                  /etc/nginx/nginx.conf && nginx -g 'daemon off;'\""
