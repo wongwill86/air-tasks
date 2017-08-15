@@ -125,6 +125,10 @@ services:
             - "80:80"
             - "81:81"
             - "82:82"
+        depends_on:
+            - webserver
+            - flower
+            - visualizer
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == worker ]
