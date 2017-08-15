@@ -128,26 +128,40 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == worker ]
-        command: "bash -c \"sed -i \
-                  -e 's/include \\\\/etc\\\\/nginx\\\\/conf\\\\.d\\\\/\\\\*\\\\.conf;//' \
-                  -e '$$s/}/\
-                      server {\\\\n\
-                          listen 80;\\\\n\
-                          location \\\\/ {\\\\n\
-                              proxy_pass http:\\\\/\\\\/webserver:8080;\\\\n\
-                          }\\\\n\
-                      }\\\\n\
-                      server {\\\\n\
-                          listen 81;\\\\n\
-                          location \\\\/ {\\\\n\
-                              proxy_pass http:\\\\/\\\\/flower:5555;\\\\n\
-                          }\\\\n\
-                      }\\\\n\
-                      server {\\\\n\
-                          listen 82;\\\\n\
-                          location \\\\/ {\\\\n\
-                              proxy_pass http:\\\\/\\\\/visualizer:8080;\\\\n\
-                          }\\\\n\
-                      }\\\\n\
-                  }\\\\n/' \
-                  /etc/nginx/nginx.conf && nginx -g 'daemon off;'\""
+        environment:
+            - BASIC_AUTH_USERNAME
+            - BASIC_AUTH_PASSWORD
+        command: "bash -c 'apt-get update && apt-get install apache2-utils -y && \
+                  [ -n \"$$BASIC_AUTH_USERNAME\" ] \
+                         && AUTH_BASIC_STRING=\\\"AirflowAuthorization\\\" \
+                         && htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $${BASIC_AUTH_PASSWORD}
+                         || AUTH_BASIC_STRING=off && \
+                  sed -i \
+                  -e \"s/include \\/etc\\/nginx\\/conf\\.d\\/\\*\\.conf;//\" \
+                  -e \"\\$$s/}/\
+                      server {\\n\
+                          listen 80;\\n\
+                          auth_basic $${AUTH_BASIC_STRING};\\n\
+                          auth_basic_user_file \\/etc\\/nginx\\/\\.htpasswd;\\n\
+                          location \\/ {\\n\
+                              proxy_pass http:\\/\\/webserver:8080;\\n\
+                          }\\n\
+                      }\\n\
+                      server {\\n\
+                          listen 81;\\n\
+                          auth_basic $${AUTH_BASIC_STRING};\\n\
+                          auth_basic_user_file \\/etc\\/nginx\\/\\.htpasswd;\\n\
+                          location \\/ {\\n\
+                              proxy_pass http:\\/\\/flower:5555;\\n\
+                          }\\n\
+                      }\\n\
+                      server {\\n\
+                          listen 82;\\n\
+                          auth_basic $${AUTH_BASIC_STRING};\\n\
+                          auth_basic_user_file \\/etc\\/nginx\\/\\.htpasswd;\\n\
+                          location \\/ {\\n\
+                              proxy_pass http:\\/\\/visualizer:8080;\\n\
+                          }\\n\
+                      }\\n\
+                  }\\n/\" \
+                  /etc/nginx/nginx.conf && cat /etc/nginx/nginx.conf && nginx -g \"daemon off;\"'"
