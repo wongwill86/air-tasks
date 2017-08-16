@@ -138,7 +138,7 @@ services:
             - BASIC_AUTH_USERNAME
             - BASIC_AUTH_PASSWORD
         command: "bash -c 'apt-get update && apt-get install apache2-utils -y && \
-                  [ -n \"$$BASIC_AUTH_USERNAME\" ] \
+                  [ -n \"$$BASIC_AUTH_PASSWORD\" ] \
                          && AUTH_BASIC_STRING=\\\"AirflowAuthorization\\\" \
                          && htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $${BASIC_AUTH_PASSWORD}
                          || AUTH_BASIC_STRING=off && \
