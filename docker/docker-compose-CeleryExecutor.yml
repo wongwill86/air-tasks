@@ -1,4 +1,4 @@
-version: '3'
+version: '3.3'
 services:
     redis:
         image: 'redis:3.2.7'
@@ -133,12 +133,14 @@ services:
             - visualizer
         deploy:
             placement:
-                constraints: [ engine.labels.infrakit-role == worker ]
+                constraints: [ engine.labels.infrakit-role == manager ]
         environment:
-            - BASIC_AUTH_USERNAME
-            - BASIC_AUTH_PASSWORD
+            BASIC_AUTH_USERNAME_FILE: /run/secrets/basic_auth_username
+            BASIC_AUTH_PASSWORD_FILE: /run/secrets/basic_auth_password
         command: "bash -c 'apt-get update && apt-get install apache2-utils -y && \
-                  [ -n \"$$BASIC_AUTH_USERNAME\" ] \
+                  BASIC_AUTH_USERNAME=$$(</$$BASIC_AUTH_USERNAME_FILE) && \
+                  BASIC_AUTH_PASSWORD=$$(</$$BASIC_AUTH_PASSWORD_FILE) && \
+                  [ -n \"$$BASIC_AUTH_PASSWORD\" ] \
                          && AUTH_BASIC_STRING=\\\"AirflowAuthorization\\\" \
                          && htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $${BASIC_AUTH_PASSWORD}
                          || AUTH_BASIC_STRING=off && \
@@ -171,3 +173,12 @@ services:
                       }\\n\
                   }\\n/\" \
                   /etc/nginx/nginx.conf && cat /etc/nginx/nginx.conf && nginx -g \"daemon off;\"'"
+        secrets:
+            - basic_auth_username
+            - basic_auth_password
+
+secrets:
+    basic_auth_username:
+        external: true
+    basic_auth_password:
+        external: true
