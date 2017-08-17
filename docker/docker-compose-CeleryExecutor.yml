@@ -133,7 +133,7 @@ services:
             - visualizer
         deploy:
             placement:
-                constraints: [ engine.labels.infrakit-role == worker ]
+                constraints: [ engine.labels.infrakit-role == manager ]
         environment:
             BASIC_AUTH_USERNAME_FILE: /run/secrets/basic_auth_username
             BASIC_AUTH_PASSWORD_FILE: /run/secrets/basic_auth_password
