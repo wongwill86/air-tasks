@@ -3,6 +3,6 @@ FROM $image_name
 ARG IMAGE_NAME
 USER root
 COPY docker/scripts/entrypoint-test.sh /entrypoint-test.sh
-RUN pip install pytest pytest-watch pytest-env flake8
+RUN pip install pytest pytest-watch pytest-env flake8 mock
 USER airflow
 ENTRYPOINT ["/entrypoint-test.sh"]
