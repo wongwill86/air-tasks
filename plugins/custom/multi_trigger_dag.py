@@ -38,30 +38,19 @@ class MultiTriggerDagRunOperator(BaseOperator):
     def execute(self, context):
         session = settings.Session()
         dbag = DagBag(settings.DAGS_FOLDER)
-        # trigger_dag = dbag.get_dag(self.trigger_dag_id)
-        # print(trigger_dag)
-        # print(type(trigger_dag))
-        # trigger_id = 0
-        # print('I AM HERE!!!')
-        # print(session)
-        # for trigger_id in range(0
-            # dr = trigger_dag.create_dagrun(
-                # run_id='trig_%s_%d_%s' % (self.trigger_dag_id
-
-                                          # trigger_id
-
-                                          # datetime.now().isoformat())
-
-                # state=State.RUNNING
-
-                # conf=self.param_list[trigger_id]
-
-                # external_trigger=True)
-            # logging.info("Creating DagRun {}".format(dr))
-            # session.add(dr)
-        # session.commit()
-        # session.close()
-        print "done"
+        trigger_dag = dbag.get_dag(self.trigger_dag_id)
+        for trigger_id in range(0, len(self.param_list)):
+            print('create dagrun')
+            dr = trigger_dag.create_dagrun(run_id='trig_%s_%d_%s' %
+                                           (self.trigger_dag_id, trigger_id,
+                                            datetime.now().isoformat()),
+                                           state=State.RUNNING,
+                                           conf=self.param_list[trigger_id],
+                                           external_trigger=True)
+            logging.info("Creating DagRun {}".format(dr))
+            session.add(dr)
+        session.commit()
+        session.close()
 
 
 class CustomPlugin(AirflowPlugin):
