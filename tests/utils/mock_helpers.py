@@ -14,8 +14,13 @@ def patch_plugin_file(*patch_args, **patch_kwargs):
     namespace = '_'.join([re.sub(norm_pattern, '__', root), module_name])
 
     import sys
-    module = sys.modules[
-        [key for key in sys.modules.keys() if namespace in key][0]]
+    found_modules = [key for key in sys.modules.keys() if namespace in key]
+
+    if len(found_modules) != 1:
+        raise(NameError('Tried to find 1 module from file %s but found: %s' %
+                        (found_modules, namespace)))
+
+    module = sys.modules[found_modules.pop()]
 
     def patch_decorator(func, *patch_decorator_args):
         @wraps(func)
