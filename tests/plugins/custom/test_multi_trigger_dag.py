@@ -59,32 +59,37 @@ class TestMultiTriggerDag(unittest.TestCase):
 
     @staticmethod
     def verify_session(session, params_list):
-        if params_list:
-            for params in params_list:
-                session.add.assert_any_call(
-                    TestMultiTriggerDag.DagRunWithParams(params))
-            assert session.add.call_count == len(params_list)
-        else:
-            assert session.add.call_count == 0
+        """
+        Verify the session has added tasks with the params_list.
+        Assumes params_list is truthy
+        """
+        if not hasattr(params_list, '__len__'):
+            params_list = [params for params in params_list]
+
+        for params in params_list:
+            session.add.assert_any_call(
+                TestMultiTriggerDag.DagRunWithParams(params))
+
+        assert session.add.call_count == len(params_list)
 
         session.commit.assert_called()
 
     @patch_plugin_file('plugins/custom/multi_trigger_dag', 'DagBag',
                        autospec=True)
-    def test_execute_none_should_fail(self, dag_bag_class):
+    def test_should_fail_when_execute_none(self, mock_dag_bag):
         params_list = None
 
-        dag_bag_class.return_value = TestMultiTriggerDag.create_mock_dag_bag()
-
         session = settings.Session()
         session.add = mock.MagicMock(name='add')
         session.commit = mock.MagicMock(name='commit')
 
         with self.assertRaises(Exception):
-            operator = MultiTriggerDagRunOperator(task_id=TASK_ID,
-                                                  trigger_dag_id=TRIGGER_DAG_ID,
-                                                  param_list=params_list,
-                                                  default_args=DAG_ARGS)
+            operator = MultiTriggerDagRunOperator(
+                task_id=TASK_ID,
+                trigger_dag_id=TRIGGER_DAG_ID,
+                params_list=params_list,
+                default_args=DAG_ARGS)
+
             operator.execute(None)
 
         session.add.assert_not_called()
@@ -92,20 +97,41 @@ class TestMultiTriggerDag(unittest.TestCase):
 
     @patch_plugin_file('plugins/custom/multi_trigger_dag', 'DagBag',
                        autospec=True)
-    def test_execute_empty(self, dag_bag_class):
+    def test_execute_none_should_fail(self, mock_dag_bag):
+        params_list = None
+
+        session = settings.Session()
+        session.add = mock.MagicMock(name='add')
+        session.commit = mock.MagicMock(name='commit')
+
+        with self.assertRaises(Exception):
+            operator = MultiTriggerDagRunOperator(
+                task_id=TASK_ID,
+                trigger_dag_id=TRIGGER_DAG_ID,
+                params_list=params_list,
+                default_args=DAG_ARGS)
+
+            operator.execute(None)
+
+        session.add.assert_not_called()
+        session.commit.assert_not_called()
+
+    @patch_plugin_file('plugins/custom/multi_trigger_dag', 'DagBag',
+                       autospec=True)
+    def test_should_fail_execute_empty_params_list(self, mock_dag_bag):
         params_list = []
 
-        dag_bag_class.return_value = TestMultiTriggerDag.create_mock_dag_bag()
-
         session = settings.Session()
         session.add = mock.MagicMock(name='add')
         session.commit = mock.MagicMock(name='commit')
 
         with self.assertRaises(Exception):
-            operator = MultiTriggerDagRunOperator(task_id=TASK_ID,
-                                                  trigger_dag_id=TRIGGER_DAG_ID,
-                                                  param_list=params_list,
-                                                  default_args=DAG_ARGS)
+            operator = MultiTriggerDagRunOperator(
+                task_id=TASK_ID,
+                trigger_dag_id=TRIGGER_DAG_ID,
+                params_list=params_list,
+                default_args=DAG_ARGS)
+
             operator.execute(None)
 
         session.add.assert_not_called()
@@ -113,7 +139,29 @@ class TestMultiTriggerDag(unittest.TestCase):
 
     @patch_plugin_file('plugins/custom/multi_trigger_dag', 'DagBag',
                        autospec=True)
-    def test_execute_many(self, dag_bag_class):
+    def test_should_add_params_list_single(self, dag_bag_class):
+        a = "a"
+        params_list = [a]
+
+        dag_bag_class.return_value = TestMultiTriggerDag.create_mock_dag_bag()
+
+        session = settings.Session()
+        session.add = mock.MagicMock(name='add')
+        session.commit = mock.MagicMock(name='commit')
+
+        operator = MultiTriggerDagRunOperator(
+            task_id=TASK_ID,
+            trigger_dag_id=TRIGGER_DAG_ID,
+            params_list=params_list,
+            default_args=DAG_ARGS)
+
+        operator.execute(None)
+
+        TestMultiTriggerDag.verify_session(session, params_list)
+
+    @patch_plugin_file('plugins/custom/multi_trigger_dag', 'DagBag',
+                       autospec=True)
+    def test_should_add_params_list(self, dag_bag_class):
         a = "a"
         b = "b"
         c = "c"
@@ -126,17 +174,19 @@ class TestMultiTriggerDag(unittest.TestCase):
         session.add = mock.MagicMock(name='add')
         session.commit = mock.MagicMock(name='commit')
 
-        operator = MultiTriggerDagRunOperator(task_id=TASK_ID,
-                                              trigger_dag_id=TRIGGER_DAG_ID,
-                                              param_list=params_list,
-                                              default_args=DAG_ARGS)
+        operator = MultiTriggerDagRunOperator(
+            task_id=TASK_ID,
+            trigger_dag_id=TRIGGER_DAG_ID,
+            params_list=params_list,
+            default_args=DAG_ARGS)
+
         operator.execute(None)
 
         TestMultiTriggerDag.verify_session(session, params_list)
 
     @patch_plugin_file('plugins/custom/multi_trigger_dag', 'DagBag',
                        autospec=True)
-    def test_execute_many_none(self, dag_bag_class):
+    def test_should_execute_params_list_of_nones(self, dag_bag_class):
         a = None
         b = None
         c = None
@@ -149,10 +199,62 @@ class TestMultiTriggerDag(unittest.TestCase):
         session.add = mock.MagicMock(name='add')
         session.commit = mock.MagicMock(name='commit')
 
-        operator = MultiTriggerDagRunOperator(task_id=TASK_ID,
-                                              trigger_dag_id=TRIGGER_DAG_ID,
-                                              param_list=params_list,
-                                              default_args=DAG_ARGS)
+        operator = MultiTriggerDagRunOperator(
+            task_id=TASK_ID,
+            trigger_dag_id=TRIGGER_DAG_ID,
+            params_list=params_list,
+            default_args=DAG_ARGS)
+
+        operator.execute(None)
+
+        TestMultiTriggerDag.verify_session(session, params_list)
+
+    @patch_plugin_file('plugins/custom/multi_trigger_dag', 'DagBag',
+                       autospec=True)
+    def test_should_execute_generator_function(self, dag_bag_class):
+        def param_generator():
+            iterable = xrange(1, 10)
+            for i in iterable:
+                yield i
+
+        dag_bag_class.return_value = TestMultiTriggerDag.create_mock_dag_bag()
+
+        session = settings.Session()
+        session.add = mock.MagicMock(name='add')
+        session.commit = mock.MagicMock(name='commit')
+
+        operator = MultiTriggerDagRunOperator(
+            task_id=TASK_ID,
+            trigger_dag_id=TRIGGER_DAG_ID,
+            params_list=param_generator(),
+            default_args=DAG_ARGS)
+
+        operator.execute(None)
+
+        print(param_generator())
+        print([i for i in param_generator()])
+        print([i for i in param_generator()])
+        print([i for i in param_generator()])
+        print([i for i in param_generator()])
+        TestMultiTriggerDag.verify_session(session, param_generator())
+
+    @patch_plugin_file('plugins/custom/multi_trigger_dag', 'DagBag',
+                       autospec=True)
+    def test_should_execute_iterable(self, dag_bag_class):
+        params_list = xrange(1, 10)
+
+        dag_bag_class.return_value = TestMultiTriggerDag.create_mock_dag_bag()
+
+        session = settings.Session()
+        session.add = mock.MagicMock(name='add')
+        session.commit = mock.MagicMock(name='commit')
+
+        operator = MultiTriggerDagRunOperator(
+            task_id=TASK_ID,
+            trigger_dag_id=TRIGGER_DAG_ID,
+            params_list=params_list,
+            default_args=DAG_ARGS)
+
         operator.execute(None)
 
         TestMultiTriggerDag.verify_session(session, params_list)
