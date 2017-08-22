@@ -2,7 +2,6 @@ from airflow.plugins_manager import AirflowPlugin
 from datetime import datetime
 import logging
 
-import airflow
 from airflow.models import BaseOperator
 from airflow.models import DagBag
 from airflow.utils.decorators import apply_defaults
@@ -34,13 +33,16 @@ class MultiTriggerDagRunOperator(BaseOperator):
         super(MultiTriggerDagRunOperator, self).__init__(*args, **kwargs)
         self.trigger_dag_id = trigger_dag_id
         self.param_list = param_list
+        assert len(self.param_list) > 0
 
     def execute(self, context):
         session = settings.Session()
         dbag = DagBag(settings.DAGS_FOLDER)
         trigger_dag = dbag.get_dag(self.trigger_dag_id)
+
+        assert trigger_dag is not None
+
         for trigger_id in range(0, len(self.param_list)):
-            print('create dagrun')
             dr = trigger_dag.create_dagrun(run_id='trig_%s_%d_%s' %
                                            (self.trigger_dag_id, trigger_id,
                                             datetime.now().isoformat()),
