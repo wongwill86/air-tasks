@@ -2,6 +2,7 @@ from functools import wraps
 import mock
 import os
 import re
+import inspect
 
 norm_pattern = re.compile(r'[/|.]')
 
@@ -23,9 +24,15 @@ def patch_plugin_file(*patch_args, **patch_kwargs):
     module = sys.modules[found_modules.pop()]
 
     def patch_decorator(func, *patch_decorator_args):
-        @wraps(func)
-        @mock.patch.object(module, *patch_args[1:], **patch_kwargs)
-        def wrapper(*args, **kwargs):
-            return func(*(args + patch_decorator_args), **kwargs)
-        return wrapper
+        if not inspect.isclass(func):
+            @wraps(func)
+            @mock.patch.object(module, *patch_args[1:], **patch_kwargs)
+            def wrapper(*args, **kwargs):
+                return func(*(args + patch_decorator_args), **kwargs)
+            return wrapper
+        else:
+            @mock.patch.object(module, *patch_args[1:], **patch_kwargs)
+            class WrappedClass(func):
+                pass
+            return WrappedClass
     return patch_decorator
