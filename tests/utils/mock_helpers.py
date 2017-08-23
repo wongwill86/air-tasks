@@ -6,6 +6,7 @@ import inspect
 
 norm_pattern = re.compile(r'[/|.]')
 
+
 def patch_plugin_file(*patch_args, **patch_kwargs):
     """
     Decorator used to search for in items:
