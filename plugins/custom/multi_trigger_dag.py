@@ -60,6 +60,8 @@ class MultiTriggerDagRunOperator(BaseOperator):
             logging.info("Creating DagRun {}".format(dr))
             session.add(dr)
             trigger_id = trigger_id + 1
+            if trigger_id % 10:
+                session.commit()
         session.commit()
         session.close()
 
