@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
-from airflow.operators.docker_operator import DockerOperator
 
 
 default_args = {
@@ -13,7 +12,8 @@ default_args = {
     'retry_delay': timedelta(seconds=2),
     'retry_exponential_backoff': True,
     }
-dag = DAG("many_ws", default_args=default_args, schedule_interval=None)
+dag = DAG(
+    "example_interleaved", default_args=default_args, schedule_interval=None)
 
 
 def create_print_date(dag, count_print_date):
@@ -31,11 +31,9 @@ def create_print_hello(dag, count_print_hello):
 
 
 def create_docker_print(dag, count_docker_print):
-    return DockerOperator(
-        task_id='watershed_print_' + str(count_docker_print),
-        image='watershed',
-        command='echo "watershed printing!"',
-        network_mode='bridge',
+    return BashOperator(
+        task_id='bash_print_' + str(count_docker_print),
+        bash_command='echo "watershed printing!"',
         dag=dag)
 
 
