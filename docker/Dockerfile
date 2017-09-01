@@ -21,7 +21,7 @@ ENV AIRFLOW_USER airflow
 USER root
 RUN curl -fsSL https://get.docker.com/ | sh \
     && pip install docker-py \
-    && pip install celery -U \
+	&& pip install celery[redis] -U \
     && apt-get install sudo \
     && buildDeps=' \
         python-dev \
@@ -74,10 +74,6 @@ RUN chown airflow ${AIRFLOW_HOME}/default_celery.py
 
 COPY dags/ ${AIRFLOW_HOME}/dags/
 RUN chown airflow ${AIRFLOW_HOME}/dags
-
-ENV CELERY_LOADER celery.app_loader
-RUN export PYTHONPATH=$PYTHONPATH:${AIRFLOW_HOME}/src/
-COPY src ${AIRFLOW_HOME}/src/
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
