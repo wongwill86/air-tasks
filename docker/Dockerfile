@@ -21,6 +21,7 @@ ENV AIRFLOW_USER airflow
 USER root
 RUN curl -fsSL https://get.docker.com/ | sh \
     && pip install docker-py \
+    && pip install celery -U \
     && apt-get install sudo \
     && buildDeps=' \
         python-dev \
@@ -62,12 +63,21 @@ COPY --from=aws_ecr_credential_helper \
 
 COPY docker/scripts/add-user-docker.sh /add-user-docker.sh
 COPY docker/scripts/entrypoint-dood.sh /entrypoint-dood.sh
+COPY plugins/ ${AIRFLOW_HOME}/plugins/
+
 COPY docker/config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 RUN chown airflow ${AIRFLOW_HOME}/airflow.cfg
-COPY plugins/ ${AIRFLOW_HOME}/plugins/
+
+ENV CELERY_CONFIG_MODULE default_celery
+COPY docker/config/default_celery.py ${AIRFLOW_HOME}/default_celery.py
+RUN chown airflow ${AIRFLOW_HOME}/default_celery.py
+
 COPY dags/ ${AIRFLOW_HOME}/dags/
 RUN chown airflow ${AIRFLOW_HOME}/dags
 
+ENV CELERY_LOADER celery.app_loader
+RUN export PYTHONPATH=$PYTHONPATH:${AIRFLOW_HOME}/src/
+COPY src ${AIRFLOW_HOME}/src/
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
