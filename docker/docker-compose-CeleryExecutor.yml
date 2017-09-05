@@ -2,8 +2,8 @@ version: '3.3'
 services:
     redis:
         image: 'redis:3.2.7'
-        #ports:
-            #- "6380:6380"
+        ports:
+            - "6379:6379"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -14,8 +14,8 @@ services:
             - POSTGRES_USER=airflow
             - POSTGRES_PASSWORD=airflow
             - POSTGRES_DB=airflow
-        ports:
-            - "5432:5432"
+        #ports:
+            #- "5432:5432"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -38,8 +38,8 @@ services:
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
         volumes:
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
@@ -68,8 +68,8 @@ services:
         depends_on:
             - webserver
         volumes:
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - LOAD_EX=y
@@ -103,8 +103,8 @@ services:
         depends_on:
             - scheduler
         volumes:
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
@@ -120,6 +120,30 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == worker ]
+
+    worker-manager:
+        image: wongwill86/air-tasks:latest
+        restart: always
+        depends_on:
+            - scheduler
+        volumes:
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
+            - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+            - AIRFLOW_HOME=/usr/local/airflow
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+        command: worker -q manager
+        deploy:
+            placement:
+                constraints: [ engine.labels.infrakit-role == manager ]
 
     proxy:
         image: nginx:latest
