@@ -21,7 +21,7 @@ ENV AIRFLOW_USER airflow
 USER root
 RUN curl -fsSL https://get.docker.com/ | sh \
     && pip install docker-py \
-	&& pip install celery[redis] -U \
+    && pip install celery[redis] -U \
     && apt-get install sudo \
     && buildDeps=' \
         python-dev \
@@ -68,9 +68,13 @@ COPY plugins/ ${AIRFLOW_HOME}/plugins/
 COPY docker/config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 RUN chown airflow ${AIRFLOW_HOME}/airflow.cfg
 
-ENV CELERY_CONFIG_MODULE default_celery
-COPY docker/config/default_celery.py ${AIRFLOW_HOME}/default_celery.py
-RUN chown airflow ${AIRFLOW_HOME}/default_celery.py
+ENV CELERY_CONFIG_MODULE celeryconfig
+COPY docker/config/celeryconfig.py ${AIRFLOW_HOME}/celeryconfig.py
+RUN chown airflow ${AIRFLOW_HOME}/celeryconfig.py
+
+ENV CELERY_LOADER celery_loader:CeleryLoader
+COPY docker/config/celery_loader.py ${AIRFLOW_HOME}/celery_loader.py
+RUN chown airflow ${AIRFLOW_HOME}/celery_loader.py
 
 COPY dags/ ${AIRFLOW_HOME}/dags/
 RUN chown airflow ${AIRFLOW_HOME}/dags
