@@ -3,10 +3,12 @@ from datetime import datetime, timedelta
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import PythonOperator
 from pprint import pprint
+from airflow.utils.state import State
 from airflow.utils.db import provide_session
 from airflow.jobs import BackfillJob
 from airflow import models
-from sqlalchemy import (or_, not_)
+from sqlalchemy import (or_, not_, and_, func)
+from amqp.exceptions import ChannelError
 
 DAG_ID = 'z_manager_cluster_scaler'
 
@@ -18,48 +20,44 @@ default_args = {
     'retries': 0,
 }
 
+MANAGER_QUEUE = u'manager'
 
 def resize_workers(queue_name, size):
     print(queue_name)
     print(size)
 
 @provide_session
-def find_tasked_queues(session=None):
-
+def find_queues(session=None):
     TI = models.TaskInstance
-    DR = models.DagRun
-    DM = models.DagModel
 
     query = (
         session
-        .query(TI)
-        .outerjoin(DR,
-                   and_(DR.dag_id = TI.dag_id,
-                        Dr.execution_date == TI.execution_date))
-        .filter(or_(DR.run_id == None,
-                    not_(DR.run_id.like(BackfillJob.ID_PREFIX + '%'))))
-        .outerjoin(DM, DM.dag_id==TI.dag_id)
-        .filter(or_(DM.dag_id == None,
-                    not_(DM.is_paused)))
+        .query(TI.queue)
+        .distinct(TI.queue)
     )
 
-    tasks = query.all()
-    print(tasks)
+    queues = query.all()
+    print(queues)
+    return queues
 
 
 def scale_function(**kwargs):
-    pprint(kwargs)
     from airflow.executors.celery_executor import app as celery_app
-
-    find_tasked_queues()
 
     with celery_app.connection_for_read() as connection:
         # We can monitor more queues here
-        queues = ['default']
-        for queue in queues:
-            _, size, _ = celery_app.amqp.queues[queue](
-                connection.default_channel).queue_declare(passive=True)
-            resize_workers(queue, size)
+        for queue in find_queues():
+            queue_name = queue[0]
+            if queue_name == MANAGER_QUEUE:
+                continue
+
+            try:
+                _, size, _ = celery_app.amqp.queues[queue_name](
+                    connection.default_channel).queue_declare(passive=True)
+                resize_workers(queue_name, size)
+            except ChannelError as e:
+                print('Skipping queue %s because %s' % (queue_name, e.message))
+                continue
 
     return "duhh"
 
@@ -80,12 +78,6 @@ start = BashOperator(
     dag=dag
 
 )
-
-
-def print_context(ds, **kwargs):
-    pprint(kwargs)
-    print(ds)
-    return 'Whatever you return gets printed in the logs'
 
 
 cluster_scale = PythonOperator(
