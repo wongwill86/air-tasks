@@ -97,7 +97,7 @@ services:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
-    worker:
+    worker-worker:
         image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
@@ -116,7 +116,7 @@ services:
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
-        command: worker
+        command: worker -q worker
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == worker ]

@@ -1,13 +1,10 @@
 from airflow import DAG
-from datetime import datetime, timedelta
+from datetime import datetime
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import PythonOperator
-from pprint import pprint
-from airflow.utils.state import State
+from airflow.operators.latest_only_operator import LatestOnlyOperator
 from airflow.utils.db import provide_session
-from airflow.jobs import BackfillJob
 from airflow import models
-from sqlalchemy import (or_, not_, and_, func)
 from amqp.exceptions import ChannelError
 
 DAG_ID = 'z_manager_cluster_scaler'
@@ -16,15 +13,34 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2017, 5, 1),
-    'cactchup_by_default': False,
+    'catchup_by_default': False,
     'retries': 0,
 }
 
-MANAGER_QUEUE = u'manager'
+SCHEDULE_INTERVAL = '0 * * * *'
 
-def resize_workers(queue_name, size):
-    print(queue_name)
-    print(size)
+dag = DAG(
+    dag_id=DAG_ID,
+    schedule_interval=SCHEDULE_INTERVAL,
+    default_args=default_args,
+)
+
+MANAGER_QUEUE = u'manager'
+QUEUE_SIZES_TASK_ID = 'queue_sizes'
+RESCALE_SWARM = 'rescale_swarm'
+
+templated_swarm_command = """
+    {% set queue_sizes = task_instance.xcom_pull(task_ids=params.task_id) %}
+    {% for queue, size in queue_sizes.items() %}
+        if docker node ls > /dev/null 2>&1; then
+            echo 'this is swarm'
+        else
+             docker-compose -f {{conf.airflow_home}}/docker/docker-compose-CeleryExecutor.yml scale worker-{{queue}}={{size}}
+        fi
+        echo {{ queue }}, {{ size }}
+    {% endfor %}
+"""
+
 
 @provide_session
 def find_queues(session=None):
@@ -37,13 +53,13 @@ def find_queues(session=None):
     )
 
     queues = query.all()
-    print(queues)
     return queues
 
 
-def scale_function(**kwargs):
+def get_queue_sizes():
     from airflow.executors.celery_executor import app as celery_app
 
+    queue_sizes = {}
     with celery_app.connection_for_read() as connection:
         # We can monitor more queues here
         for queue in find_queues():
@@ -54,37 +70,27 @@ def scale_function(**kwargs):
             try:
                 _, size, _ = celery_app.amqp.queues[queue_name](
                     connection.default_channel).queue_declare(passive=True)
-                resize_workers(queue_name, size)
+                queue_sizes[queue_name] = size
             except ChannelError as e:
-                print('Skipping queue %s because %s' % (queue_name, e.message))
+                print('No tasks found for %s because %s' %
+                      (queue_name, e.message))
+                queue_sizes[queue_name] = 0
                 continue
 
-    return "duhh"
+    return queue_sizes
 
 
-dag = DAG(
-    dag_id=DAG_ID,
-    schedule_interval='0/10 * * * *',
-    default_args=default_args,
-)
-
-
-start = BashOperator(
-    task_id='bash_task',
-    bash_command='sleep 1; echo "Hello from message #' +
-                 '{{ dag_run.conf if dag_run else "NO MESSAGE" }}"',
-    default_args=default_args,
-    queue="manager",
-    dag=dag
-
-)
-
-
-cluster_scale = PythonOperator(
-    task_id='cluster_scale',
-    provide_context=True,
-    python_callable=scale_function,
+queue_sizes_task = PythonOperator(
+    task_id=QUEUE_SIZES_TASK_ID,
+    python_callable=get_queue_sizes,
     queue="manager",
     dag=dag)
 
-start.set_downstream(cluster_scale)
+rescale_swarm_task = BashOperator(
+    task_id=RESCALE_SWARM,
+    bash_command=templated_swarm_command,
+    queue="manager",
+    params={'task_id': QUEUE_SIZES_TASK_ID},
+    dag=dag)
+
+queue_sizes_task.set_downstream(rescale_swarm_task)

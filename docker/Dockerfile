@@ -61,6 +61,9 @@ COPY --from=aws_ecr_credential_helper \
     /go/src/github.com/awslabs/amazon-ecr-credential-helper/bin/local/docker-credential-ecr-login \
     /usr/local/bin
 
+COPY docker/docker-compose-CeleryExecutor.yml ${AIRFLOW_HOME}/docker/docker-compose-CeleryExecutor.yml
+RUN chown airflow ${AIRFLOW_HOME}/docker/docker-compose-CeleryExecutor.yml
+
 COPY docker/scripts/add-user-docker.sh /add-user-docker.sh
 COPY docker/scripts/entrypoint-dood.sh /entrypoint-dood.sh
 COPY plugins/ ${AIRFLOW_HOME}/plugins/
