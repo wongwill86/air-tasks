@@ -29,15 +29,17 @@ MANAGER_QUEUE = u'manager'
 QUEUE_SIZES_TASK_ID = 'queue_sizes'
 RESCALE_SWARM = 'rescale_swarm'
 
+# Use the stack name to determine if we need to use stack or compose
 templated_swarm_command = """
     {% set queue_sizes = task_instance.xcom_pull(task_ids=params.task_id) %}
     {% for queue, size in queue_sizes.items() %}
-        if docker node ls > /dev/null 2>&1; then
-            docker service scale {{service}}_worker-{{queue}}={{size}}
-        else
+        if [ -z "${{'{'}}STACK_NAME{{'}'}}" ]; then
              docker-compose -f \
                  {{conf.get('core', 'airflow_home')}}\
 /docker/docker-compose-CeleryExecutor.yml scale worker-{{queue}}={{size}}
+        else
+            docker service scale \
+${{'{'}}STACK_NAME{{'}'}}_worker-{{queue}}={{size}}
         fi
         echo {{ queue }}, {{ size }}
     {% endfor %}
