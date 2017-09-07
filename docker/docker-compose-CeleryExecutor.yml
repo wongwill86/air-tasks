@@ -2,8 +2,8 @@ version: '3.3'
 services:
     redis:
         image: 'redis:3.2.7'
-        ports:
-            - "6379:6379"
+        #ports:
+            #- "6379:6379"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -38,8 +38,9 @@ services:
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
         volumes:
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            # Warning mounting dags/plugins not working for autoscaler
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
@@ -68,8 +69,9 @@ services:
         depends_on:
             - webserver
         volumes:
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            # Warning mounting dags/plugins not working for autoscaler
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - LOAD_EX=y
@@ -103,8 +105,9 @@ services:
         depends_on:
             - scheduler
         volumes:
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            # Warning mounting dags/plugins not working for autoscaler
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
@@ -127,8 +130,9 @@ services:
         depends_on:
             - scheduler
         volumes:
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            # Warning mounting dags/plugins not working for autoscaler
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=

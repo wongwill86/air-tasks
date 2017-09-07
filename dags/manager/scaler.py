@@ -13,11 +13,11 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2017, 5, 1),
-    'catchup_by_default': False,
+    'catchup': False,
     'retries': 0,
 }
 
-SCHEDULE_INTERVAL = '0 * * * *'
+SCHEDULE_INTERVAL = '* * * * *'
 
 dag = DAG(
     dag_id=DAG_ID,
@@ -33,9 +33,11 @@ templated_swarm_command = """
     {% set queue_sizes = task_instance.xcom_pull(task_ids=params.task_id) %}
     {% for queue, size in queue_sizes.items() %}
         if docker node ls > /dev/null 2>&1; then
-            echo 'this is swarm'
+            docker service scale {{service}}_worker-{{queue}}={{size}}
         else
-             docker-compose -f {{conf.airflow_home}}/docker/docker-compose-CeleryExecutor.yml scale worker-{{queue}}={{size}}
+             docker-compose -f \
+                 {{conf.get('core', 'airflow_home')}}\
+/docker/docker-compose-CeleryExecutor.yml scale worker-{{queue}}={{size}}
         fi
         echo {{ queue }}, {{ size }}
     {% endfor %}
@@ -45,13 +47,11 @@ templated_swarm_command = """
 @provide_session
 def find_queues(session=None):
     TI = models.TaskInstance
-
     query = (
         session
         .query(TI.queue)
         .distinct(TI.queue)
     )
-
     queues = query.all()
     return queues
 
@@ -80,6 +80,11 @@ def get_queue_sizes():
     return queue_sizes
 
 
+latest = LatestOnlyOperator(
+    task_id='latest_only',
+    queue='manager',
+    dag=dag)
+
 queue_sizes_task = PythonOperator(
     task_id=QUEUE_SIZES_TASK_ID,
     python_callable=get_queue_sizes,
@@ -93,4 +98,5 @@ rescale_swarm_task = BashOperator(
     params={'task_id': QUEUE_SIZES_TASK_ID},
     dag=dag)
 
+latest.set_downstream(queue_sizes_task)
 queue_sizes_task.set_downstream(rescale_swarm_task)

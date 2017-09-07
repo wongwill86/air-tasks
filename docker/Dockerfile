@@ -20,7 +20,7 @@ ENV AIRFLOW_USER airflow
 
 USER root
 RUN curl -fsSL https://get.docker.com/ | sh \
-    && pip install docker-py \
+    && pip install docker docker-compose \
     && pip install celery[redis] -U \
     && apt-get install sudo \
     && buildDeps=' \
@@ -43,6 +43,9 @@ RUN curl -fsSL https://get.docker.com/ | sh \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
+
+# SUPER HACK PLEASE REMOVE AFTER AIRFLOW UPDATES (i.e. https://github.com/apache/incubator-airflow/pull/2417)
+RUN sed -i -e 's/import Client/import APIClient as Client/' /usr/local/lib/python2.7/dist-packages/airflow/operators/docker_operator.py
 
 RUN usermod -aG docker airflow
 
