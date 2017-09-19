@@ -1,24 +1,35 @@
 version: '3.3'
 services:
-    redis:
-        image: 'redis:3.2.7'
-        #ports:
-            #- "6379:6379"
+    rabbitmq:
+        #image: 'rabbitmq:3.6.12'
+        image: 'rabbitmq:3-management'
+        ports:
+            - "15672:15672"
+        environment:
+            - RABBITMQ_ERLANG_COOKIE=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
-    redis-commander:
-        image: 'rediscommander/redis-commander:latest'
-        #ports:
-            #- "8081:8081"
-        depends_on:
-            - redis
-        environment:
-            - REDIS_HOSTS=local:redis:6379:1
-        deploy:
-            placement:
-                constraints: [ engine.labels.infrakit-role == manager ]
+#    redis:
+        #image: 'redis:3.2.7'
+        ##ports:
+            ##- "6379:6379"
+        #deploy:
+            #placement:
+                #constraints: [ engine.labels.infrakit-role == manager ]
+
+    #redis-commander:
+        #image: 'rediscommander/redis-commander:latest'
+        ##ports:
+            ##- "8081:8081"
+        #depends_on:
+            #- redis
+        #environment:
+            #- REDIS_HOSTS=local:redis:6379:1
+        #deploy:
+            #placement:
+                #constraints: [ engine.labels.infrakit-role == manager ]
 
     postgres:
         image: postgres:9.6
@@ -33,11 +44,11 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     webserver:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:manager
         restart: always
         depends_on:
             - postgres
-            - redis
+            - rabbitmq
         environment:
             - LOAD_EX=y
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
@@ -46,14 +57,16 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
             - STACK_NAME
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
@@ -63,13 +76,15 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     flower:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:manager
         restart: always
         depends_on:
-            - redis
+            - rabbitmq
         environment:
             - EXECUTOR=Celery
             - STACK_NAME
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
         #ports:
             #- "5555:5555"
         command: flower
@@ -78,14 +93,14 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     scheduler:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:manager
         restart: always
         depends_on:
             - webserver
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - LOAD_EX=y
@@ -95,6 +110,8 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -115,14 +132,14 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     worker-worker:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:manager
         restart: always
         depends_on:
             - scheduler
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
@@ -131,6 +148,8 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -141,14 +160,14 @@ services:
                 constraints: [ engine.labels.infrakit-role == worker ]
 
     worker-manager:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:manager
         restart: always
         depends_on:
             - scheduler
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
@@ -157,6 +176,8 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -217,14 +238,6 @@ services:
                               proxy_pass http:\\/\\/visualizer:8080;\\n\
                           }\\n\
                       }\\n\
-                      server {\\n\
-                          listen 83;\\n\
-                          auth_basic $${AUTH_BASIC_STRING};\\n\
-                          auth_basic_user_file \\/etc\\/nginx\\/\\.htpasswd;\\n\
-                          location \\/ {\\n\
-                              proxy_pass http:\\/\\/redis-commander:8081;\\n\
-                          }\\n\
-                      }\\n\
                   }\\n/\" \
                   /etc/nginx/nginx.conf && nginx -g \"daemon off;\"'"
         secrets:
@@ -236,3 +249,12 @@ secrets:
         external: true
     basic_auth_password:
         external: true
+
+                      #server {\\n\
+                          #listen 83;\\n\
+                          #auth_basic $${AUTH_BASIC_STRING};\\n\
+                          #auth_basic_user_file \\/etc\\/nginx\\/\\.htpasswd;\\n\
+                          #location \\/ {\\n\
+                              #proxy_pass http:\\/\\/redis-commander:8081;\\n\
+                          #}\\n\
+                      #}\\n\
