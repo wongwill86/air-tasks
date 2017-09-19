@@ -31,18 +31,24 @@ RESCALE_SWARM = 'rescale_swarm'
 
 # Use the stack name to determine if we need to use stack or compose
 templated_swarm_command = """
+if mount | grep '{{conf.get('core', 'airflow_home')}}/[dags|plugins]' > /dev/null; then
+    echo 'Dag folder or plugin folder is mounted! Will not autoscale!'
+else
     {% set queue_sizes = task_instance.xcom_pull(task_ids=params.task_id) %}
-    {% for queue, size in queue_sizes.items() %}
-        if [ -z "${{'{'}}STACK_NAME{{'}'}}" ]; then
-             docker-compose -f \
-                 {{conf.get('core', 'airflow_home')}}\
-/docker/docker-compose-CeleryExecutor.yml scale worker-{{queue}}={{size}}
-        else
-            docker service scale \
+    if [ -z "${{'{'}}STACK_NAME{{'}'}}" ]; then
+            docker-compose -f \
+{{conf.get('core', 'airflow_home')}}/docker/docker-compose-CeleryExecutor.yml \
+up -d --no-recreate --no-deps --no-build \
+--scale \
+{% for queue, size in queue_sizes.items() %}\
+worker-{{queue}}={{size}}
+{% endfor %}
+    else
+        docker service scale \
 ${{'{'}}STACK_NAME{{'}'}}_worker-{{queue}}={{size}}
-        fi
-        echo {{ queue }}, {{ size }}
-    {% endfor %}
+    fi
+    echo {{ queue }}, {{ size }}
+fi
 """
 
 

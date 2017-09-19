@@ -65,8 +65,8 @@ services:
             - STACK_NAME
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
@@ -99,8 +99,8 @@ services:
             - webserver
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - LOAD_EX=y
@@ -138,8 +138,8 @@ services:
             - scheduler
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
@@ -166,8 +166,8 @@ services:
             - scheduler
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
