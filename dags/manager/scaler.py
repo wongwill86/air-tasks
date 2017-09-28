@@ -40,7 +40,9 @@ else
 up -d --no-recreate --no-deps --no-build \
 --scale {% for queue, size in queue_sizes.items() %} worker-{{queue}}={{size}} {% endfor %}
     else
+        {% for queue, size in queue_sizes.items() %}
         docker service scale ${{'{'}}STACK_NAME{{'}'}}_worker-{{queue}}={{size}}
+        {% endfor %}
     fi
     echo {{ queue }}, {{ size }}
 fi
