@@ -69,7 +69,6 @@ RUN chown airflow ${AIRFLOW_HOME}/docker/docker-compose-CeleryExecutor.yml
 
 COPY docker/scripts/add-user-docker.sh /add-user-docker.sh
 COPY docker/scripts/entrypoint-dood.sh /entrypoint-dood.sh
-COPY plugins/ ${AIRFLOW_HOME}/plugins/
 
 COPY docker/config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 RUN chown airflow ${AIRFLOW_HOME}/airflow.cfg
@@ -81,6 +80,8 @@ RUN chown airflow ${AIRFLOW_HOME}/celeryconfig.py
 ENV CELERY_LOADER celery_loader:CeleryLoader
 COPY docker/config/celery_loader.py ${AIRFLOW_HOME}/celery_loader.py
 RUN chown airflow ${AIRFLOW_HOME}/celery_loader.py
+
+COPY plugins/ ${AIRFLOW_HOME}/plugins/
 
 COPY dags/ ${AIRFLOW_HOME}/dags/
 RUN chown airflow ${AIRFLOW_HOME}/dags

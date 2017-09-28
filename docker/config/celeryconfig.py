@@ -1,7 +1,4 @@
 from airflow import configuration
-import logging
-import ssl
-from airflow.exceptions import AirflowConfigException, AirflowException
 
 # Broker settings.
 accept_content = ['json', 'pickle']
