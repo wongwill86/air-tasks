@@ -12,6 +12,7 @@ services:
         volumes:
             - ../tests:/usr/local/airflow/tests
             - ../plugins:/usr/local/airflow/plugins
+            - ../dags:/usr/local/airflow/dags
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - AWS_ACCESS_KEY_ID

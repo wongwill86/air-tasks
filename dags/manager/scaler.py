@@ -36,15 +36,17 @@ if mount | grep '{{conf.get('core', 'airflow_home')}}/[dags|plugins]' > /dev/nul
 else
     {% set queue_sizes = task_instance.xcom_pull(task_ids=params.task_id) %}
     if [ -z "${{'{'}}STACK_NAME{{'}'}}" ]; then
-            docker-compose -f {{conf.get('core', 'airflow_home')}}/docker/docker-compose-CeleryExecutor.yml \
+        echo "Scaling local compose"
+        docker-compose -f {{conf.get('core', 'airflow_home')}}/docker/docker-compose-CeleryExecutor.yml \
 up -d --no-recreate --no-deps --no-build \
 --scale {% for queue, size in queue_sizes.items() %} worker-{{queue}}={{size}} {% endfor %}
     else
+        echo "Scaling swarm " $(whoami)
+        docker service ls
         {% for queue, size in queue_sizes.items() %}
-        docker service scale ${{'{'}}STACK_NAME{{'}'}}_worker-{{queue}}={{size}}
+        docker service scale ${{'{'}}STACK_NAME{{'}'}}_worker-{{queue}}={{size}} --detach=true
         {% endfor %}
     fi
-    echo {{ queue }}, {{ size }}
 fi
 """ # noqa
 
