@@ -5,7 +5,8 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.latest_only_operator import LatestOnlyOperator
 from airflow.utils.db import provide_session
 from airflow import models
-from amqp.exceptions import ChannelError
+import requests
+import json
 
 DAG_ID = 'z_manager_cluster_scaler'
 
@@ -28,6 +29,10 @@ dag = DAG(
 MANAGER_QUEUE = u'manager'
 QUEUE_SIZES_TASK_ID = 'queue_sizes'
 RESCALE_SWARM = 'rescale_swarm'
+QUEUE_URL = 'http://rabbitmq:15672/api/queues/%2f/{}'
+QUEUE_USERNAME = 'guest'
+QUEUE_PASSWORD = 'guest'
+
 
 # Use the stack name to determine if we need to use stack or compose
 templated_swarm_command = """
@@ -42,7 +47,6 @@ up -d --no-recreate --no-deps --no-build \
 --scale {% for queue, size in queue_sizes.items() %} worker-{{queue}}={{size}} {% endfor %}
     else
         echo "Scaling swarm " $(whoami)
-        docker service ls
         {% for queue, size in queue_sizes.items() %}
         docker service scale ${{'{'}}STACK_NAME{{'}'}}_worker-{{queue}}={{size}} --detach=true
         {% endfor %}
@@ -64,25 +68,40 @@ def find_queues(session=None):
 
 
 def get_queue_sizes():
-    from airflow.executors.celery_executor import app as celery_app
 
     queue_sizes = {}
-    with celery_app.connection_for_read() as connection:
-        # We can monitor more queues here
-        for queue in find_queues():
-            queue_name = queue[0]
-            if queue_name == MANAGER_QUEUE:
-                continue
+    for queue in find_queues():
+        queue_name = queue[0]
+        if queue_name == MANAGER_QUEUE:
+            continue
 
-            try:
-                _, size, _ = celery_app.amqp.queues[queue_name](
-                    connection.default_channel).queue_declare(passive=True)
-                queue_sizes[queue_name] = size
-            except ChannelError as e:
-                print('No tasks found for %s because %s' %
-                      (queue_name, e.message))
-                queue_sizes[queue_name] = 0
-                continue
+        try:
+            request = requests.get(QUEUE_URL.format(queue_name),
+                                   auth=(QUEUE_USERNAME, QUEUE_PASSWORD))
+            stats = json.loads(request.txt)
+            size = stats['messages_ready'] + stats['messages_unacknowledged']
+            queue_sizes[queue_name] = size
+        except Exception as e:
+            print('No tasks found for %s because %s' % (queue_name, e.message))
+            queue_sizes[queue_name] = 0
+
+    # from airflow.executors.celery_executor import app as celery_app
+    # from amqp.exceptions import ChannelError
+    # with celery_app.connection_for_read() as connection:
+    #     # We can monitor more queues here
+    #     for queue in find_queues():
+    #         queue_name = queue[0]
+    #         if queue_name == MANAGER_QUEUE:
+    #             continue
+
+    #         try:
+    #             _, size, _ = celery_app.amqp.queues[queue_name](
+    #                 connection.default_channel).queue_declare(passive=True)
+    #             queue_sizes[queue_name] = size
+    #         except ChannelError as e:
+    #             print('No tasks found for %s because %s' %
+    #                   (queue_name, e.message))
+    #             queue_sizes[queue_name] = 0 #             continue
 
     return queue_sizes
 
