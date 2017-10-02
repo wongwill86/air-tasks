@@ -43,7 +43,7 @@ else
     if [ -z "${{'{'}}STACK_NAME{{'}'}}" ]; then
         echo "Scaling local compose"
         docker-compose -f {{conf.get('core', 'airflow_home')}}/docker/docker-compose-CeleryExecutor.yml \
-up -d --no-recreate --no-deps --no-build \
+up -d --no-recreate --no-deps --no-build --no-color \
 --scale {% for queue, size in queue_sizes.items() %} worker-{{queue}}={{size}} {% endfor %}
     else
         echo "Scaling swarm " $(whoami)
@@ -68,7 +68,6 @@ def find_queues(session=None):
 
 
 def get_queue_sizes():
-
     queue_sizes = {}
     for queue in find_queues():
         queue_name = queue[0]
@@ -76,32 +75,14 @@ def get_queue_sizes():
             continue
 
         try:
-            request = requests.get(QUEUE_URL.format(queue_name),
-                                   auth=(QUEUE_USERNAME, QUEUE_PASSWORD))
-            stats = json.loads(request.txt)
+            response = requests.get(QUEUE_URL.format(queue_name),
+                                    auth=(QUEUE_USERNAME, QUEUE_PASSWORD))
+            stats = json.loads(response.text)
             size = stats['messages_ready'] + stats['messages_unacknowledged']
             queue_sizes[queue_name] = size
         except Exception as e:
             print('No tasks found for %s because %s' % (queue_name, e.message))
             queue_sizes[queue_name] = 0
-
-    # from airflow.executors.celery_executor import app as celery_app
-    # from amqp.exceptions import ChannelError
-    # with celery_app.connection_for_read() as connection:
-    #     # We can monitor more queues here
-    #     for queue in find_queues():
-    #         queue_name = queue[0]
-    #         if queue_name == MANAGER_QUEUE:
-    #             continue
-
-    #         try:
-    #             _, size, _ = celery_app.amqp.queues[queue_name](
-    #                 connection.default_channel).queue_declare(passive=True)
-    #             queue_sizes[queue_name] = size
-    #         except ChannelError as e:
-    #             print('No tasks found for %s because %s' %
-    #                   (queue_name, e.message))
-    #             queue_sizes[queue_name] = 0 #             continue
 
     return queue_sizes
 
