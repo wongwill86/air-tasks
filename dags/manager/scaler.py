@@ -28,29 +28,34 @@ dag = DAG(
 
 MANAGER_QUEUE = u'manager'
 QUEUE_SIZES_TASK_ID = 'queue_sizes'
-RESCALE_SWARM = 'rescale_swarm'
+BRANCH_RESIZE_TASK_ID = 'branch_resize'
+RESCALE_TASK_ID = 'rescale_compose'
 QUEUE_URL = 'http://rabbitmq:15672/api/queues/%2f/{}'
 QUEUE_USERNAME = 'guest'
 QUEUE_PASSWORD = 'guest'
 
 
-# Use the stack name to determine if we need to use stack or compose
-templated_swarm_command = """
+templated_resize_command = """
 if mount | grep '{{conf.get('core', 'airflow_home')}}/[dags|plugins]' > /dev/null; then
     echo 'Dag folder or plugin folder is mounted! Will not autoscale!'
 else
     {% set queue_sizes = task_instance.xcom_pull(task_ids=params.task_id) %}
-    if [ -z "${{'{'}}STACK_NAME{{'}'}}" ]; then
+    echo 'Try to scale {{queue_sizes}}'
+    {% if queue_sizes | length %}
+    if [ -z "${{'{'}}INFRAKIT_IMAGE{{'}'}}" ]; then
         echo "Scaling local compose"
         docker-compose -f {{conf.get('core', 'airflow_home')}}/docker/docker-compose-CeleryExecutor.yml \
 up -d --no-recreate --no-deps --no-build --no-color \
 --scale {% for queue, size in queue_sizes.items() %} worker-{{queue}}={{size}} {% endfor %}
     else
-        echo "Scaling swarm " $(whoami)
+        echo "Scaling infrakit"
         {% for queue, size in queue_sizes.items() %}
-        docker service scale ${{'{'}}STACK_NAME{{'}'}}_worker-{{queue}}={{size}} --detach=true
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v /infrakit/:/infrakit \
+-e INFRAKIT_HOME=/infrakit -e INFRAKIT_PLUGINS_DIR=/infrakit/plugins ${{'{'}}INFRAKIT_IMAGE{{'}'}} \
+infrakit group scale swarm-workers-{{queue}} {{size}}
         {% endfor %}
     fi
+    {% endif %}
 fi
 """ # noqa
 
@@ -98,12 +103,12 @@ queue_sizes_task = PythonOperator(
     queue="manager",
     dag=dag)
 
-rescale_swarm_task = BashOperator(
-    task_id=RESCALE_SWARM,
-    bash_command=templated_swarm_command,
+rescale_task = BashOperator(
+    task_id=RESCALE_TASK_ID,
+    bash_command=templated_resize_command,
     queue="manager",
     params={'task_id': QUEUE_SIZES_TASK_ID},
     dag=dag)
 
 latest.set_downstream(queue_sizes_task)
-queue_sizes_task.set_downstream(rescale_swarm_task)
+queue_sizes_task.set_downstream(rescale_task)

@@ -11,26 +11,6 @@ services:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
-#    redis:
-        #image: 'redis:3.2.7'
-        ##ports:
-            ##- "6379:6379"
-        #deploy:
-            #placement:
-                #constraints: [ engine.labels.infrakit-role == manager ]
-
-    #redis-commander:
-        #image: 'rediscommander/redis-commander:latest'
-        ##ports:
-            ##- "8081:8081"
-        #depends_on:
-            #- redis
-        #environment:
-            #- REDIS_HOSTS=local:redis:6379:1
-        #deploy:
-            #placement:
-                #constraints: [ engine.labels.infrakit-role == manager ]
-
     postgres:
         image: postgres:9.6
         environment:
@@ -156,6 +136,7 @@ services:
             - STACK_NAME
         command: worker -q worker
         deploy:
+            mode: global
             placement:
                 constraints: [ engine.labels.infrakit-role == worker ]
 
@@ -249,12 +230,3 @@ secrets:
         external: true
     basic_auth_password:
         external: true
-
-                      #server {\\n\
-                          #listen 83;\\n\
-                          #auth_basic $${AUTH_BASIC_STRING};\\n\
-                          #auth_basic_user_file \\/etc\\/nginx\\/\\.htpasswd;\\n\
-                          #location \\/ {\\n\
-                              #proxy_pass http:\\/\\/redis-commander:8081;\\n\
-                          #}\\n\
-                      #}\\n\
