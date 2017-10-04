@@ -1,10 +1,7 @@
 version: '3.3'
 services:
     rabbitmq:
-        #image: 'rabbitmq:3.6.12'
-        image: 'rabbitmq:3-management'
-        ports:
-            - "15672:15672"
+        image: rabbitmq:3.6.12-management-alpine
         environment:
             - RABBITMQ_ERLANG_COOKIE=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
         deploy:
@@ -12,7 +9,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     postgres:
-        image: postgres:9.6
+        image: postgres:9.6-alpine
         environment:
             - POSTGRES_USER=airflow
             - POSTGRES_PASSWORD=airflow
@@ -169,23 +166,25 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     proxy:
-        image: nginx:latest
+        image: nginx:1.13.5-alpine
         ports:
             - "80:80"
             - "81:81"
             - "82:82"
             - "83:83"
+            - "84:84"
         depends_on:
             - webserver
             - flower
             - visualizer
+            - rabbitmq
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
         environment:
             BASIC_AUTH_USERNAME_FILE: /run/secrets/basic_auth_username
             BASIC_AUTH_PASSWORD_FILE: /run/secrets/basic_auth_password
-        command: "bash -c 'apt-get update && apt-get install apache2-utils -y && \
+        command: "sh -c 'apk update && apk add apache2-utils && \
                   BASIC_AUTH_USERNAME=$$(</$$BASIC_AUTH_USERNAME_FILE) && \
                   BASIC_AUTH_PASSWORD=$$(</$$BASIC_AUTH_PASSWORD_FILE) && \
                   [ -n \"$$BASIC_AUTH_PASSWORD\" ] \
@@ -217,6 +216,14 @@ services:
                           auth_basic_user_file \\/etc\\/nginx\\/\\.htpasswd;\\n\
                           location \\/ {\\n\
                               proxy_pass http:\\/\\/visualizer:8080;\\n\
+                          }\\n\
+                      }\\n\
+                      server {\\n\
+                          listen 83;\\n\
+                          auth_basic $${AUTH_BASIC_STRING};\\n\
+                          auth_basic_user_file \\/etc\\/nginx\\/\\.htpasswd;\\n\
+                          location \\/ {\\n\
+                              proxy_pass http:\\/\\/rabbitmq:15672;\\n\
                           }\\n\
                       }\\n\
                   }\\n/\" \
