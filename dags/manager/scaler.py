@@ -35,11 +35,8 @@ QUEUE_USERNAME = 'guest'
 QUEUE_PASSWORD = 'guest'
 
 
-# Currently infrakit can not scale with more than 1 queue! Issue is that,
-# we are unable to scale down to 0 instances in infrakit. Only way is to
-# destroy the group. To recreate the group we must commit the json file which
-# includes all the group definitions (which means that queue groups that we
-# want to have 0 members will automatically be recreated! :( )
+# To use infrakit with > 1 queue, we will have to modify this code to use
+# separate groups file for each queue!
 templated_resize_command = """
 {% set queue_sizes = task_instance.xcom_pull(task_ids=params.task_id) %}
 {%
@@ -65,10 +62,21 @@ else
         echo "Scaling infrakit"
         {% for queue, size in queue_sizes.items() %}
         if [ {{size}} -gt 0 ]; then
-            {{docker_infrakit_command}} manager commit ${{'{'}}INFRAKIT_GROUPS_URL{{'}'}}
+            if ! {{docker_infrakit_command}} group describe swarm-workers-{{queue}}; then
+                echo 'Recommitting missing group...'
+                {{docker_infrakit_command}} manager commit ${{'{'}}INFRAKIT_GROUPS_URL{{'}'}}
+            else
+                echo 'Group swarm-workers-{{queue}} already exists, no need to commit'
+            fi
+            echo 'Scaling...'
             {{docker_infrakit_command}} group scale swarm-workers-{{queue}} {{size}}
         else
-            {{docker_infrakit_command}} group destroy swarm-workers-{{queue}}
+            if {{docker_infrakit_command}} group describe swarm-workers-{{queue}}; then
+                echo 'Destroying Group swarm-workers-{{queue}}'
+                {{docker_infrakit_command}} group destroy swarm-workers-{{queue}}
+            else
+                echo 'Group swarm-workers-{{queue}} already destroyed'
+            fi
         fi
         {% endfor %}
     fi
