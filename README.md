@@ -5,12 +5,12 @@ DooD support and AWS ECR Credential Helper
 ## How to develop dags:
 
 1. Clone this repo
-2. [Install requirements](#Setup)
-3. Modify docker/docker-compose-CeleryExecutor.yml and uncomment everything
+2. [Install requirements](#setup)
+3. Modify docker/docker-compose-CeleryExecutor.yml and uncomment dag folder mounts
 	```
 	#- ../dags/:/usr/local/airflow/dags
 	```
-4. [Deploy Local](#Local)
+4. [Deploy Local](#local)
 5. Go to [localhost](http://localhost)
 6. Activate dag and trigger run
 
@@ -31,22 +31,22 @@ DooD support and AWS ECR Credential Helper
     ```
 ## Deploy
 ### Local
-		```
-		docker-compose -f docker/docker-compose-CeleryExecutor.yml up -d
-		```
-		
+```
+docker-compose -f docker/docker-compose-CeleryExecutor.yml up -d
+```
+
 ### Swarm
-		```
-		echo '<blank or username here>' | docker secret create basic_auth_username -
-		echo '<blank or password here>' | docker secret create basic_auth_password -
-		docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
-		```
+```
+echo '<blank or username here>' | docker secret create basic_auth_username -
+echo '<blank or password here>' | docker secret create basic_auth_password -
+docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
+```
 ### Testing
-		```
-		export PYTHONDONTWRITEBYTECODE=1 
-		docker-compose -f docker/docker-compose.test.yml -p ci build
-		docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
-		```
+```
+export PYTHONDONTWRITEBYTECODE=1 
+docker-compose -f docker/docker-compose.test.yml -p ci build
+docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
+```
 ### AWS
 Use [Cloudformation](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new) to create a new stack.
 Use this [template](https://raw.githubusercontent.com/wongwill86/examples/master/latest/swarm/aws/vpc.cfn)
