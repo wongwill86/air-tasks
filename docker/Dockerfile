@@ -20,7 +20,8 @@ ENV AIRFLOW_USER airflow
 
 USER root
 RUN curl -fsSL https://get.docker.com/ | sh \
-    && pip install docker-py \
+    && pip install docker docker-compose \
+    && pip install celery -U \
     && apt-get install sudo \
     && buildDeps=' \
         python-dev \
@@ -43,6 +44,9 @@ RUN curl -fsSL https://get.docker.com/ | sh \
         /usr/share/doc \
         /usr/share/doc-base
 
+# SUPER HACK PLEASE REMOVE AFTER AIRFLOW UPDATES (i.e. https://github.com/apache/incubator-airflow/pull/2417)
+RUN sed -i -e 's/import Client/import APIClient as Client/' /usr/local/lib/python2.7/dist-packages/airflow/operators/docker_operator.py
+
 RUN usermod -aG docker airflow
 
 # unfortunately this is required to update the container docker gid to match the
@@ -60,14 +64,27 @@ COPY --from=aws_ecr_credential_helper \
     /go/src/github.com/awslabs/amazon-ecr-credential-helper/bin/local/docker-credential-ecr-login \
     /usr/local/bin
 
+COPY docker/docker-compose-CeleryExecutor.yml ${AIRFLOW_HOME}/docker/docker-compose-CeleryExecutor.yml
+RUN chown airflow ${AIRFLOW_HOME}/docker/docker-compose-CeleryExecutor.yml
+
 COPY docker/scripts/add-user-docker.sh /add-user-docker.sh
 COPY docker/scripts/entrypoint-dood.sh /entrypoint-dood.sh
+
 COPY docker/config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 RUN chown airflow ${AIRFLOW_HOME}/airflow.cfg
+
+ENV CELERY_CONFIG_MODULE celeryconfig
+COPY docker/config/celeryconfig.py ${AIRFLOW_HOME}/celeryconfig.py
+RUN chown airflow ${AIRFLOW_HOME}/celeryconfig.py
+
+ENV CELERY_LOADER celery_loader:CeleryLoader
+COPY docker/config/celery_loader.py ${AIRFLOW_HOME}/celery_loader.py
+RUN chown airflow ${AIRFLOW_HOME}/celery_loader.py
+
 COPY plugins/ ${AIRFLOW_HOME}/plugins/
+
 COPY dags/ ${AIRFLOW_HOME}/dags/
 RUN chown airflow ${AIRFLOW_HOME}/dags
-
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}

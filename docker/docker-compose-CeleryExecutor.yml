@@ -1,21 +1,21 @@
 version: '3.3'
 services:
-    redis:
-        image: 'redis:3.2.7'
-        #ports:
-            #- "6380:6380"
+    rabbitmq:
+        image: rabbitmq:3.6.12-management-alpine
+        environment:
+            - RABBITMQ_ERLANG_COOKIE=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     postgres:
-        image: postgres:9.6
+        image: postgres:9.6-alpine
         environment:
             - POSTGRES_USER=airflow
             - POSTGRES_PASSWORD=airflow
             - POSTGRES_DB=airflow
-        ports:
-            - "5432:5432"
+        #ports:
+            #- "5432:5432"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -25,7 +25,7 @@ services:
         restart: always
         depends_on:
             - postgres
-            - redis
+            - rabbitmq
         environment:
             - LOAD_EX=y
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
@@ -34,10 +34,13 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
         volumes:
+            # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
@@ -52,9 +55,11 @@ services:
         image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
-            - redis
+            - rabbitmq
         environment:
             - EXECUTOR=Celery
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
         #ports:
             #- "5555:5555"
         command: flower
@@ -68,6 +73,7 @@ services:
         depends_on:
             - webserver
         volumes:
+            # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
@@ -79,6 +85,8 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -97,12 +105,13 @@ services:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
-    worker:
+    worker-worker:
         image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - scheduler
         volumes:
+            # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
@@ -113,31 +122,66 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
-        command: worker
+        command: worker -q worker
         deploy:
+            mode: global
             placement:
                 constraints: [ engine.labels.infrakit-role == worker ]
 
+    worker-manager:
+        image: wongwill86/air-tasks:latest
+        restart: always
+        depends_on:
+            - scheduler
+        volumes:
+            # Warning mounting dags/plugins not working for autoscaler
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
+            - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+            - AIRFLOW_HOME=/usr/local/airflow
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+            - INFRAKIT_IMAGE
+            - INFRAKIT_GROUPS_URL
+        command: worker -q manager
+        deploy:
+            placement:
+                constraints: [ engine.labels.infrakit-role == manager ]
+
     proxy:
-        image: nginx:latest
+        image: nginx:1.13.5-alpine
         ports:
             - "80:80"
             - "81:81"
             - "82:82"
+            - "83:83"
+            - "84:84"
         depends_on:
             - webserver
             - flower
             - visualizer
+            - rabbitmq
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
         environment:
             BASIC_AUTH_USERNAME_FILE: /run/secrets/basic_auth_username
             BASIC_AUTH_PASSWORD_FILE: /run/secrets/basic_auth_password
-        command: "bash -c 'apt-get update && apt-get install apache2-utils -y && \
+        command: "sh -c 'apk update && apk add apache2-utils && \
                   BASIC_AUTH_USERNAME=$$(</$$BASIC_AUTH_USERNAME_FILE) && \
                   BASIC_AUTH_PASSWORD=$$(</$$BASIC_AUTH_PASSWORD_FILE) && \
                   [ -n \"$$BASIC_AUTH_PASSWORD\" ] \
@@ -171,8 +215,16 @@ services:
                               proxy_pass http:\\/\\/visualizer:8080;\\n\
                           }\\n\
                       }\\n\
+                      server {\\n\
+                          listen 83;\\n\
+                          auth_basic $${AUTH_BASIC_STRING};\\n\
+                          auth_basic_user_file \\/etc\\/nginx\\/\\.htpasswd;\\n\
+                          location \\/ {\\n\
+                              proxy_pass http:\\/\\/rabbitmq:15672;\\n\
+                          }\\n\
+                      }\\n\
                   }\\n/\" \
-                  /etc/nginx/nginx.conf && cat /etc/nginx/nginx.conf && nginx -g \"daemon off;\"'"
+                  /etc/nginx/nginx.conf && nginx -g \"daemon off;\"'"
         secrets:
             - basic_auth_username
             - basic_auth_password
