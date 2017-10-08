@@ -1,3 +1,14 @@
+"""
+This dag autoscales your cluster. This only works with docker-compose (local)
+and Infrakit (swarm).
+
+For Infrakit, the following environment variables must be set:
+    - INFRAKIT_IMAGE - what docker image to use for infrakit
+    i.e.infrakit/devbundle:latest
+    - INFRAKIT_GROUPS_URL - the location of the groups json file that defines
+    the groups definition,
+    i.e. https://github.com/wongwill86/examples/blob/master/latest/swarm/groups.json
+""" # noqa
 from airflow import DAG
 from datetime import datetime
 from airflow.operators.bash_operator import BashOperator
