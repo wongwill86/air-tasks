@@ -67,8 +67,7 @@ COPY --from=aws_ecr_credential_helper \
 COPY docker/docker-compose-CeleryExecutor.yml ${AIRFLOW_HOME}/docker/docker-compose-CeleryExecutor.yml
 RUN chown airflow ${AIRFLOW_HOME}/docker/docker-compose-CeleryExecutor.yml
 
-COPY docker/scripts/add-user-docker.sh /add-user-docker.sh
-COPY docker/scripts/entrypoint-dood.sh /entrypoint-dood.sh
+COPY docker/scripts/ /
 
 COPY docker/config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 RUN chown airflow ${AIRFLOW_HOME}/airflow.cfg
