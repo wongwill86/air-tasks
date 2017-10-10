@@ -16,8 +16,11 @@ DooD support and AWS ECR Credential Helper
 
 ## Debug tools:
 [localhost:80](http://localhost) - Airflow Webserver
+
 [localhost:81](http://localhost) - Celery Flower (Monitor Workers)
+
 [localhost:82](http://localhost) - Swarm Visualizer (Visualize Stack Deployment)
+
 [localhost:83](http://localhost) - RabbitMQ Management Plugin (Queue Info)
 
 ## Setup:
