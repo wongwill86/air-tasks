@@ -1,8 +1,11 @@
 from functools import wraps
-import mock
 import os
 import re
 import inspect
+try:
+    import unittest.mock as mock
+except ImportError:
+    import mock
 
 norm_pattern = re.compile(r'[/|.]')
 
