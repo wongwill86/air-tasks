@@ -47,7 +47,13 @@ docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
 ### Testing
 ```
 export PYTHONDONTWRITEBYTECODE=1 
+export IMAGE_NAME=wongwill86/air-tasks:<your branch/tag>
 docker-compose -f docker/docker-compose.test.yml -p ci build
+docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut
+```
+
+To watch/test. (Warning: must pass the first run, otherwise it will exit)
+```
 docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
 ```
 ### AWS
