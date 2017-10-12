@@ -70,7 +70,7 @@ class MultiTriggerDagRunOperator(BaseOperator):
 
 
 class DockerWithVariablesOperator(DockerOperator):
-    DEFAULT_MOUNT_POINT = '/run/secrets'
+    DEFAULT_MOUNT_POINT = '/run/variables'
     WRITER_IMAGE = 'alpine:latest'
 
     def __init__(self,
