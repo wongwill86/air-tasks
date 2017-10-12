@@ -2,17 +2,31 @@
 
 DooD support and AWS ECR Credential Helper
 
-## How to develop dags:
+## How to develop:
 
+### When developing dags only:
 1. Clone this repo
 2. [Install requirements](#setup)
 3. Modify docker/docker-compose-CeleryExecutor.yml and uncomment dag folder mounts
 	```
 	#- ../dags/:/usr/local/airflow/dags
 	```
-4. [Deploy Local](#local)
-5. Go to [localhost](http://localhost)
-6. Activate dag and trigger run
+5. [Deploy Local](#local)
+6. Go to [localhost](http://localhost)
+7. Activate dag and trigger run
+
+### When developing plugins / new operators / DockerFile:
+1. Do above steps 1-3
+2. Build the image with your own tag (good idea to use the branch name)
+    ```
+    docker build -f docker/Dockerfile -t wongwill86/air-tasks:<your tag> .
+    ```
+3. Modify docker/docker-compose-CeleryExecutor.yml to use your image
+    ```
+    ...:
+        image: wongwill86/air-tasks:<your tag>
+    ```
+4. Run [Tests](#testing)
 
 ## Debug tools:
 [localhost:80](http://localhost) - Airflow Webserver
