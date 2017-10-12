@@ -1,3 +1,5 @@
+# You must have the airflow variable 'nothing' set up to run this Dag!
+
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.custom_plugin import DockerWithVariablesOperator
