@@ -6,9 +6,6 @@ import collections
 
 from airflow.models import BaseOperator
 from airflow.models import DagBag
-from airflow.models import Variable
-from airflow.operators.docker_operator import DockerOperator
-from airflow.utils.file import TemporaryDirectory
 from airflow.utils.decorators import apply_defaults
 from airflow.utils.state import State
 from airflow import settings
@@ -69,34 +66,9 @@ class MultiTriggerDagRunOperator(BaseOperator):
         session.close()
 
 
-class DockerWithVariablesOperator(DockerOperator):
-    DEFAULT_MOUNT_POINT = '/run/variables'
-    WRITER_IMAGE = 'alpine:latest'
-
-    def __init__(self,
-                 variables,
-                 mount_point=DEFAULT_MOUNT_POINT,
-                 *args, **kwargs):
-        self.variables = variables
-        self.mount_point = mount_point
-        super(DockerWithVariablesOperator, self).__init__(*args, **kwargs)
-
-    def execute(self, context):
-        with TemporaryDirectory(prefix='dockervariables') as tmp_var_dir:
-            for key in self.variables:
-                value = Variable.get(key)
-                with open('{0}/{1}'.format(tmp_var_dir, key),
-                          'w') as value_file:
-                    value_file.write(str(value))
-            self.volumes.append('{0}:{1}'.format(tmp_var_dir,
-                                                 self.mount_point))
-            print(self.volumes)
-            return super(DockerWithVariablesOperator, self).execute(context)
-
-
 class CustomPlugin(AirflowPlugin):
     name = "custom_plugin"
-    operators = [MultiTriggerDagRunOperator, DockerWithVariablesOperator]
+    operators = [MultiTriggerDagRunOperator]
     hooks = []
     executors = []
     macros = []

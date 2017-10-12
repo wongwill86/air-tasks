@@ -1,9 +1,10 @@
 from __future__ import unicode_literals
-from airflow.operators.custom_plugin import DockerWithVariablesOperator
+from airflow.operators.docker_plugin import DockerRemovableContainer
+from airflow.operators.docker_plugin import DockerWithVariablesOperator
 import unittest
 from tests.utils.mock_helpers import patch_plugin_file
-# from airflow.models import Variable
 from datetime import datetime, timedelta
+from docker.errors import NotFound
 
 DAG_ARGS = {
     'owner': 'airflow',
@@ -45,6 +46,42 @@ def variables_to_show_items(variables):
     return '\n'.join(show_items_builder)
 
 
+class TestDockerRemovableContainer(unittest.TestCase):
+    def test_should_remove_container(self):
+        operator = DockerRemovableContainer(
+            task_id=TASK_ID,
+            default_args=DAG_ARGS,
+            image=IMAGE,
+            remove=True
+            )
+        operator.execute(None)
+
+        with self.assertRaises(NotFound):
+            operator.cli.inspect_container(operator.container)
+
+    def test_should_keep_container(self):
+        operator = DockerRemovableContainer(
+            task_id=TASK_ID,
+            default_args=DAG_ARGS,
+            image=IMAGE,
+            remove=False
+            )
+        operator.execute(None)
+
+        assert operator.cli.inspect_container(operator.container)
+
+    def test_should_remove_container_default(self):
+        operator = DockerRemovableContainer(
+            task_id=TASK_ID,
+            default_args=DAG_ARGS,
+            image=IMAGE
+            )
+        operator.execute(None)
+
+        with self.assertRaises(NotFound):
+            operator.cli.inspect_container(operator.container)
+
+
 class TestDockerWithVariables(unittest.TestCase):
     def test_create(self):
         operator = DockerWithVariablesOperator([],
@@ -54,6 +91,19 @@ class TestDockerWithVariables(unittest.TestCase):
         assert operator
         assert operator.task_id == TASK_ID
         operator.execute(None)
+
+    def test_should_mount_and_be_empty_with_default_mount_point(self):
+        operator = DockerWithVariablesOperator(
+            variables=[],
+            task_id=TASK_ID,
+            default_args=DAG_ARGS,
+            image=IMAGE,
+            xcom_push=True,
+            xcom_all=True,
+            command=COMMAND_CHECK_MOUNT
+            )
+        items = operator.execute(None)  # will fail if no mount found
+        assert not items  # mount was found but check to make sure it's empty
 
     def test_should_mount_and_be_empty(self):
         operator = DockerWithVariablesOperator(
@@ -69,7 +119,7 @@ class TestDockerWithVariables(unittest.TestCase):
         items = operator.execute(None)  # will fail if no mount found
         assert not items  # mount was found but check to make sure it's empty
 
-    @patch_plugin_file('plugins/custom/custom', 'Variable', autospec=True)
+    @patch_plugin_file('plugins/custom/docker', 'Variable', autospec=True)
     def test_should_find_variables(self, variable_class):
         variable_class.get.side_effect = DEFAULT_VARIABLES.__getitem__
 
@@ -89,7 +139,7 @@ class TestDockerWithVariables(unittest.TestCase):
 
         assert show_items == variables_to_show_items(DEFAULT_VARIABLES)
 
-    @patch_plugin_file('plugins/custom/custom', 'Variable', autospec=True)
+    @patch_plugin_file('plugins/custom/docker', 'Variable', autospec=True)
     def test_should_fail_when_variable_not_found(self, variable_class):
         variable_class.get.side_effect = DEFAULT_VARIABLES.__getitem__
 

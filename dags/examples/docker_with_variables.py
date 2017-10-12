@@ -2,7 +2,7 @@
 
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.operators.custom_plugin import DockerWithVariablesOperator
+from airflow.operators.docker_plugin import DockerWithVariablesOperator
 
 DAG_ID = 'example_docker_with_variables'
 
