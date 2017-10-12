@@ -12,7 +12,6 @@ from airflow.utils.file import TemporaryDirectory
 from airflow.utils.decorators import apply_defaults
 from airflow.utils.state import State
 from airflow import settings
-# from docker import APICLient as Client
 
 
 class MultiTriggerDagRunOperator(BaseOperator):
@@ -86,11 +85,12 @@ class DockerWithVariablesOperator(DockerOperator):
         with TemporaryDirectory(prefix='dockervariables') as tmp_var_dir:
             for key in self.variables:
                 value = Variable.get(key)
-                with open('{0}:{1}'.format(tmp_var_dir, key),
+                with open('{0}/{1}'.format(tmp_var_dir, key),
                           'w') as value_file:
                     value_file.write(str(value))
             self.volumes.append('{0}:{1}'.format(tmp_var_dir,
                                                  self.mount_point))
+            print(self.volumes)
             return super(DockerWithVariablesOperator, self).execute(context)
 
 

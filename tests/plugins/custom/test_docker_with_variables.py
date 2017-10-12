@@ -20,8 +20,8 @@ MOUNT_POINT = '/run/variables'
 COMMAND = 'ls %s' % MOUNT_POINT
 COMMAND_CHECK_MOUNT = 'sh -c "mount | grep %s > /dev/null && ls %s"' \
     % (MOUNT_POINT, MOUNT_POINT)
-COMMAND_SHOW_ITEMS = 'sh -c \
-    "for file in $(ls %s); do echo $file; cat %s/$file; done"' \
+COMMAND_SHOW_ITEMS = 'sh -c "ls -1 %s |\
+    while read file; do echo $file; cat \\"%s/$file\\"; echo; done"' \
     % (MOUNT_POINT, MOUNT_POINT)
 
 
@@ -32,8 +32,17 @@ DEFAULT_VARIABLES = {
     'multiline': '''
                 multiline
                 string''',
-    'weird': '\r\r\r\n%#@*(&(\x41\x42\x43'
 }
+
+
+def variables_to_show_items(variables):
+    show_items_builder = []
+    for key in sorted(DEFAULT_VARIABLES):
+        value = DEFAULT_VARIABLES[key]
+        show_items_builder.append(key)
+        show_items_builder.append(str(value))
+    show_items_builder.append('')
+    return '\n'.join(show_items_builder)
 
 
 class TestDockerWithVariables(unittest.TestCase):
@@ -72,24 +81,13 @@ class TestDockerWithVariables(unittest.TestCase):
             image=IMAGE,
             xcom_push=True,
             xcom_all=True,
-            command='ls /run/variables'
+            # command='ls /run/variables'
+            command=COMMAND_SHOW_ITEMS
         )
 
         show_items = operator.execute(None)
 
-        correct_show_items_builder = []
-        for key in sorted(DEFAULT_VARIABLES):
-            value = DEFAULT_VARIABLES[key]
-            correct_show_items_builder.append(key)
-            correct_show_items_builder.append(str(value))
-
-        print('show_items\n\n\n')
-        print(show_items)
-        print('correct_show_items\n\n\n')
-        print(correct_show_items_builder)
-        print('correct_show_items joined \n\n\n')
-        print('\n'.join(correct_show_items_builder))
-        assert show_items == '\n'.join(correct_show_items_builder)
+        assert show_items == variables_to_show_items(DEFAULT_VARIABLES)
 
     @patch_plugin_file('plugins/custom/custom', 'Variable', autospec=True)
     def test_should_fail_when_variable_not_found(self, variable_class):

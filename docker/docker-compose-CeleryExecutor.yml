@@ -115,6 +115,7 @@ services:
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp:/tmp
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
@@ -143,6 +144,7 @@ services:
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp:/tmp
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
