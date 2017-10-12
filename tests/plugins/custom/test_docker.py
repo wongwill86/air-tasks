@@ -52,34 +52,55 @@ class TestDockerRemovableContainer(unittest.TestCase):
             task_id=TASK_ID,
             default_args=DAG_ARGS,
             image=IMAGE,
-            remove=True
+            remove=True,
+            command='echo should remove'
             )
         operator.execute(None)
 
-        with self.assertRaises(NotFound):
-            operator.cli.inspect_container(operator.container)
+        try:
+            with self.assertRaises(NotFound):
+                operator.cli.inspect_container(operator.container)
+        finally:
+            try:
+                operator.cli.remove_container(operator.container)
+            except Exception:
+                pass
 
     def test_should_keep_container(self):
         operator = DockerRemovableContainer(
             task_id=TASK_ID,
             default_args=DAG_ARGS,
             image=IMAGE,
-            remove=False
+            remove=False,
+            command='echo should keep'
             )
         operator.execute(None)
 
-        assert operator.cli.inspect_container(operator.container)
+        try:
+            operator.cli.inspect_container(operator.container)
+        finally:
+            try:
+                operator.cli.remove_container(operator.container)
+            except Exception:
+                pass
 
     def test_should_remove_container_default(self):
         operator = DockerRemovableContainer(
             task_id=TASK_ID,
             default_args=DAG_ARGS,
-            image=IMAGE
+            image=IMAGE,
+            command='echo should remove by default'
             )
         operator.execute(None)
 
-        with self.assertRaises(NotFound):
-            operator.cli.inspect_container(operator.container)
+        try:
+            with self.assertRaises(NotFound):
+                operator.cli.inspect_container(operator.container)
+        finally:
+            try:
+                operator.cli.remove_container(operator.container)
+            except Exception:
+                pass
 
 
 class TestDockerWithVariables(unittest.TestCase):
