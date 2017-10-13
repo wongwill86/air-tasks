@@ -3,7 +3,7 @@ from airflow.models import DAG
 from airflow.operators.subdag_operator import SubDagOperator
 import logging
 import json
-from plugins.custom.docker import DockerRemovableContainer
+from custom.docker import DockerRemovableContainer
 
 
 class ChunkFlowOperator(DockerRemovableContainer):
