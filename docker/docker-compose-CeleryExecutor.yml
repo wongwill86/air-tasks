@@ -184,8 +184,8 @@ services:
             BASIC_AUTH_USERNAME_FILE: /run/secrets/basic_auth_username
             BASIC_AUTH_PASSWORD_FILE: /run/secrets/basic_auth_password
         command: "sh -c 'apk update && apk add apache2-utils && \
-                  BASIC_AUTH_USERNAME=$$(</$$BASIC_AUTH_USERNAME_FILE) && \
-                  BASIC_AUTH_PASSWORD=$$(</$$BASIC_AUTH_PASSWORD_FILE) && \
+                  BASIC_AUTH_USERNAME=$$(cat /$$BASIC_AUTH_USERNAME_FILE) && \
+                  BASIC_AUTH_PASSWORD=$$(cat /$$BASIC_AUTH_PASSWORD_FILE) && \
                   [ -n \"$$BASIC_AUTH_PASSWORD\" ] \
                          && AUTH_BASIC_STRING=\\\"AirflowAuthorization\\\" \
                          && htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $${BASIC_AUTH_PASSWORD}
