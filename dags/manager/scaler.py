@@ -73,20 +73,20 @@ else
         echo "Scaling infrakit"
         {% for queue, size in queue_sizes.items() %}
         if [ {{size}} -gt 0 ]; then
-            if ! {{docker_infrakit_command}} group describe swarm-workers-{{queue}}; then
+            if ! {{docker_infrakit_command}} group describe workers-{{queue}}; then
                 echo 'Recommitting missing group...'
                 {{docker_infrakit_command}} manager commit ${{'{'}}INFRAKIT_GROUPS_URL{{'}'}}
             else
-                echo 'Group swarm-workers-{{queue}} already exists, no need to commit'
+                echo 'Group workers-{{queue}} already exists, no need to commit'
             fi
             echo 'Scaling...'
-            {{docker_infrakit_command}} group scale swarm-workers-{{queue}} {{size}}
+            {{docker_infrakit_command}} group scale workers-{{queue}} {{size}}
         else
-            if {{docker_infrakit_command}} group describe swarm-workers-{{queue}}; then
-                echo 'Destroying Group swarm-workers-{{queue}}'
-                {{docker_infrakit_command}} group destroy swarm-workers-{{queue}}
+            if {{docker_infrakit_command}} group describe workers-{{queue}}; then
+                echo 'Destroying Group workers-{{queue}}'
+                {{docker_infrakit_command}} group destroy workers-{{queue}}
             else
-                echo 'Group swarm-workers-{{queue}} already destroyed'
+                echo 'Group workers-{{queue}} already destroyed'
             fi
         fi
         {% endfor %}

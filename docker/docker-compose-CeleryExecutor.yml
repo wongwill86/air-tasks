@@ -115,6 +115,7 @@ services:
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp:/tmp
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
@@ -143,6 +144,7 @@ services:
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp:/tmp
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
@@ -182,8 +184,8 @@ services:
             BASIC_AUTH_USERNAME_FILE: /run/secrets/basic_auth_username
             BASIC_AUTH_PASSWORD_FILE: /run/secrets/basic_auth_password
         command: "sh -c 'apk update && apk add apache2-utils && \
-                  BASIC_AUTH_USERNAME=$$(</$$BASIC_AUTH_USERNAME_FILE) && \
-                  BASIC_AUTH_PASSWORD=$$(</$$BASIC_AUTH_PASSWORD_FILE) && \
+                  BASIC_AUTH_USERNAME=$$(cat /$$BASIC_AUTH_USERNAME_FILE) && \
+                  BASIC_AUTH_PASSWORD=$$(cat /$$BASIC_AUTH_PASSWORD_FILE) && \
                   [ -n \"$$BASIC_AUTH_PASSWORD\" ] \
                          && AUTH_BASIC_STRING=\\\"AirflowAuthorization\\\" \
                          && htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $${BASIC_AUTH_PASSWORD}
@@ -228,6 +230,26 @@ services:
         secrets:
             - basic_auth_username
             - basic_auth_password
+
+    add-secrets:
+        image: wongwill86/air-tasks:latest
+        depends_on:
+            - scheduler
+        environment:
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+            - AIRFLOW_HOME=/usr/local/airflow
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
+        entrypoint: python /secrets_to_airflow_variables.py
+        deploy:
+            restart_policy:
+                condition: on-failure
+            placement:
+                constraints: [ engine.labels.infrakit-role == manager ]
+        #secrets:
+            #- basic_auth_username
+            #- basic_auth_password
 
 secrets:
     basic_auth_username:

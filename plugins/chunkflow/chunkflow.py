@@ -1,12 +1,12 @@
 from airflow.plugins_manager import AirflowPlugin
 from airflow.models import DAG
-from airflow.operators.docker_operator import DockerOperator
 from airflow.operators.subdag_operator import SubDagOperator
 import logging
 import json
+from custom.docker import DockerRemovableContainer
 
 
-class ChunkFlowOperator(DockerOperator):
+class ChunkFlowOperator(DockerRemovableContainer):
     DEFAULT_IMAGE_ID = '098703261575.dkr.ecr.us-east-1.amazonaws.com/chunkflow'
     DEFAULT_VERSION = 'v1.7.8'
     DEFAULT_COMMAND = 'julia /root/.julia/v0.5/ChunkFlow/scripts/main.jl ' + \
@@ -59,10 +59,6 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
                 logger.error("Unable to parse task as json: \n %s", task_json)
                 raise
 
-            print(task_origin)
-            # print task_input_params
-            print('chunkflow_' + '_'.join(str(x) for x in task_origin))
-            print(task_json)
             ChunkFlowOperator(
                 task_id='%s-task-%s' % (child_dag_name,
                                         '_'.join(str(x) for x in task_origin)),

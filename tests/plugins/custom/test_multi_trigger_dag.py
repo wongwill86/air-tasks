@@ -26,7 +26,7 @@ DAG_ARGS = {
 TASK_ID = 'MultiTriggerDag'
 
 
-@patch_plugin_file('plugins/custom/multi_trigger_dag', 'DagBag', autospec=True)
+@patch_plugin_file('plugins/custom/custom', 'DagBag', autospec=True)
 @mock.patch('airflow.settings.Session', autospec=True)
 class TestMultiTriggerDag(unittest.TestCase):
     class DagRunWithParams(object):

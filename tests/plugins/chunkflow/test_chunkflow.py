@@ -19,9 +19,9 @@ DAG_ARGS = {
 }
 TASK_ID = 'test_run_task'
 PARENT_DAG_ID = 'parent_dag'
-IMAGE_ID = 'julia'
-IMAGE_VERSION = '0.5.2'
-COMMAND = 'julia -e \'print("json is: \\n %s")\''
+IMAGE_ID = 'alpine'
+IMAGE_VERSION = 'latest'
+COMMAND = 'echo "json is: \n %s"'
 
 
 @fixture

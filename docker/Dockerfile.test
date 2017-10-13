@@ -4,5 +4,6 @@ ARG IMAGE_NAME
 USER root
 COPY docker/scripts/entrypoint-test.sh /entrypoint-test.sh
 RUN pip install pytest pytest-watch pytest-env pylama mock
+ENV PYTHONDONTWRITEBYTECODE 1 
 USER airflow
 ENTRYPOINT ["/entrypoint-test.sh"]
