@@ -248,8 +248,8 @@ services:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
         secrets:
-            - basic_auth_username
-            - basic_auth_password
+            #- basic_auth_username
+            #- basic_auth_password
 
 secrets:
     basic_auth_username:
