@@ -2,6 +2,7 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.models import Variable
 from airflow.operators.docker_operator import DockerOperator
 from airflow.utils.file import TemporaryDirectory
+import os
 
 
 class DockerRemovableContainer(DockerOperator):
@@ -35,7 +36,7 @@ class DockerWithVariablesOperator(DockerRemovableContainer):
         with TemporaryDirectory(prefix='dockervariables') as tmp_var_dir:
             for key in self.variables:
                 value = Variable.get(key)
-                with open('{0}/{1}'.format(tmp_var_dir, key), 'w') as \
+                with open(os.path.join(tmp_var_dir, key), 'w') as \
                         value_file:
                     value_file.write(str(value))
             self.volumes.append('{0}:{1}'.format(tmp_var_dir,

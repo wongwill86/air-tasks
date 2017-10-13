@@ -231,6 +231,26 @@ services:
             - basic_auth_username
             - basic_auth_password
 
+    add-secrets:
+        image: wongwill86/air-tasks:latest
+        depends_on:
+            - scheduler
+        environment:
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+            - AIRFLOW_HOME=/usr/local/airflow
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
+        entrypoint: python /secrets_to_airflow_variables.py
+        deploy:
+            restart_policy:
+                condition: on-failure
+            placement:
+                constraints: [ engine.labels.infrakit-role == manager ]
+        secrets:
+            - basic_auth_username
+            - basic_auth_password
+
 secrets:
     basic_auth_username:
         external: true
