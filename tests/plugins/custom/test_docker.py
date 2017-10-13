@@ -17,10 +17,8 @@ DAG_ARGS = {
 }
 TASK_ID = 'test_docker_with_variables'
 IMAGE = 'alpine:latest'
-MOUNT_POINT = '/run/variables'
-COMMAND = 'ls %s' % MOUNT_POINT
-COMMAND_CHECK_MOUNT = 'sh -c "mount | grep %s > /dev/null && ls %s"' \
-    % (MOUNT_POINT, MOUNT_POINT)
+MOUNT_POINT = '/run/secret'
+COMMAND_CHECK_MOUNT_TEMPLATE = 'sh -c "mount | grep %s > /dev/null && ls %s"'
 COMMAND_SHOW_ITEMS = 'sh -c "ls -1 %s |\
     while read file; do echo $file; cat \\"%s/$file\\"; echo; done"' \
     % (MOUNT_POINT, MOUNT_POINT)
@@ -121,7 +119,9 @@ class TestDockerWithVariables(unittest.TestCase):
             image=IMAGE,
             xcom_push=True,
             xcom_all=True,
-            command=COMMAND_CHECK_MOUNT
+            command=COMMAND_CHECK_MOUNT_TEMPLATE % (
+                DockerWithVariablesOperator.DEFAULT_MOUNT_POINT,
+                DockerWithVariablesOperator.DEFAULT_MOUNT_POINT)
             )
         items = operator.execute(None)  # will fail if no mount found
         assert not items  # mount was found but check to make sure it's empty
@@ -135,7 +135,7 @@ class TestDockerWithVariables(unittest.TestCase):
             image=IMAGE,
             xcom_push=True,
             xcom_all=True,
-            command=COMMAND_CHECK_MOUNT
+            command=COMMAND_CHECK_MOUNT_TEMPLATE % (MOUNT_POINT, MOUNT_POINT)
             )
         items = operator.execute(None)  # will fail if no mount found
         assert not items  # mount was found but check to make sure it's empty
@@ -152,7 +152,6 @@ class TestDockerWithVariables(unittest.TestCase):
             image=IMAGE,
             xcom_push=True,
             xcom_all=True,
-            # command='ls /run/variables'
             command=COMMAND_SHOW_ITEMS
         )
 
