@@ -4,7 +4,7 @@ DooD support and AWS ECR Credential Helper
 
 ## How to develop:
 
-### When developing dags only:
+### To develop dags by running them:
 1. Clone this repo
 2. [Install requirements](#setup)
 3. Modify docker/docker-compose-CeleryExecutor.yml and uncomment dag folder mounts
@@ -15,7 +15,7 @@ DooD support and AWS ECR Credential Helper
 6. Go to [localhost](http://localhost)
 7. Activate dag and trigger run
 
-### When developing plugins / new operators / DockerFile:
+### When developing plugins / new operators / DockerFile / dags:
 1. Do above steps 1-3
 2. Build the image with your own tag (good idea to use the branch name)
     ```
@@ -23,7 +23,7 @@ DooD support and AWS ECR Credential Helper
     ```
 3. Modify docker/docker-compose-CeleryExecutor.yml to use your image
     ```
-    ...:
+    <every service that has this>:
         image: wongwill86/air-tasks:<your tag>
     ```
 4. Run [Tests](#testing)
@@ -66,13 +66,13 @@ docker-compose -f docker/docker-compose.test.yml -p ci build
 docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut
 ```
 
-To watch/test. (Warning: must pass the first run, otherwise it will exit)
+To watch/test. (Warning: if nothing runs, make sure all tests pass first)
 ```
 docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
 ```
 ### AWS
 Use [Cloudformation](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new) to create a new stack.
-Use this [template](https://raw.githubusercontent.com/wongwill86/examples/master/latest/swarm/aws/vpc.cfn)
+Use this [template](https://raw.githubusercontent.com/wongwill86/examples/air_tasks_rebase/latest/swarm/aws/vpc.cfn)
 
 ## NOTES:
 Chunkflow: make sure AWS_ACCESS_KEY_ID, etc... are set in environment variables!
