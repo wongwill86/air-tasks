@@ -1,4 +1,4 @@
-# You must have the airflow variable 'nothing' set up to run this Dag!
+# You must have the airflow variable 'your_key' set up to run this Dag!
 
 from airflow import DAG
 from datetime import datetime, timedelta
@@ -23,10 +23,10 @@ dag = DAG(
 )
 
 start = DockerWithVariablesOperator(
-    ['nothing'],
+    ['your_key'],
     task_id='docker_task',
     command='sh -c "ls /run/variables &&\
-        cat /run/variables/nothing && echo done"',
+        cat /run/variables/your_key && echo done"',
     default_args=default_args,
     image="alpine:latest",
     dag=dag
