@@ -4,7 +4,7 @@ DooD support and AWS ECR Credential Helper
 
 ## How to develop:
 
-### To develop dags by running them:
+### By running DAGS:
 1. Clone this repo
 2. [Install requirements](#setup)
 3. Modify docker/docker-compose-CeleryExecutor.yml and uncomment dag folder mounts
@@ -15,7 +15,7 @@ DooD support and AWS ECR Credential Helper
 6. Go to [localhost](http://localhost)
 7. Activate dag and trigger run
 
-### When developing plugins / new operators / DockerFile / dags:
+### By testing plugins / new operators / DockerFile / DAGS:
 1. Do above steps 1-3
 2. Build the image with your own tag (good idea to use the branch name)
     ```

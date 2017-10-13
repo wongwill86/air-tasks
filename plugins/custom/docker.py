@@ -36,8 +36,7 @@ class DockerWithVariablesOperator(DockerRemovableContainer):
         with TemporaryDirectory(prefix='dockervariables') as tmp_var_dir:
             for key in self.variables:
                 value = Variable.get(key)
-                with open(os.path.join(tmp_var_dir, key), 'w') as \
-                        value_file:
+                with open(os.path.join(tmp_var_dir, key), 'w') as value_file:
                     value_file.write(str(value))
             self.volumes.append('{0}:{1}'.format(tmp_var_dir,
                                                  self.mount_point))
