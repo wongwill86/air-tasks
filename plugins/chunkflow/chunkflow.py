@@ -59,10 +59,6 @@ def create_chunkflow_subdag(parent_dag_name, child_dag_name, subdag_args,
                 logger.error("Unable to parse task as json: \n %s", task_json)
                 raise
 
-            print(task_origin)
-            # print task_input_params
-            print('chunkflow_' + '_'.join(str(x) for x in task_origin))
-            print(task_json)
             ChunkFlowOperator(
                 task_id='%s-task-%s' % (child_dag_name,
                                         '_'.join(str(x) for x in task_origin)),
