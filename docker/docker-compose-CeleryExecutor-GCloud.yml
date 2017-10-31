@@ -167,10 +167,10 @@ services:
     proxy:
         image: nginx:1.13.5-alpine
         ports:
-            - "80:80"
-            - "81:81"
+            - "443:80"
+            - "4000:81"
             - "82:82"
-            - "83:83"
+            - "4001:83"
         depends_on:
             - webserver
             - flower
