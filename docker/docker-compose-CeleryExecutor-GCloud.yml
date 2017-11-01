@@ -182,6 +182,8 @@ services:
         environment:
             BASIC_AUTH_USERNAME_FILE: /run/secrets/basic_auth_username
             BASIC_AUTH_PASSWORD_FILE: /run/secrets/basic_auth_password
+        #volumes:
+            #- ../secrets:/run/secrets/
         command: "sh -c 'apk update && apk add apache2-utils && \
                   BASIC_AUTH_USERNAME=$$(cat /$$BASIC_AUTH_USERNAME_FILE) && \
                   BASIC_AUTH_PASSWORD=$$(cat /$$BASIC_AUTH_PASSWORD_FILE) && \
@@ -189,6 +191,14 @@ services:
                          && AUTH_BASIC_STRING=\\\"AirflowAuthorization\\\" \
                          && htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $${BASIC_AUTH_PASSWORD}
                          || AUTH_BASIC_STRING=off && \
+                  [ -f \"/run/secrets/ssl_certificate\" ] \
+                         && SSL_BLOCK=\"ssl_certificate \\\\/run\\\\/secrets\\\\/ssl_certificate;\\\\\n
+                          ssl_certificate_key \\\\/run\\\\/secrets\\\\/ssl_certificate_key;\\\\\n
+                          ssl_session_cache  builtin:1000  shared:SSL:10m;\\\\n
+                          ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;\\\\n
+                          ssl on;\" \
+                         || SSL_BLOCK=\"ssl off;\" && \
+                  echo $$SSL_BLOCK && \
                   sed -i \
                   -e \"s/include \\/etc\\/nginx\\/conf\\.d\\/\\*\\.conf;//\" \
                   -e \"\\$$s/}/\
@@ -196,6 +206,7 @@ services:
                           listen 80;\\n\
                           auth_basic $${AUTH_BASIC_STRING};\\n\
                           auth_basic_user_file \\/etc\\/nginx\\/\\.htpasswd;\\n\
+                          $${SSL_BLOCK}\\n\
                           location \\/ {\\n\
                               proxy_pass http:\\/\\/webserver:8080;\\n\
                           }\\n\
@@ -229,6 +240,8 @@ services:
         secrets:
             - basic_auth_username
             - basic_auth_password
+            - ssl_certificate
+            - ssl_certificate_key
 
     add-secrets:
         image: wongwill86/air-tasks:latest
@@ -254,4 +267,8 @@ secrets:
     basic_auth_username:
         external: true
     basic_auth_password:
+        external: true
+    ssl_certificate:
+        external: true
+    ssl_certificate_key:
         external: true
