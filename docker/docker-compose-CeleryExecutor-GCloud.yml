@@ -249,16 +249,28 @@ services:
                           auth_basic $${AUTH_BASIC_STRING};\n
                           auth_basic_user_file \/etc\/nginx\/\.htpasswd;\n
                           $${SSL_BLOCK}\n
-                          if (\$$http_referer = \$$scheme:\/\/\$$host\/airflow) {\n
-                              rewrite ^(.*)\$$ \/airflow\/\$$1;\n
+                          proxy_set_header Host \$$host;\n
+                          proxy_set_header X-Real-IP \$$remote_addr;\n
+                          proxy_set_header X-Forwarded-For \$$proxy_add_x_forwarded_for;\n
+                          add_header Mything \$$request_uri;\n
+                          if (\$$http_referer ~* \\\"\/airflow\/.*\\\") {\n
+                              set \$$is_airflow \\\"A\\\";\n
+                          }\n
+                          if (\$$request_uri !~* airflow\/.*) {\n
+                              set \$$is_airflow \\\"\$${is_airflow}B\\\";\\n
+                          }\n
+                          if (\$$request_uri ~* dag_stats.*) {\n
+                          }\n
+                          if (\$$is_airflow ~* (AB|ABC)) { \n
+                              rewrite ^\/*(.*) \/airflow\/\$$1 permanent;\n
                           }\n
                           if (\$$http_referer ~* \\\".*\/flower\/*\\\") {\n
-                              set \$$test \\\"A\\\";\n
+                              set \$$is_flower \\\"A\\\";\n
                           }\n
                           if (\$$request_uri !~* flower\/.*) {\n
-                              set \$$test \\\"\$${test}B\\\";\\n
+                              set \$$is_flower \\\"\$${is_flower}B\\\";\\n
                           }\n
-                          if (\$$test = AB) { \n
+                          if (\$$is_flower = AB) { \n
                               rewrite ^\/*(.*) \/flower\/\$$1 permanent;\n
                           }\n
                           if (\$$http_referer = \$$scheme:\/\/\$$host\/visualizer) {\n
@@ -267,10 +279,7 @@ services:
                           if (\$$http_referer = \$$scheme:\/\/\$$host\/rabbitmq) {\n
                               rewrite ^(.*)\$$ \/rabbitmq\/\$$1;\n
                           }\n
-                          location \/airflow {\n
-                              proxy_set_header Host \$$host;\n
-                              proxy_set_header X-Real-IP \$$remote_addr;\n
-                              proxy_set_header X-Forwarded-For \$$proxy_add_x_forwarded_for;\n
+                          location ^~ \/airflow\/ {\n
                               proxy_redirect http:\/\/\$$host \$$scheme:\/\/\$$host;\n
                               proxy_pass http:\/\/webserver:8080\/;\n
                           }\n
@@ -279,9 +288,6 @@ services:
                               sub_filter_once off;\n
                               sub_filter_types application\/javascript;\n
                               sub_filter active_page(' active_page('\/flower;\n
-                              proxy_set_header Host \$$host;\n
-                              proxy_set_header X-Real-IP \$$remote_addr;\n
-                              proxy_set_header X-Forwarded-For \$$proxy_add_x_forwarded_for;\n
                               proxy_redirect http:\/\/\$$host \$$scheme:\/\/\$$host;\n
                               proxy_pass http:\/\/flower:5555\/;\n
                           }\n
