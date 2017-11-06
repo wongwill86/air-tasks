@@ -303,7 +303,7 @@ services:
                               sub_filter_last_modified on;\n
                               sub_filter_once off;\n
                               sub_filter_types application\/javascript;\n
-                              sub_filter active_page(' active_page('\/flower;\n
+                              sub_filter \\\"url_prefix() +\\\" \\\"'\/flower' +\\\";\n
                               proxy_redirect http:\/\/\$$host \$$scheme:\/\/\$$host;\n
                               proxy_pass http:\/\/flower:5555\/;\n
                           }\n
