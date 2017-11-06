@@ -243,6 +243,12 @@ services:
                   -e \"\$$s/}/
                       client_body_in_file_only on;\n
                       error_log \/var\/log\/error.log;\n
+                      gzip  on;\n
+                      gzip_vary on;\n
+                      gzip_min_length 10240;\n
+                      gzip_proxied expired no-cache no-store private auth;\n
+                      gzip_types text\/plain text\/css text\/xml text\/javascript application\/x-javascript application\/xml;\n
+                      gzip_disable \\\"MSIE [1-6]\.\\\";\n
                       server {\n
                           listen 80;\n
                           listen 443;\n
@@ -253,31 +259,41 @@ services:
                           proxy_set_header X-Real-IP \$$remote_addr;\n
                           proxy_set_header X-Forwarded-For \$$proxy_add_x_forwarded_for;\n
                           add_header Mything \$$request_uri;\n
-                          if (\$$http_referer ~* \\\"\/airflow\/.*\\\") {\n
+                          if (\$$http_referer ~* \\\"\/airflow\/*.*\\\") {\n
                               set \$$is_airflow \\\"A\\\";\n
                           }\n
-                          if (\$$request_uri !~* airflow\/.*) {\n
+                          if (\$$request_uri !~* ^\/airflow\/.*) {\n
                               set \$$is_airflow \\\"\$${is_airflow}B\\\";\\n
                           }\n
-                          if (\$$request_uri ~* dag_stats.*) {\n
-                          }\n
-                          if (\$$is_airflow ~* (AB|ABC)) { \n
+                          if (\$$is_airflow ~* AB) { \n
                               rewrite ^\/*(.*) \/airflow\/\$$1 permanent;\n
                           }\n
-                          if (\$$http_referer ~* \\\".*\/flower\/*\\\") {\n
+                          if (\$$http_referer ~* \\\".*\/flower\/*.*\\\") {\n
                               set \$$is_flower \\\"A\\\";\n
                           }\n
-                          if (\$$request_uri !~* flower\/.*) {\n
+                          if (\$$request_uri !~* ^\/flower\/.*) {\n
                               set \$$is_flower \\\"\$${is_flower}B\\\";\\n
                           }\n
                           if (\$$is_flower = AB) { \n
                               rewrite ^\/*(.*) \/flower\/\$$1 permanent;\n
                           }\n
-                          if (\$$http_referer = \$$scheme:\/\/\$$host\/visualizer) {\n
-                              rewrite ^(.*)\$$ \/visualizer\/\$$1;\n
+                          if (\$$http_referer ~* \\\".*\/visualizer\/*.*\\\") {\n
+                              set \$$is_visualizer \\\"A\\\";\n
                           }\n
-                          if (\$$http_referer = \$$scheme:\/\/\$$host\/rabbitmq) {\n
-                              rewrite ^(.*)\$$ \/rabbitmq\/\$$1;\n
+                          if (\$$request_uri !~* ^\/visualizer\/.*) {\n
+                              set \$$is_visualizer \\\"\$${is_visualizer}B\\\";\\n
+                          }\n
+                          if (\$$is_visualizer = AB) { \n
+                              rewrite ^\/*(.*) \/visualizer\/\$$1 permanent;\n
+                          }\n
+                          if (\$$http_referer ~* \\\".*\/rabbitmq\/*.*\\\") {\n
+                              set \$$is_rabbitmq \\\"A\\\";\n
+                          }\n
+                          if (\$$request_uri !~* ^\/rabbitmq\/.*) {\n
+                              set \$$is_rabbitmq \\\"\$${is_rabbitmq}B\\\";\\n
+                          }\n
+                          if (\$$is_rabbitmq = AB) { \n
+                              rewrite ^\/*(.*) \/rabbitmq\/\$$1 permanent;\n
                           }\n
                           location ^~ \/airflow\/ {\n
                               proxy_redirect http:\/\/\$$host \$$scheme:\/\/\$$host;\n
@@ -291,19 +307,19 @@ services:
                               proxy_redirect http:\/\/\$$host \$$scheme:\/\/\$$host;\n
                               proxy_pass http:\/\/flower:5555\/;\n
                           }\n
-                          location \/visualizer {\n
+                          location ^~ \/visualizer\/ {\n
                               proxy_set_header Host \$$host;\n
                               proxy_set_header X-Real-IP \$$remote_addr;\n
                               proxy_set_header X-Forwarded-For \$$proxy_add_x_forwarded_for;\n
                               proxy_redirect http:\/\/\$$host \$$scheme:\/\/\$$host;\n
                               proxy_pass http:\/\/visualizer:8080\/;\n
                           }\n
-                          location \/rabbitmq {\n
+                          location ^~ \/rabbitmq\/ {\n
                               proxy_set_header X-Real-IP \$$remote_addr;\n
                               proxy_set_header X-Forwarded-For \$$proxy_add_x_forwarded_for;\n
                               proxy_set_header Host \$$http_host;\n
                               proxy_pass http:\/\/rabbitmq:15672\/;\n
-                              proxy_redirect off;
+                              proxy_redirect off;\n
                           }\n
                       }\n
                       server {\n
