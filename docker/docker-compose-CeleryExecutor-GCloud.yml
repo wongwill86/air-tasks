@@ -181,8 +181,8 @@ services:
         environment:
             BASIC_AUTH_USERNAME_FILE: /run/secrets/basic_auth_username
             BASIC_AUTH_PASSWORD_FILE: /run/secrets/basic_auth_password
-        volumes:
-            - ../secrets:/run/secrets/
+        #volumes:
+            #- ../secrets:/run/secrets/
         command:
             sh -c "apk update && apk add apache2-utils &&
             BASIC_AUTH_USERNAME=$$(cat /$$BASIC_AUTH_USERNAME_FILE) &&
@@ -192,16 +192,15 @@ services:
                    htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $${BASIC_AUTH_PASSWORD} ||
             AUTH_BASIC_STRING=off &&
             [ -f \"/run/secrets/ssl_certificate\" ] &&
-                   SSL_BLOCK=\"ssl_certificate \/run\/secrets\/ssl_certificate;\\n
-                    ssl_certificate_key \/run\/secrets\/ssl_certificate_key;\\n
+                   SSL_BLOCK=\"ssl_certificate \\/run\\/secrets\\/ssl_certificate;\\n
+                    ssl_certificate_key \\/run\\/secrets\\/ssl_certificate_key;\\n
                     ssl_session_cache  builtin:1000  shared:SSL:10m;\\n
                     ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;\\n
-                    ssl on;\" 
+                    ssl on;\" ||
             SSL_BLOCK=\"ssl off;\" && 
             echo $$SSL_BLOCK && 
             sed -i -e \"s/include \\/etc\\/nginx\\/conf\\.d\\/\\*\.conf;//\" 
             -e \"\\$$s/}/
-                client_body_in_file_only on;\\n
                 error_log \\/var\\/log\\/error.log;\\n
                 gzip  on;\\n
                 gzip_vary on;\\n
@@ -218,7 +217,6 @@ services:
                     proxy_set_header Host \\$$host;\\n
                     proxy_set_header X-Real-IP \\$$remote_addr;\\n
                     proxy_set_header X-Forwarded-For \\$$proxy_add_x_forwarded_for;\\n
-                    add_header Mything \\$$request_uri;\\n
                     if (\\$$http_referer ~* \\\"\\/airflow\\/*.*\\\") {\\n
                         set \\$$is_airflow \\\"A\\\";\\n
                     }\\n
@@ -281,8 +279,8 @@ services:
         secrets:
             - basic_auth_username
             - basic_auth_password
-            #- ssl_certificate
-            #- ssl_certificate_key
+            - ssl_certificate
+            - ssl_certificate_key
 
     add-secrets:
         image: wongwill86/air-tasks:latest
