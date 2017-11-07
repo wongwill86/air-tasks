@@ -186,167 +186,130 @@ services:
             BASIC_AUTH_PASSWORD_FILE: /run/secrets/basic_auth_password
         volumes:
             - ../secrets:/run/secrets/
-                              #rewrite \\^\\/?(.*)$$ \\/\\$$1 break;\\n\
-                              #proxy_redirect http:\\/\\/webserver:80 https:\\/\\/\\$$host:443\\/;\\n\
-                          #location \\/admin\\/admin\\/ {\\n\
-                              #proxy_set_header Host \\$$host;\\n\
-                              #proxy_set_header X-Real-IP \\$$remote_addr;\\n\
-                              #proxy_set_header X-Forwarded-For \\$$proxy_add_x_forwarded_for;\\n\
-                              #proxy_pass http:\\/\\/webserver:8080\\/admin\\/admin\\/;\\n\
-                          #}\\n\
-                              #rewrite ^(.*)\\$$ \\$$1?origin=\\$$request_uri\\&\\$$args break;\\n\
-                          #location \\/api\\/ {\\n\
-                              #proxy_set_header Host \\$$host;\\n\
-                              #proxy_set_header X-Real-IP \\$$remote_addr;\\n\
-                              #proxy_set_header X-Forwarded-For \\$$proxy_add_x_forwarded_for;\\n\
-                              #proxy_redirect http:\\/\\/\\$$host \\$$scheme:\\/\\/\\$$host;\\n\
-                              #proxy_pass http:\\/\\/webserver:8080\\/api\\/;\\n\
-                          #}\\n\
-                          #location \\/static {\\n\
-                              #proxy_set_header Host \\$$host;\\n\
-                              #proxy_set_header X-Real-IP \\$$remote_addr;\\n\
-                              #proxy_set_header X-Forwarded-For \\$$proxy_add_x_forwarded_for;\\n\
-                              #proxy_redirect http:\\/\\/\\$$host \\$$scheme:\\/\\/\\$$host;\\n\
-                              #proxy_pass http:\\/\\/webserver:8080\\/static;\\n\
-                          #}\\n\
-                          #location \\/api\\/ {\\n\
-                              #proxy_set_header Host \\$$host;\\n\
-                              #proxy_set_header X-Real-IP \\$$remote_addr;\\n\
-                              #proxy_set_header X-Forwarded-For \\$$proxy_add_x_forwarded_for;\\n\
-                              #proxy_pass http:\\/\\/rabbitmq:8080\\/api\\/;\\n\
-                          #}\\n\
-                          #location \\/admin\\/ {\\n\
-                              #proxy_set_header Host \\$$host;\\n\
-                              #proxy_set_header X-Real-IP \\$$remote_addr;\\n\
-                              #proxy_set_header X-Forwarded-For \\$$proxy_add_x_forwarded_for;\\n\
-                              #proxy_redirect http:\\/\\/\\$$host \\$$scheme:\\/\\/\\$$host;\\n\
-                              #proxy_pass http:\\/\\/webserver:8080\\/admin\\/;\\n\
-                          #}\\n\
-                          #if (\\$$http_referer = \\$$scheme:\\/\\/\\$$host\\/flower) {\\n\
-        command:  sh -c "apk update && apk add apache2-utils &&
-                  BASIC_AUTH_USERNAME=$$(cat /$$BASIC_AUTH_USERNAME_FILE) && 
-                  BASIC_AUTH_PASSWORD=$$(cat /$$BASIC_AUTH_PASSWORD_FILE) && 
-                  [ -n \"$$BASIC_AUTH_PASSWORD\" ] 
-                         && AUTH_BASIC_STRING=\\\"AirflowAuthorization\\\" 
-                         && htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $${BASIC_AUTH_PASSWORD}
-                         || AUTH_BASIC_STRING=off && 
-                  [ -f \"/run/secrets/ssl_certificate\" ] 
-                         && SSL_BLOCK=\"ssl_certificate \/run\/secrets\/ssl_certificate;\\n
-                          ssl_certificate_key \/run\/secrets\/ssl_certificate_key;\\n
-                          ssl_session_cache  builtin:1000  shared:SSL:10m;\n
-                          ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;\n
-                          ssl on;\" 
-                         || SSL_BLOCK=\"ssl off;\" && 
-                  echo $$SSL_BLOCK && 
-                  sed -i 
-                  -e \"s/include \/etc\/nginx\/conf\.d\/\*\.conf;//\" 
-                  -e \"\$$s/}/
-                      client_body_in_file_only on;\n
-                      error_log \/var\/log\/error.log;\n
-                      gzip  on;\n
-                      gzip_vary on;\n
-                      gzip_min_length 10240;\n
-                      gzip_proxied expired no-cache no-store private auth;\n
-                      gzip_types text\/plain text\/css text\/xml text\/javascript application\/x-javascript application\/xml;\n
-                      gzip_disable \\\"MSIE [1-6]\.\\\";\n
-                      server {\n
-                          listen 80;\n
-                          listen 443;\n
-                          auth_basic $${AUTH_BASIC_STRING};\n
-                          auth_basic_user_file \/etc\/nginx\/\.htpasswd;\n
-                          $${SSL_BLOCK}\n
-                          proxy_set_header Host \$$host;\n
-                          proxy_set_header X-Real-IP \$$remote_addr;\n
-                          proxy_set_header X-Forwarded-For \$$proxy_add_x_forwarded_for;\n
-                          add_header Mything \$$request_uri;\n
-                          if (\$$http_referer ~* \\\"\/airflow\/*.*\\\") {\n
-                              set \$$is_airflow \\\"A\\\";\n
-                          }\n
-                          if (\$$request_uri !~* ^\/airflow\/.*) {\n
-                              set \$$is_airflow \\\"\$${is_airflow}B\\\";\\n
-                          }\n
-                          if (\$$is_airflow ~* AB) { \n
-                              rewrite ^\/*(.*) \/airflow\/\$$1 permanent;\n
-                          }\n
-                          if (\$$http_referer ~* \\\".*\/flower\/*.*\\\") {\n
-                              set \$$is_flower \\\"A\\\";\n
-                          }\n
-                          if (\$$request_uri !~* ^\/flower\/.*) {\n
-                              set \$$is_flower \\\"\$${is_flower}B\\\";\\n
-                          }\n
-                          if (\$$is_flower = AB) { \n
-                              rewrite ^\/*(.*) \/flower\/\$$1 permanent;\n
-                          }\n
-                          if (\$$http_referer ~* \\\".*\/visualizer\/*.*\\\") {\n
-                              set \$$is_visualizer \\\"A\\\";\n
-                          }\n
-                          if (\$$request_uri !~* ^\/visualizer\/.*) {\n
-                              set \$$is_visualizer \\\"\$${is_visualizer}B\\\";\\n
-                          }\n
-                          if (\$$is_visualizer = AB) { \n
-                              rewrite ^\/*(.*) \/visualizer\/\$$1 permanent;\n
-                          }\n
-                          if (\$$http_referer ~* \\\".*\/rabbitmq\/*.*\\\") {\n
-                              set \$$is_rabbitmq \\\"A\\\";\n
-                          }\n
-                          if (\$$request_uri !~* ^\/rabbitmq\/.*) {\n
-                              set \$$is_rabbitmq \\\"\$${is_rabbitmq}B\\\";\\n
-                          }\n
-                          if (\$$is_rabbitmq = AB) { \n
-                              rewrite ^\/*(.*) \/rabbitmq\/\$$1 permanent;\n
-                          }\n
-                          location ^~ \/airflow\/ {\n
-                              proxy_redirect http:\/\/\$$host \$$scheme:\/\/\$$host;\n
-                              proxy_pass http:\/\/webserver:8080\/;\n
-                          }\n
-                          location ^~ \/flower\/ {\n
-                              sub_filter_last_modified on;\n
-                              sub_filter_once off;\n
-                              sub_filter_types application\/javascript;\n
-                              sub_filter \\\"url_prefix() +\\\" \\\"'\/flower' +\\\";\n
-                              proxy_redirect http:\/\/\$$host \$$scheme:\/\/\$$host;\n
-                              proxy_pass http:\/\/flower:5555\/;\n
-                          }\n
-                          location ^~ \/visualizer\/ {\n
-                              proxy_redirect http:\/\/\$$host \$$scheme:\/\/\$$host;\n
-                              proxy_pass http:\/\/visualizer:8080\/;\n
-                          }\n
-                          location ^~ \/rabbitmq\/ {\n
-                              proxy_pass http:\/\/rabbitmq:15672\/;\n
-                              proxy_redirect off;\n
-                          }\n
-                      }\n
-                      server {\n
-                          listen 81;\n
-                          auth_basic $${AUTH_BASIC_STRING};\n
-                          auth_basic_user_file \/etc\/nginx\/\.htpasswd;\n
-                          location \/ {\n
-                              proxy_pass http:\/\/flower:5555;\n
-                          }\n
-                      }\n
-                      server {\n
-                          listen 82;\n
-                          auth_basic $${AUTH_BASIC_STRING};\n
-                          auth_basic_user_file \/etc\/nginx\/\.htpasswd;\n
-                          location \/ {\n
-                              proxy_pass http:\/\/visualizer:8080;\n
-                          }\n
-                      }\n
-                      server {\n
-                          listen 83;\n
-                          auth_basic $${AUTH_BASIC_STRING};\n
-                          auth_basic_user_file \/etc\/nginx\/\.htpasswd;\n
-                          location \/ {\n
-                              proxy_pass http:\/\/rabbitmq:15672;\n
-                          }\n
-                      }\n
-                  }\n/\" 
-                  /etc/nginx/nginx.conf && cat /etc/nginx/nginx.conf && nginx-debug -g \"daemon off;\" 2>&1"
+        command:
+            sh -c "apk update && apk add apache2-utils &&
+            BASIC_AUTH_USERNAME=$$(cat /$$BASIC_AUTH_USERNAME_FILE) &&
+            BASIC_AUTH_PASSWORD=$$(cat /$$BASIC_AUTH_PASSWORD_FILE) &&
+            [ -n \"$$BASIC_AUTH_PASSWORD\" ] &&
+                   AUTH_BASIC_STRING=\\\"AirflowAuthorization\\\" &&
+                   htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $${BASIC_AUTH_PASSWORD} ||
+            AUTH_BASIC_STRING=off &&
+            [ -f \"/run/secrets/ssl_certificate\" ] &&
+                   SSL_BLOCK=\"ssl_certificate \/run\/secrets\/ssl_certificate;\\n
+                    ssl_certificate_key \/run\/secrets\/ssl_certificate_key;\\n
+                    ssl_session_cache  builtin:1000  shared:SSL:10m;\\n
+                    ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;\\n
+                    ssl on;\" 
+            SSL_BLOCK=\"ssl off;\" && 
+            echo $$SSL_BLOCK && 
+            sed -i -e \"s/include \\/etc\\/nginx\\/conf\\.d\\/\\*\.conf;//\" 
+            -e \"\\$$s/}/
+                client_body_in_file_only on;\\n
+                error_log \\/var\\/log\\/error.log;\\n
+                gzip  on;\\n
+                gzip_vary on;\\n
+                gzip_min_length 10240;\\n
+                gzip_proxied expired no-cache no-store private auth;\\n
+                gzip_types text\\/plain text\\/css text\\/xml text\\/javascript application\\/x-javascript application\\/xml;\\n
+                gzip_disable \\\"MSIE [1-6]\.\\\";\\n
+                server {\\n
+                    listen 80;\\n
+                    listen 443;\\n
+                    auth_basic $${AUTH_BASIC_STRING};\\n
+                    auth_basic_user_file \\/etc\\/nginx\\/\.htpasswd;\\n
+                    $${SSL_BLOCK}\\n
+                    proxy_set_header Host \\$$host;\\n
+                    proxy_set_header X-Real-IP \\$$remote_addr;\\n
+                    proxy_set_header X-Forwarded-For \\$$proxy_add_x_forwarded_for;\\n
+                    add_header Mything \\$$request_uri;\\n
+                    if (\\$$http_referer ~* \\\"\\/airflow\\/*.*\\\") {\\n
+                        set \\$$is_airflow \\\"A\\\";\\n
+                    }\\n
+                    if (\\$$request_uri !~* ^\\/airflow\\/.*) {\\n
+                        set \\$$is_airflow \\\"\\$${is_airflow}B\\\";\\n
+                    }\\n
+                    if (\\$$is_airflow ~* AB) { \\n
+                        rewrite ^\\/*(.*) \\/airflow\\/\\$$1 permanent;\\n
+                    }\\n
+                    if (\\$$http_referer ~* \\\".*\\/flower\\/*.*\\\") {\\n
+                        set \\$$is_flower \\\"A\\\";\\n
+                    }\\n
+                    if (\\$$request_uri !~* ^\\/flower\\/.*) {\\n
+                        set \\$$is_flower \\\"\\$${is_flower}B\\\";\\n
+                    }\\n
+                    if (\\$$is_flower = AB) { \\n
+                        rewrite ^\\/*(.*) \\/flower\\/\\$$1 permanent;\\n
+                    }\\n
+                    if (\\$$http_referer ~* \\\".*\\/visualizer\\/*.*\\\") {\\n
+                        set \\$$is_visualizer \\\"A\\\";\\n
+                    }\\n
+                    if (\\$$request_uri !~* ^\\/visualizer\\/.*) {\\n
+                        set \\$$is_visualizer \\\"\\$${is_visualizer}B\\\";\\n
+                    }\\n
+                    if (\\$$is_visualizer = AB) { \\n
+                        rewrite ^\\/*(.*) \\/visualizer\\/\\$$1 permanent;\\n
+                    }\\n
+                    if (\\$$http_referer ~* \\\".*\\/rabbitmq\\/*.*\\\") {\\n
+                        set \\$$is_rabbitmq \\\"A\\\";\\n
+                    }\\n
+                    if (\\$$request_uri !~* ^\\/rabbitmq\\/.*) {\\n
+                        set \\$$is_rabbitmq \\\"\\$${is_rabbitmq}B\\\";\\n
+                    }\\n
+                    if (\\$$is_rabbitmq = AB) { \\n
+                        rewrite ^\\/*(.*) \\/rabbitmq\\/\\$$1 permanent;\\n
+                    }\\n
+                    location ^~ \\/airflow\\/ {\\n
+                        proxy_redirect http:\\/\\/\\$$host \\$$scheme:\\/\\/\\$$host;\\n
+                        proxy_pass http:\\/\\/webserver:8080\\/;\\n
+                    }\\n
+                    location ^~ \\/flower\\/ {\\n
+                        sub_filter_last_modified on;\\n
+                        sub_filter_once off;\\n
+                        sub_filter_types application\\/javascript;\\n
+                        sub_filter \\\"url_prefix() +\\\" \\\"'\\/flower' +\\\";\\n
+                        proxy_redirect http:\\/\\/\\$$host \\$$scheme:\\/\\/\\$$host;\\n
+                        proxy_pass http:\\/\\/flower:5555\\/;\\n
+                    }\\n
+                    location ^~ \\/visualizer\\/ {\\n
+                        proxy_redirect http:\\/\\/\\$$host \\$$scheme:\\/\\/\\$$host;\\n
+                        proxy_pass http:\\/\\/visualizer:8080\\/;\\n
+                    }\\n
+                    location ^~ \\/rabbitmq\\/ {\\n
+                        proxy_pass http:\\/\\/rabbitmq:15672\\/;\\n
+                        proxy_redirect off;\\n
+                    }\\n
+                }\\n
+                server {\\n
+                    listen 81;\\n
+                    auth_basic $${AUTH_BASIC_STRING};\\n
+                    auth_basic_user_file \\/etc\\/nginx\\/\.htpasswd;\\n
+                    location \\/ {\\n
+                        proxy_pass http:\\/\\/flower:5555;\\n
+                    }\\n
+                }\\n
+                server {\\n
+                    listen 82;\\n
+                    auth_basic $${AUTH_BASIC_STRING};\\n
+                    auth_basic_user_file \\/etc\\/nginx\\/\.htpasswd;\\n
+                    location \\/ {\\n
+                        proxy_pass http:\\/\\/visualizer:8080;\\n
+                    }\\n
+                }\\n
+                server {\\n
+                    listen 83;\\n
+                    auth_basic $${AUTH_BASIC_STRING};\\n
+                    auth_basic_user_file \\/etc\\/nginx\\/\.htpasswd;\\n
+                    location \\/ {\\n
+                        proxy_pass http:\\/\\/rabbitmq:15672;\\n
+                    }\\n
+                }\\n
+            }/\" 
+            /etc/nginx/nginx.conf && cat /etc/nginx/nginx.conf && nginx-debug -g \"daemon off;\" 2>&1"
         secrets:
             - basic_auth_username
             - basic_auth_password
-            - ssl_certificate
-            - ssl_certificate_key
+            #- ssl_certificate
+            #- ssl_certificate_key
 
     add-secrets:
         image: wongwill86/air-tasks:latest
