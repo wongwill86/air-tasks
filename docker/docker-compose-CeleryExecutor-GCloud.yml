@@ -170,9 +170,6 @@ services:
         ports:
             - "80:80"
             - "443:443"
-            - "4000:81"
-            - "82:82"
-            - "4001:83"
         depends_on:
             - webserver
             - flower
@@ -277,30 +274,6 @@ services:
                     location ^~ \\/rabbitmq\\/ {\\n
                         proxy_pass http:\\/\\/rabbitmq:15672\\/;\\n
                         proxy_redirect off;\\n
-                    }\\n
-                }\\n
-                server {\\n
-                    listen 81;\\n
-                    auth_basic $${AUTH_BASIC_STRING};\\n
-                    auth_basic_user_file \\/etc\\/nginx\\/\.htpasswd;\\n
-                    location \\/ {\\n
-                        proxy_pass http:\\/\\/flower:5555;\\n
-                    }\\n
-                }\\n
-                server {\\n
-                    listen 82;\\n
-                    auth_basic $${AUTH_BASIC_STRING};\\n
-                    auth_basic_user_file \\/etc\\/nginx\\/\.htpasswd;\\n
-                    location \\/ {\\n
-                        proxy_pass http:\\/\\/visualizer:8080;\\n
-                    }\\n
-                }\\n
-                server {\\n
-                    listen 83;\\n
-                    auth_basic $${AUTH_BASIC_STRING};\\n
-                    auth_basic_user_file \\/etc\\/nginx\\/\.htpasswd;\\n
-                    location \\/ {\\n
-                        proxy_pass http:\\/\\/rabbitmq:15672;\\n
                     }\\n
                 }\\n
             }/\" 
