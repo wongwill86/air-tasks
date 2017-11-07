@@ -29,13 +29,15 @@ DooD support and AWS ECR Credential Helper
 4. Run [Tests](#testing)
 
 ## Debug tools:
-[localhost:80](http://localhost) - Airflow Webserver
+[AirFlow](http://localhost) - Airflow Webserver
 
-[localhost:81](http://localhost) - Celery Flower (Monitor Workers)
+[Celery Flower](http://localhost/flower) - Monitor Workers
 
-[localhost:82](http://localhost) - Swarm Visualizer (Visualize Stack Deployment)
+[Swarm Visualizer](http://localhost/visualizer) - Visualize Stack Deployment
 
-[localhost:83](http://localhost) - RabbitMQ Management Plugin (Queue Info)
+[RabbitMQ](http://localhost/rabbitmq) - RabbitMQ Management Plugin (Queue Info)
+
+Note: if running with ssl, use https: instead of http
 
 ## Setup:
 1. Install docker
@@ -56,6 +58,8 @@ docker-compose -f docker/docker-compose-CeleryExecutor.yml up -d
 ```
 echo '<blank or username here>' | docker secret create basic_auth_username -
 echo '<blank or password here>' | docker secret create basic_auth_password -
+echo '<blank ssl certificate here>' | docker secret create ssl_certificate -
+echo '<blank ssl certificate key here>' | docker secret create ssl_certificate_key -
 docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
 ```
 ### Testing

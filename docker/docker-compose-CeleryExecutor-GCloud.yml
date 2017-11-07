@@ -178,20 +178,17 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
-        environment:
-            BASIC_AUTH_USERNAME_FILE: /run/secrets/basic_auth_username
-            BASIC_AUTH_PASSWORD_FILE: /run/secrets/basic_auth_password
         #volumes:
             #- ../secrets:/run/secrets/
         command:
             sh -c "apk update && apk add apache2-utils &&
-            BASIC_AUTH_USERNAME=$$(cat /$$BASIC_AUTH_USERNAME_FILE) &&
-            BASIC_AUTH_PASSWORD=$$(cat /$$BASIC_AUTH_PASSWORD_FILE) &&
+            BASIC_AUTH_PASSWORD=$$(cat /run/secrets/basic_auth_password) &&
             [ -n \"$$BASIC_AUTH_PASSWORD\" ] &&
                    AUTH_BASIC_STRING=\\\"AirflowAuthorization\\\" &&
-                   htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $${BASIC_AUTH_PASSWORD} ||
+                   htpasswd -b -c /etc/nginx/.htpasswd $${BASIC_AUTH_USERNAME} $$(cat /run/secrets/basic_auth_username) ||
             AUTH_BASIC_STRING=off &&
-            [ -f \"/run/secrets/ssl_certificate\" ] &&
+            SSL_CERTIFICATE=$$(cat /run/secrets/ssl_certificate) &&
+            [ -n \"$$SSL_CERTIFICATE\" ] &&
                    SSL_BLOCK=\"ssl_certificate \\/run\\/secrets\\/ssl_certificate;\\n
                     ssl_certificate_key \\/run\\/secrets\\/ssl_certificate_key;\\n
                     ssl_session_cache  builtin:1000  shared:SSL:10m;\\n
@@ -253,6 +250,9 @@ services:
                     if (\\$$is_rabbitmq = AB) { \\n
                         rewrite ^\\/*(.*) \\/rabbitmq\\/\\$$1 permanent;\\n
                     }\\n
+                    location \\/ {\\n
+                        rewrite . \\/airflow\\/admin\\/ permanent;\\n
+                    }\\n
                     location ^~ \\/airflow\\/ {\\n
                         proxy_redirect http:\\/\\/\\$$host \\$$scheme:\\/\\/\\$$host;\\n
                         proxy_pass http:\\/\\/webserver:8080\\/;\\n
@@ -274,8 +274,11 @@ services:
                         proxy_redirect off;\\n
                     }\\n
                 }\\n
-            }/\" 
-            /etc/nginx/nginx.conf && cat /etc/nginx/nginx.conf && nginx-debug -g \"daemon off;\" 2>&1"
+            }/\" /etc/nginx/nginx.conf &&
+            unset BASIC_AUTH_PASSWORD &&
+            unset BASIC_AUTH_USERNAME &&
+            unset SSL_CERTIFICATE &&
+            nginx-debug -g \"daemon off;\" 2>&1"
         secrets:
             - basic_auth_username
             - basic_auth_password
