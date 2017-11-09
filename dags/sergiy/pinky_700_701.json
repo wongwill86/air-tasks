@@ -15,7 +15,7 @@
 	"params":{
 		"mesh":{
 			"z_start": 700,
-			"z_stop": 701,
+			"z_stop": 710,
 			"mesh_length": 1000
 		},
 		"match":{

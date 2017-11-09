@@ -23,30 +23,34 @@ matching_dag = DAG(
     schedule_interval=None
 )
 
-params_file   = "./dags/sergiy/pinky_700_701.json"
-params = json.loads(params_file)
+params_file   = "./dags/sergiy/drosophila.json"
+
+with open(params_file) as f:
+    params = json.load(f)
 
 z_start = params["params"]["mesh"]["z_start"]
-z_end   = params["params"]["mesh"]["z_end"]
-z_range = range(z_start, z_end)
+z_stop  = params["params"]["mesh"]["z_stop"]
+z_range = range(z_start, z_stop + 1)
 
 # [1, 2, 3] -> [(1,2), (2,3)]
 section_pairs = zip(z_range, z_range[1:])
 
 nodes = []
 for zs in section_pairs:
-    subtask_name = str(zs)
+    subtask_name = "{}-{}".format(zs[0], zs[1])
     subtask_params = copy.deepcopy(params)
-    subtask_params["params"]["mesh"]["z_start"] = zs[0]
-    subtask_params["params"]["mesh"]["z_end"]   = zs[1]
-    subtask_params_str = json.dumps(subtask_params).replace("'", "\\'").replace('"', '\\"')
 
+    subtask_params["params"]["mesh"]["z_start"] = zs[0]
+    subtask_params["params"]["mesh"]["z_stop"]  = zs[1]
+
+    subtask_params_str = json.dumps(subtask_params).replace("'", "\\'").replace('"', '\\"')
     nodes.append(DockerWithVariablesOperator(
             ["google-secret.json"],
             mount_point="/root/.cloudvolume/secrets/",
             task_id=subtask_name,
-            command='/bin/bash -c "echo \'{}\' > /clients/params.json;'.format(subtask_params_str),
-                    #julia /clients/match_client.jl /clients/params.json;"'.format(),
+            command='/bin/bash -c "echo \'{}\' > /tasks/params.json; \
+                    julia /tasks/match_task.jl /tasks/params.json 4;"'.format(subtask_params_str),
+                    #cat /clients/params.json;"'.format(subtask_params_str),
             default_args=default_args,
             image="sergiypopo/alembic",
             dag=matching_dag
