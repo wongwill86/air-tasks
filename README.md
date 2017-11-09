@@ -89,6 +89,7 @@ docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pyl
 	```
 2. Install [Gcloud](https://cloud.google.com/sdk/downloads)
 3. Optional: configure yaml (cloud/latest/swarm/google/cloud-deployment.yaml)
+4. Deploy on gcloud
 	```
 	gcloud deployment-manager deployments create <deployment name> --config cloud/latest/swarm/google/cloud-deployment.yaml
 	```
