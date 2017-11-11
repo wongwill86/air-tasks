@@ -52,7 +52,7 @@ for zs in section_pairs:
                     julia /tasks/match_task.jl /tasks/params.json 4;"'.format(subtask_params_str),
                     #cat /clients/params.json;"'.format(subtask_params_str),
             default_args=default_args,
-            image="sergiypopo/alembic:julia_mkl_n1",
+            image="sergiypopo/alembic:generic",
             dag=matching_dag
         )
     )
