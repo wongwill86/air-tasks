@@ -58,7 +58,8 @@ set docker_compose_command='docker-compose -f ' +
 {%
 set docker_infrakit_command='docker run --rm \
 -v /var/run/docker.sock:/var/run/docker.sock -v /infrakit/:/infrakit \
--e INFRAKIT_HOME=/infrakit -e INFRAKIT_PLUGINS_DIR=/infrakit/plugins ${INFRAKIT_IMAGE} infrakit'
+-e INFRAKIT_HOME=/infrakit -e INFRAKIT_PLUGINS_DIR=/infrakit/plugins \
+-e INFRAKIT_HOST=manager-cluster ${INFRAKIT_IMAGE} infrakit'
 %}
 if mount | grep '{{conf.get('core', 'airflow_home')}}/[dags|plugins]' > /dev/null; then
     echo 'Dag folder or plugin folder is mounted! Will not autoscale!'
