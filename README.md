@@ -1,6 +1,52 @@
-# air-tasks
+# Air-Tasks, a Distributed Task Workflow Management System.
 
-DooD support and AWS ECR Credential Helper
+Air-Tasks is a curated set of tools to enable distributed task processing.
+
+Tools leveraged:
+[Airflow](https://github.com/apache/incubator-airflow): Task Workflow Engine
+[Docker Swarm](https://docs.docker.com/engine/swarm/): Container Orchestration
+[Docker Infrakit](https://github.com/docker/infrakit): Infrastructure Orchestration to deploy on the cloud
+
+
+Note: This project builds off of the docker image provided by https://github.com/puckel/docker-airflow and infrakit examples https://github.com/infrakit/examples
+
+## Concepts:
+
+### Tasks
+Tasks are defined as independent and stateless units of work. They should be assumed to operate in isolated and clean environments. A task is described by creating an (Airflow Operator)[https://airflow.apache.org/concepts.html#operators]
+Airflow provides many operators such as for calling bash scripts, python scripts, and even calling Docker images.
+
+If your tasks requires significant amount of environment setup, please consider incorporating your library into it's own Docker image so not to pollute the environment of other tasks.
+
+### DAG
+Directed Acyclic Graph (DAG)[https://airflow.apache.org/concepts.html#dags] is used to describe a group of tasks that may or may not have dependencies. The nodes of this graph are the tasks and the edges describe the dependencies between them. A DAG is described by creating an (Airflow DAG)[https://airflow.apache.org/concepts.html#dags]. Edges are created by setting `task.set_upstream` or task.set_downstream`.
+
+See examples from https://github.com/wongwill86/air-tasks/tree/master/dags/examples
+
+#### Useful(?) Patterns
+See examples from https://github.com/wongwill86/air-tasks/tree/master/dags/examples
+
+##### Standard
+Create a one shot dag that is only run when manually triggered:
+see https://github.com/wongwill86/air-tasks/blob/master/dags/examples/interleaved.py
+
+This should be the most common use case. Should fit most use cases.
+
+##### Unbounded
+Two separate DAGS are created:
+1. Listener DAG. Listens for command to be triggered with parameters
+2. Trigger DAG. Dynamically create a list of parameters to trigger the Listener DAG
+see https://github.com/wongwill86/air-tasks/blob/master/dags/examples/multi_trigger.py
+
+This should be avoided if possible since there is no good way to set fan-in dependencies for the listener DAG (possible but probably very hacky)
+
+### Hierarchy of Services:
+Infrastructure
+
+### Compose File
+See https://github.com/wongwill86/air-tasks/blob/master/docker/docker-compose-CeleryExecutor.yml
+
+This is a description of all the services for (docker-compose)[https://docs.docker.com/compose/compose-file/]. This file includes all the services required to start up your containers.
 
 ## How to develop:
 
