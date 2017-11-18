@@ -1,11 +1,11 @@
-# Air-Tasks, a Distributed Task Workflow Management System.
+# Air-Tasks, a Distributed Task Workflow Management System
 
-Air-Tasks is a curated set of tools to enable distributed task processing.
+Curated set of tools to enable distributed task processing.
 
 Tools leveraged:
-[Airflow](https://github.com/apache/incubator-airflow): Task Workflow Engine
-[Docker Swarm](https://docs.docker.com/engine/swarm/): Container Orchestration
-[Docker Infrakit](https://github.com/docker/infrakit): Infrastructure Orchestration to deploy on the cloud
+* [Airflow](https://github.com/apache/incubator-airflow): Task Workflow Engine
+* [Docker Swarm](https://docs.docker.com/engine/swarm/): Container Orchestration
+* [Docker Infrakit](https://github.com/docker/infrakit): Infrastructure Orchestration to deploy on the cloud
 
 
 Note: This project builds off of the docker image provided by https://github.com/puckel/docker-airflow and infrakit examples https://github.com/infrakit/examples
@@ -13,7 +13,7 @@ Note: This project builds off of the docker image provided by https://github.com
 ## Concepts:
 
 ### Tasks
-Tasks are defined as independent and stateless units of work. A task is described by creating an (Airflow Operator)[https://airflow.apache.org/concepts.html#operators]
+Tasks are defined as independent and stateless units of work. A task is described by creating an [Airflow Operator](https://airflow.apache.org/concepts.html#operators)
 Airflow provides many operators function such as calling bash scripts, python scripts, and even calling Docker images.
 
 There is no guarantee that related tasks will be run on the same machine/environment. It is preferrable to use docker containers for your tasks to isolate the runtime environment and prevent polluting the environment of other tasks.
@@ -21,9 +21,9 @@ There is no guarantee that related tasks will be run on the same machine/environ
 When a task is being scheduled to run, a `task_instance` is created.
 
 ### DAG
-A Directed Acyclic Graph (DAG) is a static set of repeatable tasks operators that are invoked automatically or manually. DAGs are described in (Airflow DAGS) [https://airflow.apache.org/concepts.html#dags]. The nodes of this graph are the task operators and the edges describe the dependencies between them. Edges are created by setting `task.set_upstream` or `task.set_downstream` to and from each task operator.
+A Directed Acyclic Graph (DAG) is a static set of repeatable tasks operators that are invoked automatically or manually. DAGs are described in [ Airflow DAGS ]( https://airflow.apache.org/concepts.html#dags ). The nodes of this graph are the task operators and the edges describe the dependencies between them. Edges are created by setting `task.set_upstream` or `task.set_downstream` to and from each task operator.
 
-It should be assumed that the size of a dag is immutable ( actually its not but it gets really messy if you modify it ). DAGS themselves can also be invoked using parameters. See (example_trigger_target_dag)[https://github.com/apache/incubator-airflow/blob/master/airflow/example_dags/example_trigger_target_dag.py].
+It should be assumed that the size of a dag is immutable ( actually its not but it gets really messy if you modify it ). DAGS themselves can also be invoked using parameters. See [ example_trigger_target_dag ](https://github.com/apache/incubator-airflow/blob/master/airflow/example_dags/example_trigger_target_dag.py).
 
 When a DAG is being scheduled to run, a `dag_run` is created.
 
@@ -53,14 +53,14 @@ see https://github.com/wongwill86/air-tasks/blob/master/dags/examples/multi_trig
 This should be avoided if possible since there is no good way to set fan-in dependencies for the listener DAG (possible but probably very hacky)
 
 ### Variables
-These are global variables that can be set to be made available for all tasks. see (Variables)[https://airflow.apache.org/concepts.html#variables]
+These are global variables that can be set to be made available for all tasks. see [ Variables ]( https://airflow.apache.org/concepts.html#variables )
 
 ### Compose File
 This file is a schedule of services necessary to start Air-tasks
 
 See https://github.com/wongwill86/air-tasks/blob/master/docker/docker-compose-CeleryExecutor.yml
 
-This is a description of all the services for (docker-compose)[https://docs.docker.com/compose/compose-file/]. This file includes all the services required to start up your containers.
+This is a description of all the services for [ docker-compose ]( https://docs.docker.com/compose/compose-file/ ). This file includes all the services required to start up your containers.
 
 #### Core Airflow Components
 ##### Postgres
