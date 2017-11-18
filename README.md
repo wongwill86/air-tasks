@@ -13,24 +13,36 @@ Note: This project builds off of the docker image provided by https://github.com
 ## Concepts:
 
 ### Tasks
-Tasks are defined as independent and stateless units of work. They should be assumed to operate in isolated and clean environments. A task is described by creating an (Airflow Operator)[https://airflow.apache.org/concepts.html#operators]
-Airflow provides many operators such as for calling bash scripts, python scripts, and even calling Docker images.
+Tasks are defined as independent and stateless units of work. A task is described by creating an (Airflow Operator)[https://airflow.apache.org/concepts.html#operators]
+Airflow provides many operators function such as calling bash scripts, python scripts, and even calling Docker images.
 
-If your tasks requires significant amount of environment setup, please consider incorporating your library into it's own Docker image so not to pollute the environment of other tasks.
+There is no guarantee that related tasks will be run on the same machine/environment. It is preferrable to use docker containers for your tasks to isolate the runtime environment and prevent polluting the environment of other tasks.
+
+When a task is being scheduled to run, a `task_instance` is created.
 
 ### DAG
-Directed Acyclic Graph (DAG)[https://airflow.apache.org/concepts.html#dags] is used to describe a group of tasks that may or may not have dependencies. The nodes of this graph are the tasks and the edges describe the dependencies between them. A DAG is described by creating an (Airflow DAG)[https://airflow.apache.org/concepts.html#dags]. Edges are created by setting `task.set_upstream` or task.set_downstream`.
+A Directed Acyclic Graph (DAG) is a static set of repeatable tasks operators that are invoked automatically or manually. DAGs are described in (Airflow DAGS) [https://airflow.apache.org/concepts.html#dags]. The nodes of this graph are the task operators and the edges describe the dependencies between them. Edges are created by setting `task.set_upstream` or `task.set_downstream` to and from each task operator.
+
+It should be assumed that the size of a dag is immutable ( actually its not but it gets really messy if you modify it ). DAGS themselves can also be invoked using parameters. See (example_trigger_target_dag)[https://github.com/apache/incubator-airflow/blob/master/airflow/example_dags/example_trigger_target_dag.py].
+
+When a DAG is being scheduled to run, a `dag_run` is created.
+
+DAGs can be triggered by using the web ui as well as from thhe bash terminal of any airflow container, i.e.
+```
+$ docker exec -it <air_flow container> bash
+$ airflow trigger_dag dag_id --conf '{"param_name":"param_value" }'
+```
+
+See more examples from https://github.com/wongwill86/air-tasks/tree/master/dags/examples
 
 See examples from https://github.com/wongwill86/air-tasks/tree/master/dags/examples
 
-#### Useful(?) Patterns
-See examples from https://github.com/wongwill86/air-tasks/tree/master/dags/examples
-
+#### Useful (maybe?) Patterns
 ##### Standard
 Create a one shot dag that is only run when manually triggered:
 see https://github.com/wongwill86/air-tasks/blob/master/dags/examples/interleaved.py
 
-This should be the most common use case. Should fit most use cases.
+This should be the most common use case. Should fit most needs.
 
 ##### Unbounded
 Two separate DAGS are created:
@@ -40,13 +52,47 @@ see https://github.com/wongwill86/air-tasks/blob/master/dags/examples/multi_trig
 
 This should be avoided if possible since there is no good way to set fan-in dependencies for the listener DAG (possible but probably very hacky)
 
-### Hierarchy of Services:
-Infrastructure
+### Variables
+These are global variables that can be set to be made available for all tasks. see (Variables)[https://airflow.apache.org/concepts.html#variables]
 
 ### Compose File
+This file is a schedule of services necessary to start Air-tasks
+
 See https://github.com/wongwill86/air-tasks/blob/master/docker/docker-compose-CeleryExecutor.yml
 
 This is a description of all the services for (docker-compose)[https://docs.docker.com/compose/compose-file/]. This file includes all the services required to start up your containers.
+
+#### Core Airflow Components
+##### Postgres
+Database for saving DAGs, DAG runs, Tasks, Task Instances, etc...
+##### RabbitMQ
+Internal queue service used to schedule tasks instances. Task instances are *only* scheduled when they are ready to run.
+##### Webserver
+Parses DAG python files and inserts them into the database.
+##### Scheduler
+Searches database for task_instances ready to run and places them in the queue.
+##### Flower
+Web UI monitoring of worker state and statistics
+##### Worker (worker-worker)
+Runs the task_instance
+#### Additional Components
+##### worker-manager
+Runs exclusively on Manager type instances. Runs tasks such as Autoscaling
+##### Visualizer
+Basic Docker Swarm container visualizing UI
+##### Proxy
+Reverse proxy for all web UI. Can be configured for basic auth and HTTPS
+#### add-secrets:
+Injects any specified secrets as a docker variable
+
+
+#### Architectural Concepts:
+####Infrastructure Orchestration
+[Docker Infrakit](https://github.com/docker/infrakit) to deploy into the cloud. Each manager and worker instance is defined 
+####Container Orchestration
+[Docker Swarm](https://docs.docker.com/engine/swarm/) 
+####Task Orchestration
+[Airflow](https://github.com/apache/incubator-airflow)
 
 ## How to develop:
 
