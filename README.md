@@ -30,11 +30,11 @@ There is no guarantee that related tasks will be run on the same machine/environ
 When a task is being scheduled to run, a `task_instance` is created.
 
 ### DAG
-A Directed Acyclic Graph (DAG) is a static set of repeatable tasks operators that are invoked automatically or manually. DAGs are described in [ Airflow DAGS ]( https://airflow.apache.org/concepts.html#dags ). The nodes of this graph are the task operators and the edges describe the dependencies between them. Edges are created by setting `operator.set_upstream` or `operator.set_downstream` to and from each task operator.
+A Directed Acyclic Graph (DAG) is a static set of repeatable tasks operators that are invoked automatically or manually. DAGs are described in [Airflow DAGS]( https://airflow.apache.org/concepts.html#dags ). The nodes of this graph are the task operators and the edges describe the dependencies between them. Edges are created by setting `operator.set_upstream` or `operator.set_downstream` to and from each task operator.
 
 It should be assumed that the size of a dag is immutable ( actually its not but it gets really messy if you modify it ). DAGS themselves can also be invoked using parameters.
 
-See [ example_trigger_target_dag ](https://github.com/apache/incubator-airflow/blob/master/airflow/example_dags/example_trigger_target_dag.py)
+See [example_trigger_target_dag](https://github.com/apache/incubator-airflow/blob/master/airflow/example_dags/example_trigger_target_dag.py)
 
 When a DAG is being scheduled to run, a `dag_run` is created.
 
@@ -66,14 +66,14 @@ This should be avoided if possible since there is no good way to set fan-in depe
 ### Variables
 These are global variables that all task operators can have access to.
 
-See [ Variables ]( https://airflow.apache.org/concepts.html#variables )
+See [Variables]( https://airflow.apache.org/concepts.html#variables )
 
 ### Compose File
 This file is a schedule of services necessary to start Air-tasks
 
 See https://github.com/wongwill86/air-tasks/blob/master/docker/docker-compose-CeleryExecutor.yml
 
-This is a description of all the services for [ docker-compose ]( https://docs.docker.com/compose/compose-file/ ).
+This is a description of all the services for [docker-compose]( https://docs.docker.com/compose/compose-file/ ).
 
 #### Core Components
 * **Postgres:** Database for saving DAGs, DAG runs, Tasks, Task Instances, etc...
@@ -98,18 +98,18 @@ Deployment of Air-Tasks can be split into 3 layers of abstraction:
 
 ### Container Orchestration
 
-[Docker Swarm](https://docs.docker.com/engine/swarm/) to join separate machines into a cluster. Docker managers are able to deploy and monitoring services. Services are defined in the [compose file](#compose-file). Manager nodes run all services except for worker-worker (this is done via deploy constraints using the engine label `infrakit-role=manager`).
+[Docker Swarm](https://docs.docker.com/engine/swarm/) to join separate machines into a cluster. Docker managers are able to deploy and monitoring services. Services are defined in the [compose file](#compose-file). Manager nodes run all services except for worker-worker. This is done via deploy constraints using the engine label `infrakit-role=manager`.
 
 ### Task Orchestration
 [Airflow](https://github.com/apache/incubator-airflow) tasks are run on worker-worker containers that in turn run on infrakit worker nodes.
 
 #### How a task is executed:
 1. Webserver parses python DAG file and inserts into database
-2. DAG is triggered either manually via web/cli or via cron job
+2. DAG is triggered either manually via web/cli or via cron schedule
 3. Scheduler creates `dag_runs` and `task_instances` for DAG
 4. Scheduler inserts any valid ready `task_instances` into the queue
-5. Worker instance processes tasks
-6. Worker instance writes back to queue and database indicating status as done
+5. Worker processes tasks
+6. Worker writes back to queue and database indicating status as done
 
 ### Autoscaling
 Air-Tasks is capable of autoscaling the cluster by monitoring the number of tasks ready to be executed (on the queue). This is done by careful coordination between the above 3 layers.
@@ -198,9 +198,9 @@ docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pyl
 	```
 	git submodule update --recursive --remote
 	```
-2. Install [Gcloud](https://cloud.google.com/sdk/downloads)
+2. Install [gcloud](https://cloud.google.com/sdk/downloads)
 3. Optional: configure yaml (cloud/latest/swarm/google/cloud-deployment.yaml)
-4. Deploy on gcloud
+4. Deploy using gcloud
 	```
 	gcloud deployment-manager deployments create <deployment name> --config cloud/latest/swarm/google/cloud-deployment.yaml
 	```
@@ -219,7 +219,7 @@ Note: if running with ssl, use https: instead of http
 ## Notes
 ### Mounting Secrets
 
-If your docker operator requires secrets, you can add them using [ Variables ]( https://airflow.apache.org/concepts.html#variables ). Then you can mount these secrets using [DockerWithVariablesOperator](https://github.com/wongwill86/air-tasks/blob/master/dags/examples/docker_with_variables.py). i.e.
+If your docker operator requires secrets, you can add them using [variables]( https://airflow.apache.org/concepts.html#variables ). Then you can mount these secrets using [DockerWithVariablesOperator](https://github.com/wongwill86/air-tasks/blob/master/dags/examples/docker_with_variables.py). i.e.
 
 ```
 start = DockerWithVariablesOperator(
@@ -247,5 +247,4 @@ To access a private AWS container registry, remember to set aws environment vari
 - AWS_SECRET_ACCESS_KEY
 - AWS_DEFAULT_REGION
 
-Docker login to AWS ECR will automatically set up.
-
+Docker login to AWS ECR will automatically be set up.
