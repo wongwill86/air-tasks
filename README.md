@@ -1,8 +1,8 @@
 # Air-Tasks
 
-Distributed Task Workflow Management System
+A curated set of tools for managing distributed task workflows.
 
-**Tools leveraged**
+## Tools leveraged
 * [Airflow](https://github.com/apache/incubator-airflow): Task Workflow Engine
 * [Docker Swarm](https://docs.docker.com/engine/swarm/): Container Orchestration
 * [Docker Infrakit](https://github.com/docker/infrakit): Infrastructure Orchestration to deploy on the cloud
@@ -10,7 +10,7 @@ Distributed Task Workflow Management System
 
 Note: This project builds off of the docker image provided by https://github.com/puckel/docker-airflow and infrakit examples https://github.com/infrakit/examples
 
-**Table of Contents**
+## Table of Contents
 - [Core Concepts](#core-concepts)
 - [Architectural Concepts](#architectural-concepts)
 - [Setup](#setup)
