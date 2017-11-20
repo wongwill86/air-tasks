@@ -1,6 +1,6 @@
-# Air-Tasks, a Distributed Task Workflow Management System
+# Air-Tasks
 
-Curated set of tools to enable distributed task processing.
+Distributed Task Workflow Management System
 
 **Tools leveraged**
 * [Airflow](https://github.com/apache/incubator-airflow): Task Workflow Engine
