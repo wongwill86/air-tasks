@@ -215,6 +215,18 @@ docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pyl
 	gcloud deployment-manager deployments create <deployment name> --config cloud/latest/swarm/google/cloud-deployment.yaml
 	```
 
+## Debug Tools
+[AirFlow](http://localhost) - Airflow Webserver
+
+[Celery Flower](http://localhost/flower) - Monitor Workers
+
+[Swarm Visualizer](http://localhost/visualizer) - Visualize Stack Deployment
+
+[RabbitMQ](http://localhost/rabbitmq) - RabbitMQ Management Plugin (Queue Info)
+
+Note: if running with ssl, use https: instead of http
+
+## Notes
 ### Mounting secrets
 
 If your docker operator requires secrets, you can add them using [ Variables ]( https://airflow.apache.org/concepts.html#variables ). Then you can mount these secrets using [DockerWithVariablesOperator](https://github.com/wongwill86/air-tasks/blob/master/dags/examples/docker_with_variables.py). i.e.
@@ -238,17 +250,12 @@ Sometimes you may need to make operators that will be useful for others. These c
 
 See https://github.com/wongwill86/air-tasks/blob/master/plugins/custom/docker.py
 
-## Debug Tools
-[AirFlow](http://localhost) - Airflow Webserver
+### AWS ECR Access
 
-[Celery Flower](http://localhost/flower) - Monitor Workers
+To access a private AWS container registry, remember to set aws environment variables such as:
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_DEFAULT_REGION
 
-[Swarm Visualizer](http://localhost/visualizer) - Visualize Stack Deployment
-
-[RabbitMQ](http://localhost/rabbitmq) - RabbitMQ Management Plugin (Queue Info)
-
-Note: if running with ssl, use https: instead of http
-
-## Notes
-Chunkflow: make sure AWS_ACCESS_KEY_ID, etc... are set in environment variables!
+Docker login to AWS ECR will automatically set up.
 
