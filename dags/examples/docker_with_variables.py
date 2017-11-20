@@ -24,9 +24,10 @@ dag = DAG(
 
 start = DockerWithVariablesOperator(
     ['your_key'],
+    mount_point='/secrets',
     task_id='docker_task',
-    command='sh -c "ls /run/variables &&\
-        cat /run/variables/your_key && echo done"',
+    command='sh -c "ls /secrets &&\
+        cat /secrets/your_key && echo done"',
     default_args=default_args,
     image="alpine:latest",
     dag=dag

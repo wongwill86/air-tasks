@@ -2,13 +2,22 @@
 
 Curated set of tools to enable distributed task processing.
 
-Tools leveraged:
+**Tools leveraged**
 * [Airflow](https://github.com/apache/incubator-airflow): Task Workflow Engine
 * [Docker Swarm](https://docs.docker.com/engine/swarm/): Container Orchestration
 * [Docker Infrakit](https://github.com/docker/infrakit): Infrastructure Orchestration to deploy on the cloud
 
 
 Note: This project builds off of the docker image provided by https://github.com/puckel/docker-airflow and infrakit examples https://github.com/infrakit/examples
+
+**Table of Contents**
+- [Core Concepts](#core-concepts)
+- [Architectural Concepts](#architectural-concepts)
+- [Setup](#setup)
+- [How to Start](#how-to-start)
+- [How to Deploy](#how-to-deploy)
+- [Debug Tools](#debug-tools)
+- [Notes](#notes)
 
 ## Core Concepts:
 
@@ -74,20 +83,20 @@ This is a description of all the services for [ docker-compose ]( https://docs.d
 * Webserver
   Parses DAG python files and inserts them into the database.
 * Scheduler
-..Searches database for task_instances ready to run and places them in the queue.
+  Searches database for task_instances ready to run and places them in the queue.
 * Flower
   Web UI monitoring of worker state and statistics
 * Worker (worker-worker)
   Runs the task_instance
 #### Additional Components
 * Worker (worker-manager)
-..Runs exclusively on Manager type instances. Runs tasks such as Autoscaling
+  Runs exclusively on Manager type instances. Runs tasks such as Autoscaling
 * Visualizer
-..Basic Docker Swarm container visualizing UI
+  Basic Docker Swarm container visualizing UI
 * Proxy
-..Reverse proxy for all web UI. Can be configured for basic auth and HTTPS
+  Reverse proxy for all web UI. Can be configured for basic auth and HTTPS
 * add-secrets:
-..Injects any specified secrets as a docker variable
+  Injects any specified secrets as a docker variable
 
 ## Architectural Concepts:
 
@@ -105,58 +114,21 @@ Deployment of Air-Tasks can be split into 3 layers of abstraction:
 [Airflow](https://github.com/apache/incubator-airflow) tasks are run on worker-worker containers that in turn run on infrakit worker nodes.
 
 #### How a task is executed:
-1. Webserver parses python DAG file and inserts into database.
+1. Webserver parses python DAG file and inserts into database
 2. DAG is triggered either manually via web/cli or via cron job
-3. Scheduler creates `dag_runs` and `task_instances` for DAG.
-4. Scheduler inserts any valid ready `task_instances` into the queue.
+3. Scheduler creates `dag_runs` and `task_instances` for DAG
+4. Scheduler inserts any valid ready `task_instances` into the queue
 5. Worker instance processes tasks
-6. Worker instance writes back to queue and database indicating status as done.
+6. Worker instance writes back to queue and database indicating status as done
 
 ### Autoscaling
 Air-Tasks is capable of autoscaling the cluster by monitoring the number of tasks ready to be executed (on the queue). This is done by careful coordination between the above 3 layers.
 
 A special worker service ("worker-manager") is created in the [compose file](#compose-file). This service is deployed exclusively on manager nodes, thus capable of creating instances via infrakit. Additionally a separate queue topic ("worker-manager") is dedicated for tasks that need to run on managers.
 
-See https://github.com/wongwill86/air-tasks/blob/more_docs/dags/manager/scaler.py for more information.
+See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py for more information.
 
-## How to develop:
-
-### By running DAGS:
-1. Clone this repo
-2. [Install requirements](#setup)
-3. Modify docker/docker-compose-CeleryExecutor.yml and uncomment dag folder mounts
-	```
-	#- ../dags/:/usr/local/airflow/dags
-	```
-5. [Deploy Local](#local)
-6. Go to [localhost](http://localhost)
-7. Activate dag and trigger run
-
-### By testing plugins / new operators / DockerFile / DAGS:
-1. Do above steps 1-3
-2. Build the image with your own tag (good idea to use the branch name)
-    ```
-    docker build -f docker/Dockerfile -t wongwill86/air-tasks:<your tag> .
-    ```
-3. Modify docker/docker-compose-CeleryExecutor.yml to use your image
-    ```
-    <every service that has this>:
-        image: wongwill86/air-tasks:<your tag>
-    ```
-4. Run [Tests](#testing)
-
-## Debug tools:
-[AirFlow](http://localhost) - Airflow Webserver
-
-[Celery Flower](http://localhost/flower) - Monitor Workers
-
-[Swarm Visualizer](http://localhost/visualizer) - Visualize Stack Deployment
-
-[RabbitMQ](http://localhost/rabbitmq) - RabbitMQ Management Plugin (Queue Info)
-
-Note: if running with ssl, use https: instead of http
-
-## Setup:
+## Setup
 1. Install docker
 	```
 	wget -qO- https://get.docker.com/ | sh
@@ -165,7 +137,37 @@ Note: if running with ssl, use https: instead of http
     ```
     pip install docker-compose
     ```
-## Deploy
+
+## How to Start
+1. [Install requirements](#setup)
+2. Clone this repo
+3. Uncomment **every** dag and plugin folder mounts in docker/docker-compose-CeleryExecutor.yml
+	```
+	#- ../dags/:/usr/local/airflow/dags
+	#- ../plugins:/usr/local/airflow/plugins
+	```
+4. Create your DAG inside [dags folder](https://github.com/wongwill86/air-tasks/tree/master/dags)
+5. (Optional) Start [Tests](#automated-testing)
+6. [Deploy Local](#local)
+7. Go to [localhost](http://localhost)
+8. Activate dag and trigger run
+
+See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/examples) for inspiration.
+
+### Automated Testing
+1. Do above steps 1-2
+2. Build the image with your own tag (good idea to use the branch name)
+    ```
+    docker build -f docker/Dockerfile -t wongwill86/air-tasks:<your tag> .
+    ```
+3. Replace **every** air-tasks tag with your tag in docker/docker-compose-CeleryExecutor.yml
+    ```
+    <every service that has this>:
+        image: wongwill86/air-tasks:<your tag>
+    ```
+4. Deploy [Tests](#testing)
+
+## How to Deploy
 ### Local
 ```
 docker-compose -f docker/docker-compose-CeleryExecutor.yml up -d
@@ -179,6 +181,7 @@ echo '<blank ssl certificate here>' | docker secret create ssl_certificate -
 echo '<blank ssl certificate key here>' | docker secret create ssl_certificate_key -
 docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
 ```
+
 ### Testing
 ```
 export PYTHONDONTWRITEBYTECODE=1 
@@ -191,9 +194,61 @@ To watch/test. (Warning: if nothing runs, make sure all tests pass first)
 ```
 docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
 ```
-### AWS
-Use [Cloudformation](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new) to create a new stack.
-Use this [template](https://raw.githubusercontent.com/wongwill86/examples/air-tasks/latest/swarm/aws/vpc.cfn)
 
-## NOTES:
+### AWS
+1. Optional: Initialize submodule
+	```
+	git submodule update --recursive --remote
+	```
+2. Use [Cloudformation](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new) to create a new stack.
+3. Use this [cloud/latest/swarm/aws/vpc.cfn](https://raw.githubusercontent.com/wongwill86/examples/air-tasks/latest/swarm/aws/vpc.cfn)
+
+### GCloud
+1. Optional: Initialize submodule
+	```
+	git submodule update --recursive --remote
+	```
+2. Install [Gcloud](https://cloud.google.com/sdk/downloads)
+3. Optional: configure yaml (cloud/latest/swarm/google/cloud-deployment.yaml)
+4. Deploy on gcloud
+	```
+	gcloud deployment-manager deployments create <deployment name> --config cloud/latest/swarm/google/cloud-deployment.yaml
+	```
+
+### Mounting secrets
+
+If your docker operator requires secrets, you can add them using [ Variables ]( https://airflow.apache.org/concepts.html#variables ). Then you can mount these secrets using [DockerWithVariablesOperator](https://github.com/wongwill86/air-tasks/blob/master/dags/examples/docker_with_variables.py). i.e.
+
+```
+start = DockerWithVariablesOperator(
+    ['your_key'],
+    mount_point='/secrets',
+    task_id='docker_task',
+    command='sh -c "ls /secrets &&\
+        cat /secrets/variables/your_key && echo done"',
+    default_args=default_args,
+    image="alpine:latest",
+    dag=dag
+)
+```
+
+### Developing Plugins
+
+Sometimes you may need to make operators that will be useful for others. These can be shared with others as a plugin. You can add plugins to the [plugins folder](https://github.com/wongwill86/air-tasks/tree/master/plugins).
+
+See https://github.com/wongwill86/air-tasks/blob/master/plugins/custom/docker.py
+
+## Debug Tools
+[AirFlow](http://localhost) - Airflow Webserver
+
+[Celery Flower](http://localhost/flower) - Monitor Workers
+
+[Swarm Visualizer](http://localhost/visualizer) - Visualize Stack Deployment
+
+[RabbitMQ](http://localhost/rabbitmq) - RabbitMQ Management Plugin (Queue Info)
+
+Note: if running with ssl, use https: instead of http
+
+## Notes
 Chunkflow: make sure AWS_ACCESS_KEY_ID, etc... are set in environment variables!
+
