@@ -127,6 +127,10 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
     ```
     pip install docker-compose
     ```
+3. *(Optional)* Build docker image
+    ```
+    docker build -f docker/Dockerfile -t wongwill86/air-tasks:<your tag> .
+    ```
 
 ## How to Start
 1. [Install requirements](#setup)
@@ -136,8 +140,13 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
 	#- ../dags/:/usr/local/airflow/dags
 	#- ../plugins:/usr/local/airflow/plugins
 	```
+3. Replace **every** air-tasks tag with your tag in docker/docker-compose-CeleryExecutor.yml
+    ```
+    <every service that has this>:
+        image: wongwill86/air-tasks:<your tag>
+    ```
 4. Create your DAG inside [dags folder](https://github.com/wongwill86/air-tasks/tree/master/dags)
-5. (Optional) Start [Tests](#automated-testing)
+5. *(Optional)* Start [Tests](#automated-testing)
 6. [Deploy Local](#local)
 7. Go to [localhost](http://localhost)
 8. Activate dag and trigger run
@@ -146,16 +155,23 @@ See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/ex
 
 ### Automated Testing
 1. Do above steps 1-2
-2. Build the image with your own tag (good idea to use the branch name)
+2. Build the test image
     ```
-    docker build -f docker/Dockerfile -t wongwill86/air-tasks:<your tag> .
+    export PYTHONDONTWRITEBYTECODE=1 
+    export IMAGE_NAME=wongwill86/air-tasks:<your tag>
+    docker-compose -f docker/docker-compose.test.yml -p ci build
     ```
-3. Replace **every** air-tasks tag with your tag in docker/docker-compose-CeleryExecutor.yml
+3. Run test container
     ```
-    <every service that has this>:
-        image: wongwill86/air-tasks:<your tag>
+    docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut
     ```
-4. Deploy [Tests](#testing)
+4. *(Optional)* Watch / Test. 
+    ```
+    docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
+    ```
+    *Warning 1: if nothing runs, make sure all tests pass first*
+
+    *Warning 2: you may need to restart if you rename/move files*
 
 ## How to Deploy
 ### Local
@@ -172,21 +188,8 @@ echo '<blank ssl certificate key here>' | docker secret create ssl_certificate_k
 docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
 ```
 
-### Testing
-```
-export PYTHONDONTWRITEBYTECODE=1 
-export IMAGE_NAME=wongwill86/air-tasks:<your branch/tag>
-docker-compose -f docker/docker-compose.test.yml -p ci build
-docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut
-```
-
-To watch/test. (Warning: if nothing runs, make sure all tests pass first)
-```
-docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
-```
-
 ### AWS
-1. Optional: Initialize submodule
+1. *(Optional)* Initialize submodule
 	```
 	git submodule update --recursive --remote
 	```
@@ -194,12 +197,12 @@ docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pyl
 3. Use this [cloud/latest/swarm/aws/vpc.cfn](https://raw.githubusercontent.com/wongwill86/examples/air-tasks/latest/swarm/aws/vpc.cfn)
 
 ### GCloud
-1. Optional: Initialize submodule
+1. *(Optional)* Initialize submodule
 	```
 	git submodule update --recursive --remote
 	```
 2. Install [gcloud](https://cloud.google.com/sdk/downloads)
-3. Optional: configure yaml (cloud/latest/swarm/google/cloud-deployment.yaml)
+3. *(Optional)* configure yaml (cloud/latest/swarm/google/cloud-deployment.yaml)
 4. Deploy using gcloud
 	```
 	gcloud deployment-manager deployments create <deployment name> --config cloud/latest/swarm/google/cloud-deployment.yaml
