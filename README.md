@@ -73,30 +73,20 @@ This file is a schedule of services necessary to start Air-tasks
 
 See https://github.com/wongwill86/air-tasks/blob/master/docker/docker-compose-CeleryExecutor.yml
 
-This is a description of all the services for [ docker-compose ]( https://docs.docker.com/compose/compose-file/ ). This file includes all the services required to start up your containers.
+This is a description of all the services for [ docker-compose ]( https://docs.docker.com/compose/compose-file/ ).
 
 #### Core Components
-* Postgres
-  Database for saving DAGs, DAG runs, Tasks, Task Instances, etc...
-* RabbitMQ
-  Internal queue service used to schedule tasks instances. Task instances are *only* scheduled when they are ready to run.
-* Webserver
-  Parses DAG python files and inserts them into the database.
-* Scheduler
-  Searches database for task_instances ready to run and places them in the queue.
-* Flower
-  Web UI monitoring of worker state and statistics
-* Worker (worker-worker)
-  Runs the task_instance
+* **Postgres:** Database for saving DAGs, DAG runs, Tasks, Task Instances, etc...
+* **RabbitMQ:** Internal queue service used to schedule tasks instances. Task instances are *only* scheduled when they are ready to run.
+* **Webserver:** Parses DAG python files and inserts them into the database.
+* **Scheduler:** Searches database for task_instances ready to run and places them in the queue.
+* **Flower:** Web UI monitoring of worker state and statistics
+* **Worker (worker-worker):** Runs the task_instance
 #### Additional Components
-* Worker (worker-manager)
-  Runs exclusively on Manager type instances. Runs tasks such as Autoscaling
-* Visualizer
-  Basic Docker Swarm container visualizing UI
-* Proxy
-  Reverse proxy for all web UI. Can be configured for basic auth and HTTPS
-* add-secrets:
-  Injects any specified secrets as a docker variable
+* **Worker (worker-manager):** Runs exclusively on Manager type instances. Runs tasks such as Autoscaling
+* **Visualizer:** Basic Docker Swarm container visualizing UI
+* **Proxy:** Reverse proxy for all web UI. Can be configured for basic auth and HTTPS
+* **add-secrets:** Injects any specified secrets as a docker variable
 
 ## Architectural Concepts:
 
