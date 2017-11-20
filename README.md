@@ -34,7 +34,7 @@ A Directed Acyclic Graph (DAG) is a static set of repeatable tasks operators tha
 
 It should be assumed that the size of a dag is immutable ( actually its not but it gets really messy if you modify it ). DAGS themselves can also be invoked using parameters.
 
-See [ example_trigger_target_dag ](https://github.com/apache/incubator-airflow/blob/master/airflow/example_dags/example_trigger_target_dag.py).
+See [ example_trigger_target_dag ](https://github.com/apache/incubator-airflow/blob/master/airflow/example_dags/example_trigger_target_dag.py)
 
 When a DAG is being scheduled to run, a `dag_run` is created.
 
@@ -126,7 +126,7 @@ Air-Tasks is capable of autoscaling the cluster by monitoring the number of task
 
 A special worker service ("worker-manager") is created in the [compose file](#compose-file). This service is deployed exclusively on manager nodes, thus capable of creating instances via infrakit. Additionally a separate queue topic ("worker-manager") is dedicated for tasks that need to run on managers.
 
-See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py for more information.
+See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py for more information
 
 ## Setup
 1. Install docker
@@ -152,7 +152,7 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
 7. Go to [localhost](http://localhost)
 8. Activate dag and trigger run
 
-See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/examples) for inspiration.
+See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/examples) for inspiration
 
 ### Automated Testing
 1. Do above steps 1-2
@@ -227,7 +227,7 @@ docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pyl
 Note: if running with ssl, use https: instead of http
 
 ## Notes
-### Mounting secrets
+### Mounting Secrets
 
 If your docker operator requires secrets, you can add them using [ Variables ]( https://airflow.apache.org/concepts.html#variables ). Then you can mount these secrets using [DockerWithVariablesOperator](https://github.com/wongwill86/air-tasks/blob/master/dags/examples/docker_with_variables.py). i.e.
 
