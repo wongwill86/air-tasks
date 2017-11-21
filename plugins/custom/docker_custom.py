@@ -1,6 +1,7 @@
 import os
 import json
-from docker import APIClient as Client
+import logging
+from docker import APIClient as Client, tls
 from airflow.exceptions import AirflowException
 from airflow.plugins_manager import AirflowPlugin
 from airflow.models import Variable
@@ -8,30 +9,40 @@ from airflow.operators.docker_operator import DockerOperator
 from airflow.utils.file import TemporaryDirectory
 
 
-class DockerConfigurableContainer(DockerOperator):
+class DockerConfigurableOperator(DockerOperator):
+    DEFAULT_CONTAINER_ARGS = {}
+    DEFAULT_HOST_ARGS = {'auto_remove': True}
     """
-    This is a copy and paste of https://github.com/apache/incubator-airflow/blob/master/airflow/operators/docker_operator.py
+    This is a copy and paste of https://github.com/apache/incubator-airflow/blob/1.8.2/airflow/operators/docker_operator.py
     with the exception that we are able to inject container and host arguments
-    before the container is run
+    before the container is run.
     """ # noqa
     def __init__(self, container_args={}, host_args={}, *args, **kwargs):
-        self.container_args = container_args
-        self.host_args = host_args
-        super(DockerRemovableContainer, self).__init__(*args, **kwargs)
+        self.container_args = self.DEFAULT_CONTAINER_ARGS.copy()
+        self.container_args.update(container_args)
 
+        self.host_args = self.DEFAULT_HOST_ARGS.copy()
+        self.host_args.update(host_args)
+
+        super(DockerConfigurableOperator, self).__init__(*args, **kwargs)
+
+    # This needs to be updated whenever we update to a new version of airflow!
     def execute(self, context):
-        self.log.info('Starting docker container from image %s', self.image)
+        logging.info('Starting docker container from image ' + self.image)
 
-        tls_config = self.__get_tls_config()
-
-        if self.docker_conn_id:
-            self.cli = self.get_hook().get_conn()
-        else:
-            self.cli = Client(
-                base_url=self.docker_url,
-                version=self.api_version,
-                tls=tls_config
+        tls_config = None
+        if self.tls_ca_cert and self.tls_client_cert and self.tls_client_key:
+            tls_config = tls.TLSConfig(
+                    ca_cert=self.tls_ca_cert,
+                    client_cert=(self.tls_client_cert, self.tls_client_key),
+                    verify=True,
+                    ssl_version=self.tls_ssl_version,
+                    assert_hostname=self.tls_hostname
             )
+            self.docker_url = self.docker_url.replace('tcp://', 'https://')
+
+        self.cli = Client(base_url=self.docker_url, version=self.api_version,
+                          tls=tls_config)
 
         if ':' not in self.image:
             image = self.image + ':latest'
@@ -39,10 +50,10 @@ class DockerConfigurableContainer(DockerOperator):
             image = self.image
 
         if self.force_pull or len(self.cli.images(name=image)) == 0:
-            self.log.info('Pulling docker image %s', image)
+            logging.info('Pulling docker image ' + image)
             for l in self.cli.pull(image, stream=True):
                 output = json.loads(l.decode('utf-8'))
-                self.log.info("%s", output['status'])
+                logging.info("{}".format(output['status']))
 
         cpu_shares = int(round(self.cpus * 1024))
 
@@ -62,7 +73,6 @@ class DockerConfigurableContainer(DockerOperator):
                     image=image,
                     mem_limit=self.mem_limit,
                     user=self.user,
-                    working_dir=self.working_dir,
                     **self.container_args
             )
             self.cli.start(self.container['Id'])
@@ -70,38 +80,19 @@ class DockerConfigurableContainer(DockerOperator):
             line = ''
             for line in self.cli.logs(container=self.container['Id'],
                                       stream=True):
-                line = line.strip()
-                if hasattr(line, 'decode'):
-                    line = line.decode('utf-8')
-                self.log.info(line)
+                logging.info("{}".format(line.strip()))
 
             exit_code = self.cli.wait(self.container['Id'])
             if exit_code != 0:
                 raise AirflowException('docker container failed')
 
-            if self.xcom_push_flag:
+            if self.xcom_push:
                 return self.cli.logs(
                     container=self.container['Id']) if self.xcom_all else str(
-                        line)
+                        line.strip())
 
 
-class DockerRemovableContainer(DockerOperator):
-    def __init__(self,
-                 remove=True,
-                 *args, **kwargs):
-        self.remove = remove
-        super(DockerRemovableContainer, self).__init__(*args, **kwargs)
-
-    def execute(self, context):
-        try:
-            return super(DockerRemovableContainer, self).execute(context)
-        finally:
-            if self.cli and self.container and self.remove:
-                self.cli.stop(self.container, timeout=1)
-                self.cli.remove_container(self.container)
-
-
-class DockerWithVariablesOperator(DockerRemovableContainer):
+class DockerWithVariablesOperator(DockerConfigurableOperator):
     DEFAULT_MOUNT_POINT = '/run/variables'
 
     def __init__(self,
@@ -125,7 +116,7 @@ class DockerWithVariablesOperator(DockerRemovableContainer):
 
 class CustomPlugin(AirflowPlugin):
     name = "docker_plugin"
-    operators = [DockerRemovableContainer, DockerWithVariablesOperator]
+    operators = [DockerWithVariablesOperator, DockerConfigurableOperator]
     hooks = []
     executors = []
     macros = []
