@@ -10,20 +10,14 @@ from airflow.utils.file import TemporaryDirectory
 
 
 class DockerConfigurableOperator(DockerOperator):
-    DEFAULT_CONTAINER_ARGS = {}
-    DEFAULT_HOST_ARGS = {'auto_remove': True}
     """
-    This is a copy and paste of https://github.com/apache/incubator-airflow/blob/1.8.2/airflow/operators/docker_operator.py
+    This is modified from https://github.com/apache/incubator-airflow/blob/1.8.2/airflow/operators/docker_operator.py
     with the exception that we are able to inject container and host arguments
     before the container is run.
     """ # noqa
     def __init__(self, container_args={}, host_args={}, *args, **kwargs):
-        self.container_args = self.DEFAULT_CONTAINER_ARGS.copy()
-        self.container_args.update(container_args)
-
-        self.host_args = self.DEFAULT_HOST_ARGS.copy()
-        self.host_args.update(host_args)
-
+        self.container_args = container_args
+        self.host_args = host_args
         super(DockerConfigurableOperator, self).__init__(*args, **kwargs)
 
     # This needs to be updated whenever we update to a new version of airflow!
@@ -61,20 +55,26 @@ class DockerConfigurableOperator(DockerOperator):
             self.environment['AIRFLOW_TMP_DIR'] = self.tmp_dir
             self.volumes.append('{0}:{1}'.format(host_tmp_dir, self.tmp_dir))
 
-            self.container = self.cli.create_container(
-                    command=self.get_command(),
-                    cpu_shares=cpu_shares,
-                    environment=self.environment,
-                    host_config=self.cli.create_host_config(
-                        binds=self.volumes,
-                        network_mode=self.network_mode,
-                        **self.host_args
-                    ),
-                    image=image,
-                    mem_limit=self.mem_limit,
-                    user=self.user,
-                    **self.container_args
-            )
+            host_args = {
+                'binds': self.volumes,
+                'network_mode': self.network_mode
+            }
+            host_args.update(self.host_args)
+
+            container_args = {
+                'command': self.get_command(),
+                'cpu_shares': cpu_shares,
+                'environment': self.environment,
+                'image': image,
+                'mem_limit': self.mem_limit,
+                'user': self.user,
+                'host_config': self.cli.create_host_config(**host_args)
+            }
+
+            container_args.update(self.container_args)
+
+            self.container = self.cli.create_container(**container_args)
+
             self.cli.start(self.container['Id'])
 
             line = ''
@@ -90,6 +90,29 @@ class DockerConfigurableOperator(DockerOperator):
                 return self.cli.logs(
                     container=self.container['Id']) if self.xcom_all else str(
                         line.strip())
+
+
+class DockerRemovableContainer(DockerConfigurableOperator):
+    """
+    This manually removes the container after it has exited.
+    This is *NOT* to be confused with docker host config with *auto_remove*
+    AutoRemove is done on docker side and will automatically remove the
+    container along with its logs automatically before we can display and
+    get the exit code!
+    """
+    def __init__(self,
+                 remove=True,
+                 *args, **kwargs):
+        self.remove = remove
+        super(DockerRemovableContainer, self).__init__(*args, **kwargs)
+
+    def execute(self, context):
+        try:
+            return super(DockerRemovableContainer, self).execute(context)
+        finally:
+            if self.cli and self.container and self.remove:
+                self.cli.stop(self.container, timeout=1)
+                self.cli.remove_container(self.container)
 
 
 class DockerWithVariablesOperator(DockerConfigurableOperator):
@@ -116,7 +139,8 @@ class DockerWithVariablesOperator(DockerConfigurableOperator):
 
 class CustomPlugin(AirflowPlugin):
     name = "docker_plugin"
-    operators = [DockerWithVariablesOperator, DockerConfigurableOperator]
+    operators = [DockerRemovableContainer,
+                 DockerWithVariablesOperator, DockerConfigurableOperator]
     hooks = []
     executors = []
     macros = []
