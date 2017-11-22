@@ -14,7 +14,8 @@ Note: This project builds off of the docker image provided by https://github.com
 - [Core Concepts](#core-concepts)
 - [Architectural Concepts](#architectural-concepts)
 - [Setup](#setup)
-- [How to Start](#how-to-start)
+- [Where to Start](#where-to-start)
+- [Hot to Test](#how-to-test)
 - [How to Deploy](#how-to-deploy)
 - [Debug Tools](#debug-tools)
 - [Notes](#notes)
@@ -98,7 +99,7 @@ Deployment of Air-Tasks can be split into 3 layers of abstraction:
 
 ### Container Orchestration
 
-[Docker Swarm](https://docs.docker.com/engine/swarm/) to join separate machines into a cluster. Docker managers are able to deploy and monitoring services. Services are defined in the [compose file](#compose-file). Manager nodes run all services except for worker-worker. This is done via deploy constraints using the engine label `infrakit-role=manager`.
+[Docker Swarm](https://docs.docker.com/engine/swarm/) to join separate machines into a cluster. Docker managers are able to deploy and monitoring services. Services are defined in the [compose file](#compose-file). Manager nodes run all services except for worker-worker. This is done via deploy constraints using the engine label `infrakit-manager=true`.
 
 ### Task Orchestration
 [Airflow](https://github.com/apache/incubator-airflow) tasks are run on worker-worker containers that in turn run on infrakit worker nodes.
@@ -132,7 +133,7 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
     docker build -f docker/Dockerfile -t wongwill86/air-tasks:<your tag> .
     ```
 
-## How to Start
+## Where to Start
 1. [Install requirements](#setup)
 2. Clone this repo
 3. Uncomment **every** dag and plugin folder mounts in docker/docker-compose-CeleryExecutor.yml
@@ -146,14 +147,14 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
         image: wongwill86/air-tasks:<your tag>
     ```
 4. Create your DAG inside [dags folder](https://github.com/wongwill86/air-tasks/tree/master/dags)
-5. *(Optional)* Start [Tests](#automated-testing)
+5. *(Optional)* Start [Tests](#how-to-test)
 6. [Deploy Local](#local)
 7. Go to [localhost](http://localhost)
 8. Activate dag and trigger run
 
 See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/examples) for inspiration
 
-### Automated Testing
+## How to Test
 1. Do above steps 1-2
 2. Build the test image
     ```
@@ -232,10 +233,47 @@ start = DockerWithVariablesOperator(
     command='sh -c "ls /secrets &&\
         cat /secrets/variables/your_key && echo done"',
     default_args=default_args,
-    image="alpine:latest",
+    image='alpine:latest',
     dag=dag
 )
 ```
+
+### Nvidia GPU Support
+
+Requires [Nvidia Docker](https://github.com/NVIDIA/nvidia-docker#quickstart)
+
+Make sure you `/etc/docker/daemon.json` contains the appropriate [engine labels](#engine-labels) after installation.
+
+Use any air-task'ss [custom docker operators](https://github.com/wongwill86/air-tasks/blob/gpu/plugins/custom/docker_custom.py) with runtime set. i.e.
+
+```
+start = DockerConfigurableOperator(
+    task_id='docker_gpu_task',
+    command='nvidia-smi',
+    default_args=default_args,
+    image='nvidia/cuda',
+    host_args={'runtime': 'nvidia'},
+    dag=dag
+)
+
+```
+
+### Multiple Instance Types
+
+If you need more than one instance type, such as having both CPU and GPU types.
+Define a new instance type in the worker
+
+change the queue, add the queue type to the operator, i.e.
+```
+start = BashOperator(
+    task_id='new_instance_tag',
+    bash_command='echo run from different instance type',
+    queue='p2',
+    dag=dag)
+```
+
+
+
 
 ### Developing Plugins
 

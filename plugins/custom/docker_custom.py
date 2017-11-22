@@ -115,7 +115,7 @@ class DockerRemovableContainer(DockerConfigurableOperator):
                 self.cli.remove_container(self.container)
 
 
-class DockerWithVariablesOperator(DockerConfigurableOperator):
+class DockerWithVariablesOperator(DockerRemovableContainer):
     DEFAULT_MOUNT_POINT = '/run/variables'
 
     def __init__(self,
@@ -139,8 +139,8 @@ class DockerWithVariablesOperator(DockerConfigurableOperator):
 
 class CustomPlugin(AirflowPlugin):
     name = "docker_plugin"
-    operators = [DockerRemovableContainer,
-                 DockerWithVariablesOperator, DockerConfigurableOperator]
+    operators = [DockerRemovableContainer, DockerWithVariablesOperator,
+                 DockerConfigurableOperator]
     hooks = []
     executors = []
     macros = []
