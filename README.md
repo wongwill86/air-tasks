@@ -121,9 +121,14 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
 
 ## Setup
 1. Install docker
-	```
-	wget -qO- https://get.docker.com/ | sh
-	```
+    * **NO** Nvidia GPU support needed
+        ```
+        wget -qO- https://get.docker.com/ | sh
+        ```
+    * **YES** Nvidia GPU support needed
+        1. [Install Docker CE](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#install-using-the-repository)
+        2. Install [nvidia-docker2](https://github.com/NVIDIA/nvidia-docker#xenial-x86_64)
+
 2. Install docker compose
     ```
     pip install docker-compose
@@ -137,10 +142,10 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
 1. [Install requirements](#setup)
 2. Clone this repo
 3. Uncomment **every** dag and plugin folder mounts in docker/docker-compose-CeleryExecutor.yml
-	```
-	#- ../dags/:/usr/local/airflow/dags
-	#- ../plugins:/usr/local/airflow/plugins
-	```
+    ```
+    #- ../dags/:/usr/local/airflow/dags
+    #- ../plugins:/usr/local/airflow/plugins
+    ```
 3. Replace **every** air-tasks tag with your tag in docker/docker-compose-CeleryExecutor.yml
     ```
     <every service that has this>:
@@ -191,23 +196,23 @@ docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
 
 ### AWS
 1. *(Optional)* Initialize submodule
-	```
-	git submodule update --recursive --remote
-	```
+    ```
+    git submodule update --recursive --remote
+    ```
 2. Use [Cloudformation](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new) to create a new stack.
 3. Use this [cloud/latest/swarm/aws/vpc.cfn](https://raw.githubusercontent.com/wongwill86/examples/air-tasks/latest/swarm/aws/vpc.cfn)
 
 ### GCloud
 1. *(Optional)* Initialize submodule
-	```
-	git submodule update --recursive --remote
-	```
+    ```
+    git submodule update --recursive --remote
+    ```
 2. Install [gcloud](https://cloud.google.com/sdk/downloads)
 3. *(Optional)* configure yaml (cloud/latest/swarm/google/cloud-deployment.yaml)
 4. Deploy using gcloud
-	```
-	gcloud deployment-manager deployments create <deployment name> --config cloud/latest/swarm/google/cloud-deployment.yaml
-	```
+    ```
+    gcloud deployment-manager deployments create <deployment name> --config cloud/latest/swarm/google/cloud-deployment.yaml
+    ```
 
 ## Debug Tools
 [AirFlow](http://localhost) - Airflow Webserver
@@ -221,6 +226,18 @@ docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
 Note: if running with ssl, use https: instead of http
 
 ## Notes
+### Nvidia GPU Docker Support
+#### Setup Notes
+Nvidia-docker is not forward compatible with edge releases of Docker. Therefore you must install the latest *stable* version of docker. As of writing the latest nvidia-docker can only be used with docker version 17.09. Check to make sure that the version is correct by using `docker version`.  
+
+Repeated from [Setup](#setup)
+1. [Install Docker CE](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#install-using-the-repository)
+2. Install [nvidia-docker2](https://github.com/NVIDIA/nvidia-docker#xenial-x86_64)
+
+#### Driver Compatibility
+If using CUDA, please make sure that your docker image uses the correct matching Driver version.
+See [compatibility matrix](https://github.com/NVIDIA/nvidia-docker/wiki/CUDA) for more details
+
 ### Mounting Secrets
 
 If your docker operator requires secrets, you can add them using [variables]( https://airflow.apache.org/concepts.html#variables ). Then you can mount these secrets using [DockerWithVariablesOperator](https://github.com/wongwill86/air-tasks/blob/master/dags/examples/docker_with_variables.py). i.e.
