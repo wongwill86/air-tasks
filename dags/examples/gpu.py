@@ -1,10 +1,11 @@
-# You must have the airflow variable 'your_key' set up to run this Dag!
+# This will only work on instances that contain the nvidia runtime environment.
+# See https://github.com/NVIDIA/nvidia-docker
 
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.operators.docker_plugin import DockerWithVariablesOperator
+from airflow.operators.docker_plugin import DockerConfigurableOperator
 
-DAG_ID = 'example_docker_with_variables'
+DAG_ID = 'example_nvidia_docker'
 
 default_args = {
     'owner': 'airflow',
@@ -22,13 +23,11 @@ dag = DAG(
     schedule_interval=None
 )
 
-start = DockerWithVariablesOperator(
-    ['your_key'],
-    mount_point='/secrets',
+start = DockerConfigurableOperator(
+    container_args={'runtime': 'nvidia'},
     task_id='docker_task',
-    command='sh -c "ls /secrets &&\
-        cat /secrets/your_key && echo done"',
+    command='nvidia-smi',
     default_args=default_args,
-    image='alpine:latest',
+    image='nvidia/cuda',
     dag=dag
 )

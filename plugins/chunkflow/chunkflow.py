@@ -3,10 +3,10 @@ from airflow.models import DAG
 from airflow.operators.subdag_operator import SubDagOperator
 import logging
 import json
-from custom.docker import DockerRemovableContainer
+from custom.docker_custom import DockerConfigurableOperator
 
 
-class ChunkFlowOperator(DockerRemovableContainer):
+class ChunkFlowOperator(DockerConfigurableOperator):
     DEFAULT_IMAGE_ID = '098703261575.dkr.ecr.us-east-1.amazonaws.com/chunkflow'
     DEFAULT_VERSION = 'v1.7.8'
     DEFAULT_COMMAND = 'julia /root/.julia/v0.5/ChunkFlow/scripts/main.jl ' + \
