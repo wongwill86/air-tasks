@@ -97,8 +97,8 @@ class DockerRemovableContainer(DockerConfigurableOperator):
     This manually removes the container after it has exited.
     This is *NOT* to be confused with docker host config with *auto_remove*
     AutoRemove is done on docker side and will automatically remove the
-    container along with its logs automatically before we can display and
-    get the exit code!
+    container along with its logs automatically before we can display the logs
+    and get the exit code!
     """
     def __init__(self,
                  remove=True,
