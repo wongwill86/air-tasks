@@ -78,9 +78,9 @@ This is a description of all the services for [docker-compose]( https://docs.doc
 
 #### Core Components
 * **Postgres:** Database for saving DAGs, DAG runs, Tasks, Task Instances, etc...
-* **RabbitMQ:** Internal queue service used to schedule tasks instances. Task instances are *only* scheduled when they are ready to run.
-* **Webserver:** Parses DAG python files and inserts them into the database.
-* **Scheduler:** Searches database for task_instances ready to run and places them in the queue.
+* **RabbitMQ:** Internal queue service used to schedule tasks instances. Task instances are *only* scheduled when they are ready to run
+* **Webserver:** Parses DAG python files and inserts them into the database
+* **Scheduler:** Searches database for task_instances ready to run and places them in the queue
 * **Flower:** Web UI monitoring of worker state and statistics
 * **Worker (worker-worker):** Runs the task_instance
 #### Additional Components
@@ -99,10 +99,10 @@ Deployment of Air-Tasks can be split into 3 layers of abstraction:
 
 ### Container Orchestration
 
-[Docker Swarm](https://docs.docker.com/engine/swarm/) to join separate machines into a cluster. Docker managers are able to deploy and monitoring services. Services are defined in the [compose file](#compose-file). Manager nodes run all services except for worker-worker. This is done via deploy constraints using the engine label `infrakit-manager=true`.
+[Docker Swarm](https://docs.docker.com/engine/swarm/) to join separate machines into a cluster. Docker managers are able to deploy and monitoring services. Services are defined in the [compose file](#compose-file). Manager nodes run all services except for `worker-worker`. This is made possible via deploy constraints using the engine label `infrakit-manager=true`.
 
 ### Task Orchestration
-[Airflow](https://github.com/apache/incubator-airflow) tasks are run on worker-worker containers that in turn run on infrakit worker nodes.
+[Airflow](https://github.com/apache/incubator-airflow) tasks are run on worker-worker containers that, in turn, run on infrakit worker nodes.
 
 #### How a task is executed:
 1. Webserver parses python DAG file and inserts into database
@@ -133,7 +133,7 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
     ```
     pip install docker-compose
     ```
-3. *(Only for development)* Build docker image
+3. *(Optional: Only for development)* Build docker image
     ```
     docker build -f docker/Dockerfile -t wongwill86/air-tasks:<your tag> .
     ```
@@ -146,13 +146,13 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
     #- ../dags/:/usr/local/airflow/dags
     #- ../plugins:/usr/local/airflow/plugins
     ```
-3. *(Only for development)* Replace **every** air-tasks tag with your tag in docker/docker-compose-CeleryExecutor.yml
+3. *(Optional: Only for development)* Replace **every** air-tasks tag with your tag in docker/docker-compose-CeleryExecutor.yml
     ```
     <every service that has this>:
         image: wongwill86/air-tasks:<your tag>
     ```
-4. *(Only for development)* Create your DAG inside [dags folder](https://github.com/wongwill86/air-tasks/tree/master/dags)
-5. *(Only for development)* Start [Tests](#how-to-test)
+4. *(Optional: Only for development)* Create your DAG inside [dags folder](https://github.com/wongwill86/air-tasks/tree/master/dags)
+5. *(Optional: Only for development)* Start [Tests](#how-to-test)
 6. [Deploy Local](#local)
 7. Go to [localhost](http://localhost)
 8. Activate dag and trigger run
@@ -160,7 +160,8 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
 See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/examples) for inspiration
 
 ## How to Test
-1. Do above steps 1-2
+1. [Install requirements](#setup)
+2. Clone this repo
 2. Build the test image
     ```
     export PYTHONDONTWRITEBYTECODE=1 
@@ -177,7 +178,7 @@ See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/ex
     ```
     *Warning 1: if nothing runs, make sure all tests pass first*
 
-    *Warning 2: you may need to restart if you rename/move files*
+    *Warning 2: you may need to restart if you rename/move files, especially possible if these are plugin modules*
 
 ## How to Deploy
 ### Local
@@ -210,20 +211,20 @@ docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
     git submodule update --recursive --remote
     ```
 2. Install [gcloud](https://cloud.google.com/sdk/downloads)
-3. *(Optional)* configure yaml (cloud/latest/swarm/google/cloud-deployment.yaml)
+3. *(Optional)* configure yaml [cloud/latest/swarm/google/cloud-deployment.yaml](https://github.com/wongwill86/examples/blob/air-tasks/latest/swarm/google/cloud-deployment.yaml)
 4. Deploy using gcloud
     ```
     gcloud deployment-manager deployments create <deployment name> --config cloud/latest/swarm/google/cloud-deployment.yaml
     ```
 
 ## Debug Tools
-[AirFlow](http://localhost) - Airflow Webserver
+[AirFlow](http://localhost) or (`<host>/`) - Airflow Webserver
 
-[Celery Flower](http://localhost/flower) - Monitor Workers
+[Celery Flower](http://localhost/flower) or (`<host>/flower`)- Monitor Workers
 
-[Swarm Visualizer](http://localhost/visualizer) - Visualize Stack Deployment
+[Swarm Visualizer](http://localhost/visualizer) or (`<host>/visualizer`)- Visualize Stack Deployment
 
-[RabbitMQ](http://localhost/rabbitmq) - RabbitMQ Management Plugin (Queue Info)
+[RabbitMQ](http://localhost/rabbitmq) or (`<host>/rabbitmq`)- RabbitMQ Management Plugin (Queue Info)
 
 Note: if running with ssl, use https: instead of http
 
@@ -236,10 +237,10 @@ Repeated from [Setup](#setup)
 1. [Install Docker CE](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#install-using-the-repository)
 2. Install [nvidia-docker2](https://github.com/NVIDIA/nvidia-docker#xenial-x86_64)
 
-nvidia-docker2 will add configurations via `/etc/docker/daemon.json`. If you have made any changes i.e. [multiple-instance-types](#multiple-instance-types), those are persisted.
+nvidia-docker2 will add configurations via `/etc/docker/daemon.json`. If you have made any changes i.e. [multiple-instance-types](#multiple-instance-types), make sure those are still persisted.
 
 #### Driver Compatibility
-If using CUDA, please make sure that your docker image uses the correct matching Driver version.
+If you are using CUDA in your docker image, please make sure that the CUA version matches the host's Nvidia driver version.
 See [compatibility matrix](https://github.com/NVIDIA/nvidia-docker/wiki/CUDA) for more details
 
 #### Docker Operator with Nvidia
@@ -251,7 +252,7 @@ start = DockerConfigurableOperator(
     task_id='docker_gpu_task',
     command='nvidia-smi',
     default_args=default_args,
-    image='nvidia/cuda',
+    image='nvidia/cuda:8.0-runtime-ubuntu16.04',
     host_args={'runtime': 'nvidia'},
     dag=dag
 )
@@ -274,9 +275,12 @@ start = DockerWithVariablesOperator(
 )
 ```
 
+#### Running/testing locally
+You can mount your host machine's directory as a volume in the Docker Operator. DockerOperator calls docker directly from the host machine. In other words, your task's docker container is not running inside the worker container. Instead, it is running directly off the host machine. Therefore when you are testing locally, you can just mount your host's secret directory as a volume into the operator.
+
 ### Multiple Instance Types
 **INCOMPLETE**
-If you need to run tasks on different machine instance types, this can be achieved by scheduling the task on a new queue topic.  Currently all standard workers listen to the queue topic `worker`. If you require specialized workers to run specific tasks, this can be achieved by
+If you need to run tasks on different machine instance types, this can be achieved by scheduling the task on a new queue topic.  Currently all standard workers listen to the queue topic `worker`. If you require specialized workers to run specific tasks, this can be achieved by:
 
 1. In the *task operator*, specify a new queue topic. This will schedule all tasks of this operator into a separate queue topic (in this case `other-instance-type`).
     ```
@@ -286,7 +290,7 @@ If you need to run tasks on different machine instance types, this can be achiev
         queue='other-instance-type',
         dag=dag)
     ```
-2. In the *docker compose*, create a new service copied and pasted from `worker-worker`. This will start workers that will listen to this new queue topic (`other-instance-type`) and will only deploy on machines with the docker engine label: `[ engine.labels.infrakit-role == other-instance-type ]`.
+2. In the *[docker compose file](https://github.com/wongwill86/air-tasks/blob/gpu/docker/docker-compose-CeleryExecutor.yml)*, create a new service copied and pasted from `worker-worker`. This will create workers that will listen to this new queue topic (`other-instance-type`) and only deploy on machines with the docker engine label: `[ engine.labels.infrakit-role == other-instance-type ]`.
     ```
     worker-other-instance-type:
 
@@ -300,8 +304,8 @@ If you need to run tasks on different machine instance types, this can be achiev
     ```
 3. Add support for new workers in Infrakit.
     1. Create a new worker init script to set the role to `worker-other-instance-type` i.e.  [cloud/latest/swarm/worker-init.sh](https://github.com/wongwill86/examples/blob/air-tasks/latest/swarm/worker-init.sh). This role is used to set the docker engine label (to deploy your new docker service that listens to the queue topic `other-instance-type`).
-    2. Create a new worker definition i.e. [cloud/latest/swarm/google/](https://github.com/wongwill86/examples/blob/air-tasks/latest/swarm/google/worker.json). This is used to specify the instance type.
-    3. Add a new group plugin with ID `worker-other-instance-type` to enable worker definitions created from Steps 1 and 2 [cloud/latest/swarm/groups.json](https://github.com/wongwill86/examples/blob/air-tasks/latest/swarm/groups.json). The ID in this format will help with autoscaling.
+    2. Create a new worker definition i.e. [cloud/latest/swarm/google/worker.json](https://github.com/wongwill86/examples/blob/air-tasks/latest/swarm/google/worker.json). This is used to specify the instance type.
+    3. Add a new group plugin with ID `worker-other-instance-type` to enable worker definitions created from Steps 1 and 2 [cloud/latest/swarm/groups.json](https://github.com/wongwill86/examples/blob/air-tasks/latest/swarm/groups.json). If you create an ID in this format, autoscaling will work for this instance type.
 
 ### Developing Plugins
 

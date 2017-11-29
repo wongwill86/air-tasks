@@ -30,6 +30,6 @@ start = DockerConfigurableOperator(
     task_id='docker_task',
     command='nvidia-smi',
     default_args=default_args,
-    image="nvidia/cuda:8.0-runtime-ubuntu16.04",
+    image='nvidia/cuda:8.0-runtime-ubuntu16.04',
     dag=dag
 )
