@@ -19,6 +19,11 @@ Note: This project builds off of the docker image provided by https://github.com
 - [How to Deploy](#how-to-deploy)
 - [Debug Tools](#debug-tools)
 - [Notes](#notes)
+  - [Nvidia GPU Docker Support](#nvidia-gpu-docker-support)
+  - [Mounting Secrets](#mounting-secrets)
+  - [Multiple Instance Types](#multiple-instance-types)
+  - [Developing Plugins](#developing-plugins)
+  - [AWS ECR Access](#aws-ecr-access)
 
 ## Core Concepts:
 
