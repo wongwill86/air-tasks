@@ -133,7 +133,7 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
     ```
     pip install docker-compose
     ```
-3. *(Optional)* Build docker image
+3. *(Only for development)* Build docker image
     ```
     docker build -f docker/Dockerfile -t wongwill86/air-tasks:<your tag> .
     ```
@@ -146,13 +146,13 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
     #- ../dags/:/usr/local/airflow/dags
     #- ../plugins:/usr/local/airflow/plugins
     ```
-3. Replace **every** air-tasks tag with your tag in docker/docker-compose-CeleryExecutor.yml
+3. *(Only for development)* Replace **every** air-tasks tag with your tag in docker/docker-compose-CeleryExecutor.yml
     ```
     <every service that has this>:
         image: wongwill86/air-tasks:<your tag>
     ```
-4. Create your DAG inside [dags folder](https://github.com/wongwill86/air-tasks/tree/master/dags)
-5. *(Optional)* Start [Tests](#how-to-test)
+4. *(Only for development)* Create your DAG inside [dags folder](https://github.com/wongwill86/air-tasks/tree/master/dags)
+5. *(Only for development)* Start [Tests](#how-to-test)
 6. [Deploy Local](#local)
 7. Go to [localhost](http://localhost)
 8. Activate dag and trigger run
@@ -197,6 +197,7 @@ docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
 ### AWS
 1. *(Optional)* Initialize submodule
     ```
+    git submodule init
     git submodule update --recursive --remote
     ```
 2. Use [Cloudformation](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new) to create a new stack.
@@ -205,6 +206,7 @@ docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
 ### GCloud
 1. *(Optional)* Initialize submodule
     ```
+    git submodule init
     git submodule update --recursive --remote
     ```
 2. Install [gcloud](https://cloud.google.com/sdk/downloads)
@@ -234,10 +236,27 @@ Repeated from [Setup](#setup)
 1. [Install Docker CE](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#install-using-the-repository)
 2. Install [nvidia-docker2](https://github.com/NVIDIA/nvidia-docker#xenial-x86_64)
 
+nvidia-docker2 will add configurations via `/etc/docker/daemon.json`. If you have made any changes i.e. [multiple-instance-types](#multiple-instance-types), those are persisted.
+
 #### Driver Compatibility
 If using CUDA, please make sure that your docker image uses the correct matching Driver version.
 See [compatibility matrix](https://github.com/NVIDIA/nvidia-docker/wiki/CUDA) for more details
 
+#### Docker Operator with Nvidia
+
+Use any air-task's [custom docker operators](https://github.com/wongwill86/air-tasks/blob/gpu/plugins/custom/docker_custom.py) with runtime set. i.e.
+
+```
+start = DockerConfigurableOperator(
+    task_id='docker_gpu_task',
+    command='nvidia-smi',
+    default_args=default_args,
+    image='nvidia/cuda',
+    host_args={'runtime': 'nvidia'},
+    dag=dag
+)
+
+```
 ### Mounting Secrets
 
 If your docker operator requires secrets, you can add them using [variables]( https://airflow.apache.org/concepts.html#variables ). Then you can mount these secrets using [DockerWithVariablesOperator](https://github.com/wongwill86/air-tasks/blob/master/dags/examples/docker_with_variables.py). i.e.
@@ -255,42 +274,34 @@ start = DockerWithVariablesOperator(
 )
 ```
 
-### Nvidia GPU Support
-
-Requires [Nvidia Docker](https://github.com/NVIDIA/nvidia-docker#quickstart)
-
-Make sure you `/etc/docker/daemon.json` contains the appropriate [engine labels](#engine-labels) after installation.
-
-Use any air-task'ss [custom docker operators](https://github.com/wongwill86/air-tasks/blob/gpu/plugins/custom/docker_custom.py) with runtime set. i.e.
-
-```
-start = DockerConfigurableOperator(
-    task_id='docker_gpu_task',
-    command='nvidia-smi',
-    default_args=default_args,
-    image='nvidia/cuda',
-    host_args={'runtime': 'nvidia'},
-    dag=dag
-)
-
-```
-
 ### Multiple Instance Types
+**INCOMPLETE**
+If you need to run tasks on different machine instance types, this can be achieved by scheduling the task on a new queue topic.  Currently all standard workers listen to the queue topic `worker`. If you require specialized workers to run specific tasks, this can be achieved by
 
-If you need more than one instance type, such as having both CPU and GPU types.
-Define a new instance type in the worker
+1. In the *task operator*, specify a new queue topic. This will schedule all tasks of this operator into a separate queue topic (in this case `other-instance-type`).
+    ```
+    start = BashOperator(
+        task_id='new_instance_tag',
+        bash_command='echo run from other instance type',
+        queue='other-instance-type',
+        dag=dag)
+    ```
+2. In the *docker compose*, create a new service copied and pasted from `worker-worker`. This will start workers that will listen to this new queue topic (`other-instance-type`) and will only deploy on machines with the docker engine label: `[ engine.labels.infrakit-role == other-instance-type ]`.
+    ```
+    worker-other-instance-type:
 
-change the queue, add the queue type to the operator, i.e.
-```
-start = BashOperator(
-    task_id='new_instance_tag',
-    bash_command='echo run from different instance type',
-    queue='p2',
-    dag=dag)
-```
+        ...
 
-
-
+        command: worker -q other-instance-type
+        deploy:
+            mode: global
+            placement:
+                constraints: [ engine.labels.infrakit-role == other-instance-type ]
+    ```
+3. Add support for new workers in Infrakit.
+    1. Create a new worker init script to set the role to `worker-other-instance-type` i.e.  [cloud/latest/swarm/worker-init.sh](https://github.com/wongwill86/examples/blob/air-tasks/latest/swarm/worker-init.sh). This role is used to set the docker engine label (to deploy your new docker service that listens to the queue topic `other-instance-type`).
+    2. Create a new worker definition i.e. [cloud/latest/swarm/google/](https://github.com/wongwill86/examples/blob/air-tasks/latest/swarm/google/worker.json). This is used to specify the instance type.
+    3. Add a new group plugin with ID `worker-other-instance-type` to enable worker definitions created from Steps 1 and 2 [cloud/latest/swarm/groups.json](https://github.com/wongwill86/examples/blob/air-tasks/latest/swarm/groups.json). The ID in this format will help with autoscaling.
 
 ### Developing Plugins
 
@@ -306,3 +317,4 @@ To access a private AWS container registry, remember to set aws environment vari
 - AWS_DEFAULT_REGION
 
 Docker login to AWS ECR will automatically be set up.
+
