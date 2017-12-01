@@ -53,7 +53,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
             restart_policy:
                 condition: any
-                delay: 1h
+                delay: 300s
                 window: 120s
 
     flower:
