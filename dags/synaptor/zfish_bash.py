@@ -34,14 +34,14 @@ out_cvname = "s3://neuroglancer/zfish_v1/psd"
 cc_cvname = "gs://neuroglancer/zfish_v1/cleft_test"
 
 # FULL VOLUME COORDS
-start_coord = (14336, 12288, 16384)
-vol_shape   = (69632, 32768, 1792)
-chunk_shape = (1024,1024,1792)
+# start_coord = (14336, 12288, 16384)
+# vol_shape   = (69632, 32768, 1792)
+# chunk_shape = (1024,1024,128)
 
 # TEST VOLUME COORDS
-#start_coord = (57216, 28992, 17280)
-#vol_shape = (3072, 3072, 384)
-#chunk_shape = (1024, 1024, 128)
+start_coord = (57216, 28992, 17280)
+vol_shape = (3072, 3072, 384)
+chunk_shape = (1024, 1024, 128)
 
 cc_thresh = 0.1
 sz_thresh = 200
@@ -115,7 +115,10 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
                                chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str),
         default_args=default_args,
+<<<<<<< HEAD
         queue="cpu",
+=======
+>>>>>>> Successful local run
         dag=dag
         )
 
@@ -126,7 +129,10 @@ def merge_ccs(dag):
         bash_command=("echo merge_ccs {proc_dir_path} {sz_thresh}"
                       ).format(proc_dir_path=proc_dir_path, sz_thresh=sz_thresh),
         default_args=default_args,
+<<<<<<< HEAD
         queue="cpu",
+=======
+>>>>>>> Successful local run
         dag=dag
         )
 
@@ -150,7 +156,10 @@ def asynet_pass(dag, chunk_begin, chunk_end):
                                patchsz_str=patchsz_str,
                                proc_dir_path=proc_dir_path),
         default_args=default_args,
+<<<<<<< HEAD
         queue="gpu",
+=======
+>>>>>>> Successful local run
         dag=dag
         )
 
@@ -164,7 +173,10 @@ def merge_edges(dag):
                       ).format(proc_dir_path=proc_dir_path, dist_thr=dist_thr,
                                voxel_res_str=voxel_res_str),
         default_args=default_args,
+<<<<<<< HEAD
         queue="cpu",
+=======
+>>>>>>> Successful local run
         dag=dag
         )
 
@@ -181,7 +193,10 @@ def remap_ids(dag, chunk_begin, chunk_end):
                                chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str),
         default_args=default_args,
+<<<<<<< HEAD
         queue="cpu",
+=======
+>>>>>>> Successful local run
         dag=dag
         )
 
