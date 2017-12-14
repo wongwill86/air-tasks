@@ -54,7 +54,11 @@ patch_sz = (160, 160, 18)
 voxel_res = (5, 5, 45)
 dist_thr = 1000
 
+<<<<<<< HEAD
 proc_dir_path = "gs://seunglab/nick/zfish_full"
+=======
+proc_dir_path = "gs://seunglab/nick/testing/airtasks"
+>>>>>>> Successful local run
 # =============
 
 import itertools
@@ -118,7 +122,10 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
                           chunk_end_str=chunk_end_str),
         default_args=default_args,
         image="seunglab/synaptor:latest",
+<<<<<<< HEAD
         queue="cpu",
+=======
+>>>>>>> Successful local run
         dag=dag
         )
 
@@ -132,7 +139,10 @@ def merge_ccs(dag):
                       ).format(proc_dir_path=proc_dir_path, sz_thresh=sz_thresh),
         default_args=default_args,
         image="seunglab/synaptor:latest",
+<<<<<<< HEAD
         queue="cpu",
+=======
+>>>>>>> Successful local run
         dag=dag
         )
 
@@ -160,7 +170,10 @@ def asynet_pass(dag, chunk_begin, chunk_end):
                                proc_dir_path=proc_dir_path),
         default_args=default_args,
         image="seunglab/synaptor:latest",
+<<<<<<< HEAD
         queue="gpu",
+=======
+>>>>>>> Successful local run
         dag=dag
         )
 
@@ -177,7 +190,10 @@ def merge_edges(dag):
                                voxel_res_str=voxel_res_str),
         default_args=default_args,
         image="seunglab/synaptor:latest",
+<<<<<<< HEAD
         queue="cpu",
+=======
+>>>>>>> Successful local run
         dag=dag
         )
 
@@ -197,7 +213,10 @@ def remap_ids(dag, chunk_begin, chunk_end):
                                chunk_end_str=chunk_end_str),
         default_args=default_args,
         image="seunglab/synaptor:latest",
+<<<<<<< HEAD
         queue="cpu",
+=======
+>>>>>>> Successful local run
         dag=dag
         )
 
