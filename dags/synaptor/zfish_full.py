@@ -31,6 +31,7 @@ dag = DAG(
 img_cvname = "gs://neuroglancer/zfish_v1/image"
 seg_cvname = "gs://neuroglancer/zfish_v1/consensus-20171130"
 out_cvname = "gs://neuroglancer/zfish_v1/psd"
+<<<<<<< HEAD
 cc_cvname = "gs://neuroglancer/zfish_v1/clefts"
 
 # FULL VOLUME COORDS
