@@ -59,7 +59,7 @@ services:
                 condition: on-failure
 
     webserver:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:nick
         restart: always
         depends_on:
             - init-db
@@ -84,7 +84,7 @@ services:
                 window: 120s
 
     flower:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:nick
         restart: always
         depends_on:
             - init-db
@@ -99,7 +99,7 @@ services:
                 condition: any
 
     scheduler:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:nick
         restart: always
         depends_on:
             - init-db
@@ -133,7 +133,7 @@ services:
                 condition: any
 
     worker-worker:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:nick
         restart: always
         depends_on:
             - init-db
@@ -159,7 +159,7 @@ services:
                 condition: any
 
     worker-manager:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:nick
         restart: always
         depends_on:
             - init-db
@@ -309,7 +309,7 @@ services:
             - ssl_certificate_key
 
     add-secrets:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:nick
         restart: on-failure
         depends_on:
             - init-db
