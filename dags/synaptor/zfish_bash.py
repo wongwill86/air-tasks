@@ -115,6 +115,7 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
                                chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str),
         default_args=default_args,
+        queue="cpu",
         dag=dag
         )
 
@@ -125,6 +126,7 @@ def merge_ccs(dag):
         bash_command=("echo merge_ccs {proc_dir_path} {sz_thresh}"
                       ).format(proc_dir_path=proc_dir_path, sz_thresh=sz_thresh),
         default_args=default_args,
+        queue="cpu",
         dag=dag
         )
 
@@ -148,6 +150,7 @@ def asynet_pass(dag, chunk_begin, chunk_end):
                                patchsz_str=patchsz_str,
                                proc_dir_path=proc_dir_path),
         default_args=default_args,
+        queue="gpu",
         dag=dag
         )
 
@@ -161,6 +164,7 @@ def merge_edges(dag):
                       ).format(proc_dir_path=proc_dir_path, dist_thr=dist_thr,
                                voxel_res_str=voxel_res_str),
         default_args=default_args,
+        queue="cpu",
         dag=dag
         )
 
@@ -177,6 +181,7 @@ def remap_ids(dag, chunk_begin, chunk_end):
                                chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str),
         default_args=default_args,
+        queue="cpu",
         dag=dag
         )
 
