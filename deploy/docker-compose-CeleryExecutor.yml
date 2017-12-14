@@ -68,9 +68,9 @@ services:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
             #- ../config:/usr/local/airflow/config
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
@@ -106,9 +106,9 @@ services:
             - rabbitmq
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
             #- ../config:/usr/local/airflow/config
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
@@ -140,9 +140,9 @@ services:
             - rabbitmq
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
             #- ../config:/usr/local/airflow/config
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
@@ -224,9 +224,9 @@ services:
             - rabbitmq
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
             #- ../config:/usr/local/airflow/config
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
@@ -275,9 +275,9 @@ services:
                     ssl_session_cache  builtin:1000  shared:SSL:10m;\\n
                     ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;\\n
                     ssl on;\" ||
-            SSL_BLOCK=\"ssl off;\" && 
-            echo $$SSL_BLOCK && 
-            sed -i -e \"s/include \\/etc\\/nginx\\/conf\\.d\\/\\*\.conf;//\" 
+            SSL_BLOCK=\"ssl off;\" &&
+            echo $$SSL_BLOCK &&
+            sed -i -e \"s/include \\/etc\\/nginx\\/conf\\.d\\/\\*\.conf;//\"
             -e \"\\$$s/}/
                 error_log \\/var\\/log\\/error.log;\\n
                 gzip  on;\\n
