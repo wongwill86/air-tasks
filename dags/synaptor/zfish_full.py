@@ -31,17 +31,17 @@ dag = DAG(
 img_cvname = "gs://neuroglancer/zfish_v1/image"
 seg_cvname = "gs://neuroglancer/zfish_v1/consensus-20171130"
 out_cvname = "gs://neuroglancer/zfish_v1/psd"
-cc_cvname = "gs://neuroglancer/zfish_v1/clefts"
+cc_cvname = "gs://neuroglancer/zfish_v1/cleft_test"
 
 # FULL VOLUME COORDS
-start_coord = (14336, 12288, 16384)
-vol_shape   = (69632, 32768, 1792)
-chunk_shape = (1024,1024,1792)
+# start_coord = (14336, 12288, 16384)
+# vol_shape   = (69632, 32768, 1792)
+# chunk_shape = (1024,1024,128)
 
 # TEST VOLUME COORDS
-#start_coord = (52736, 24576, 17344)
-#vol_shape = (3072, 2048, 256)
-#chunk_shape = (1024, 1024, 128)
+start_coord = (73728, 36608, 16576)
+vol_shape = (3072, 2048, 256)
+chunk_shape = (1024, 1024, 128)
 
 cc_thresh = 0.1
 sz_thresh = 200
@@ -54,7 +54,7 @@ patch_sz = (160, 160, 18)
 voxel_res = (5, 5, 45)
 dist_thr = 1000
 
-proc_dir_path = "gs://seunglab/nick/zfish_full"
+proc_dir_path = "gs://seunglab/nick/testing/airtasks"
 # =============
 
 import itertools
