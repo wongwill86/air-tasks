@@ -34,9 +34,9 @@ out_cvname = "gs://neuroglancer/zfish_v1/psd"
 cc_cvname = "gs://neuroglancer/zfish_v1/clefts"
 
 # FULL VOLUME COORDS
- start_coord = (14336, 12288, 16384)
- vol_shape   = (69632, 32768, 1792)
- chunk_shape = (1024,1024,128)
+start_coord = (14336, 12288, 16384)
+vol_shape   = (69632, 32768, 1792)
+chunk_shape = (1024,1024,128)
 
 # TEST VOLUME COORDS
 # start_coord = (52736, 24576, 17344)
