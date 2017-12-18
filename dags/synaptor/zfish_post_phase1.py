@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
 
 
-DAG_ID = 'synaptor_test_big_chunk'
+DAG_ID = 'synaptor_post_phase1'
 
 default_args = {
     'owner': 'airflow',
@@ -31,17 +31,17 @@ dag = DAG(
 img_cvname = "gs://neuroglancer/zfish_v1/image"
 seg_cvname = "gs://neuroglancer/zfish_v1/consensus-20171130"
 out_cvname = "gs://neuroglancer/zfish_v1/psd"
-cc_cvname = "gs://neuroglancer/zfish_v1/cleft_test"
+cc_cvname = "gs://neuroglancer/zfish_v1/clefts"
 
 # FULL VOLUME COORDS
-# start_coord = (14336, 12288, 16384)
-# vol_shape   = (69632, 32768, 1792)
-# chunk_shape = (1024,1024,1792)
+start_coord = (14336, 12288, 16384)
+vol_shape   = (69632, 32768, 1792)
+chunk_shape = (1024,1024,1792)
 
 # TEST VOLUME COORDS
-start_coord = (44672, 23424, 17280)
-vol_shape = (1024, 1024, 1792)
-chunk_shape = (1024, 1024, 1792)
+#start_coord = (52736, 24576, 17344)
+#vol_shape = (3072, 2048, 256)
+#chunk_shape = (1024, 1024, 128)
 
 cc_thresh = 0.1
 sz_thresh = 200
@@ -54,7 +54,7 @@ patch_sz = (160, 160, 18)
 voxel_res = (5, 5, 45)
 dist_thr = 1000
 
-proc_dir_path = "gs://seunglab/nick/testing/big_chunk"
+proc_dir_path = "gs://seunglab/nick/zfish_full"
 # =============
 
 import itertools
@@ -204,12 +204,12 @@ def remap_ids(dag, chunk_begin, chunk_end):
 
 # STEP 1: chunk_ccs
 bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord)
-step1 = [chunk_ccs(dag, bb[0], bb[1]) for bb in bboxes]
+#step1 = [chunk_ccs(dag, bb[0], bb[1]) for bb in bboxes]
 
 # STEP 2: merge_ccs
 step2 = merge_ccs(dag)
-for chunk in step1:
-    chunk.set_downstream(step2)
+#for chunk in step1:
+#    chunk.set_downstream(step2)
 
 # STEP 3: asynet pass
 step3 = [asynet_pass(dag, bb[0], bb[1]) for bb in bboxes]
