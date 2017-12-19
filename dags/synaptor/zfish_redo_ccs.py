@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
 
 
-DAG_ID = 'synaptor_full'
+DAG_ID = 'synaptor_redo_ccs'
 
 default_args = {
     'owner': 'airflow',
