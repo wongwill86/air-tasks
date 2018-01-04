@@ -29,6 +29,9 @@ RUN set -ex \
        postgresql-dev \
        libffi-dev \
        openblas-dev \
+       libxslt-dev \
+       libxml2-dev \
+       linux-headers \
     && apk add --no-cache build-base bash wget shadow \
     && wget https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz \
     && tar -xvf docker-${DOCKER_VERSION}.tgz \
@@ -48,7 +51,6 @@ RUN set -ex \
     )" \
     && apk add --virtual .run-dependencies $runDeps \
     && apk del .build-dependencies
-    
 
 
 #RUN apt-get install curl lsb-release software-properties-common \
