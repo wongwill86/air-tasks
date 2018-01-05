@@ -1,4 +1,4 @@
-# VERSION 0.0.1
+# VERSION 0.0.2
 # AUTHOR: Will Wong
 # DESCRIPTION: Docker airflow with ECR registry and DooD (Docker outside of Dkr)
 # BUILD: docker build --rm -t wongwill86/air-tasks .
@@ -11,7 +11,7 @@ RUN git clone https://github.com/awslabs/amazon-ecr-credential-helper.git
 WORKDIR /go/src/github.com/awslabs/amazon-ecr-credential-helper
 RUN make
 
-FROM puckel/docker-airflow:1.8.1
+FROM wongwill86/air-tasks:alpine-2
 MAINTAINER wongwill86
 
 ARG AIRFLOW_HOME=/usr/local/airflow
@@ -19,34 +19,35 @@ ENV AIRFLOW_HOME ${AIRFLOW_HOME}
 ENV AIRFLOW_USER airflow
 
 USER root
-RUN curl -fsSL https://get.docker.com/ | sh \
-    && pip install docker docker-compose \
-    && pip install celery -U \
-    && apt-get install sudo \
-    && buildDeps=' \
-        python-dev \
-        libkrb5-dev \
-        libsasl2-dev \
-        libssl-dev \
-        libffi-dev \
-        build-essential \
-        libblas-dev \
-        liblapack-dev \
-        libpq-dev \
-        git \
-    ' && apt-get remove --purge -yqq $buildDeps \
-    && apt-get clean \
-    && rm -rf \
-        /var/lib/apt/lists/* \
-        /tmp/* \
-        /var/tmp/* \
-        /usr/share/man \
-        /usr/share/doc \
-        /usr/share/doc-base
+#RUN curl -fsSL https://get.docker.com/ | sh \
+    #&& pip install docker docker-compose \
+    #&& pip install celery -U \
+    #&& apt-get install sudo \
+    #&& buildDeps=' \
+        #python-dev \
+        #libkrb5-dev \
+        #libsasl2-dev \
+        #libssl-dev \
+        #libffi-dev \
+        #build-essential \
+        #libblas-dev \
+        #liblapack-dev \
+        #libpq-dev \
+        #git \
+    #' && apt-get remove --purge -yqq $buildDeps \
+    #&& apt-get clean \
+    #&& rm -rf \
+        #/var/lib/apt/lists/* \
+        #/tmp/* \
+        #/var/tmp/* \
+        #/usr/share/man \
+        #/usr/share/doc \
+#        /usr/share/doc-base
 
 # SUPER HACK PLEASE REMOVE AFTER AIRFLOW UPDATES (i.e. https://github.com/apache/incubator-airflow/pull/2417)
-RUN sed -i -e 's/import Client/import APIClient as Client/' /usr/local/lib/python2.7/dist-packages/airflow/operators/docker_operator.py
+#RUN sed -i -e 's/import Client/import APIClient as Client/' /usr/local/lib/python2.7/dist-packages/airflow/operators/docker_operator.py
 
+RUN addgroup -S airflow && adduser -S -G airflow -h ${AIRFLOW_HOME} airflow 
 RUN usermod -aG docker airflow
 
 # unfortunately this is required to update the container docker gid to match the
