@@ -11,7 +11,7 @@ RUN git clone https://github.com/awslabs/amazon-ecr-credential-helper.git
 WORKDIR /go/src/github.com/awslabs/amazon-ecr-credential-helper
 RUN make
 
-FROM wongwill86/air-tasks:alpine-2
+FROM wongwill86/air-tasks:alpine-base
 MAINTAINER wongwill86
 
 ARG AIRFLOW_HOME=/usr/local/airflow

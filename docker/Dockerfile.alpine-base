@@ -23,6 +23,7 @@ ARG DOCKER_VERSION=17.12.0-ce
 USER root
 
 RUN set -ex \
+    && apk add --no-cache bash wget shadow \
     && apk add --no-cache --virtual .build-dependencies \
        build-base \
        python3-dev \
@@ -32,25 +33,24 @@ RUN set -ex \
        libxslt-dev \
        libxml2-dev \
        linux-headers \
-    && apk add --no-cache build-base bash wget shadow \
     && wget https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz \
     && tar -xvf docker-${DOCKER_VERSION}.tgz \
     && mv docker/* /usr/local/bin/ \
     && rm -rf docker docker-${DOCKER_VERSION}.tgz docker \
-    && pip install apache-airflow[crypto,celery,postgres] celery[rabbitmq] \
-    && find /usr/local \
-        \( -type d -a -name test -o -name tests \) \
-        -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) \
-        -exec rm -rf '{}' + \
-    && runDeps="$( \
-        scanelf --needed --nobanner --recursive /usr/local \
-                | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
-                | sort -u \
-                | xargs -r apk info --installed \
-                | sort -u \
-    )" \
-    && apk add --virtual .run-dependencies $runDeps \
-    && apk del .build-dependencies
+    && pip install apache-airflow[crypto,celery,postgres] celery
+#RUN find /usr/local \
+#        \( -type d -a -name test -o -name tests \) \
+#        -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) \
+#        -exec rm -rf '{}' + \
+#    && runDeps="$( \
+#        scanelf --needed --nobanner --recursive /usr/local \
+#                | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
+#                | sort -u \
+#                | xargs -r apk info --installed \
+#                | sort -u \
+#    )" \
+#    && apk add --virtual .run-dependencies $runDeps \
+#    && apk del .build-dependencies
 
 RUN delgroup ping
 RUN addgroup -g 999 docker

@@ -1,0 +1,39 @@
+# VERSION 0.0.2
+# AUTHOR: Will Wong
+# DESCRIPTION: Docker airflow with ECR registry and DooD (Docker outside of Dkr)
+# BUILD: docker build --rm -t wongwill86/air-tasks .
+# SOURCE: https://github.com/wongwill86/air-tasks
+
+# Compile AWS credential helper
+FROM python:3.6-slim
+MAINTAINER wongwill86
+
+ARG AIRFLOW_HOME=/usr/local/airflow
+ENV AIRFLOW_HOME ${AIRFLOW_HOME}
+ENV AIRFLOW_USER airflow
+
+USER root
+RUN apt-get update && apt-get install curl -y \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
+    && apt-key fingerprint 0EBFCD88 \
+    && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian jessie stable" \
+    && apt-get update \
+    && buildDeps=' \
+        libffi-dev \
+        build-essential \
+        libblas-dev \
+        liblapack-dev \
+        libpq-dev \
+        software-properties-common \
+    ' \
+    && apt-get install $buildDeps git vim docker-ce sudo -y \
+    && pip install docker-compose airflow[cyrpto,celery,postgres] celery \
+    && apt-get remove --purge -yqq $buildDeps \
+    && apt-get clean \
+    && rm -rf \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/* \
+        /usr/share/man \
+        /usr/share/doc \
+        /usr/share/doc-base

@@ -1,5 +1,5 @@
 #!/bin/bash
-PUCKEL_ENTRYPOINT=/entrypoint.sh
+PUCKEL_ENTRYPOINT=airflow
 
 source /add-user-docker.sh
 
