@@ -15,6 +15,7 @@ FROM alpine/git as version_container
 WORKDIR /.gitcopy
 ADD .git .
 RUN git rev-parse HEAD > COMMIT_VERSION
+RUN git describe --tags > COMMIT_TAGS
 
 FROM python:3.6-alpine3.7
 MAINTAINER wongwill86
@@ -72,3 +73,5 @@ RUN mkdir -p /.docker/ \
 # copy the current commit from  the version container
 COPY --from=version_container \
     /.gitcopy/COMMIT_VERSION /COMMIT_VERSION_BASE.ALPINE
+COPY --from=version_container \
+    /.gitcopy/COMMIT_TAGS /COMMIT_TAGS_BASE.SLIM

@@ -10,6 +10,7 @@ FROM alpine/git as version_container
 WORKDIR /.gitcopy
 ADD .git .
 RUN git rev-parse HEAD > COMMIT_VERSION
+RUN git describe --tags > COMMIT_TAGS
 
 FROM wongwill86/air-tasks:${BASE}-base
 MAINTAINER wongwill86
@@ -23,7 +24,7 @@ ENV AIRFLOW_USER ${AIRFLOW_USER}
 WORKDIR ${AIRFLOW_HOME}
 
 # Move base version information directly into airflow home directory
-RUN cp /COMMIT* ${AIRFLOW_HOME}/
+RUN cp /COMMIT* ${AIRFLOW_HOME}/version
 
 # prepare airflow user
 RUN groupadd -r ${AIRFLOW_USER} \
@@ -57,7 +58,9 @@ COPY dags/ dags/
 
 # copy the current commit of this image from the version container
 COPY --from=version_container \
-    /.gitcopy/COMMIT_VERSION COMMIT_VERSION_AIR_TASKS
+    /.gitcopy/COMMIT_VERSION version/COMMIT_VERSION_AIR_TASKS
+COPY --from=version_container \
+    /.gitcopy/COMMIT_TAGS version/COMMIT_TAGS_AIR_TASKS.SLIM
 
 USER ${AIRFLOW_USER}
 ENTRYPOINT ["/entrypoint-dood.sh"]
