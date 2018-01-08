@@ -1,23 +1,22 @@
 # VERSION 0.0.2
 # AUTHOR: Will Wong
-# DESCRIPTION: Docker airflow with ECR registry and DooD (Docker outside of Dkr)
-# BUILD: docker build --rm -t wongwill86/air-tasks .
+# DESCRIPTION: Slim base image with dockerized airflow and ECR registry and DooD (Docker outside of Docker)
+# BUILD: docker build --rm -t wongwill86/air-tasks:slim-base .
 # SOURCE: https://github.com/wongwill86/air-tasks
 
 # Compile AWS credential helper
+FROM golang:1.8.3 as aws_ecr_credential_helper
+WORKDIR /go/src/github.com/awslabs/
+RUN git clone https://github.com/awslabs/amazon-ecr-credential-helper.git
+WORKDIR /go/src/github.com/awslabs/amazon-ecr-credential-helper
+RUN make
+
 FROM python:3.6-slim
 MAINTAINER wongwill86
 
-ARG AIRFLOW_HOME=/usr/local/airflow
-ENV AIRFLOW_HOME ${AIRFLOW_HOME}
-ENV AIRFLOW_USER airflow
+ARG AIRFLOW_VERSION=1.9.0
 
-USER root
-RUN apt-get update && apt-get install curl -y \
-    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
-    && apt-key fingerprint 0EBFCD88 \
-    && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian jessie stable" \
-    && apt-get update \
+RUN apt-get update \
     && buildDeps=' \
         libffi-dev \
         build-essential \
@@ -25,11 +24,22 @@ RUN apt-get update && apt-get install curl -y \
         liblapack-dev \
         libpq-dev \
         software-properties-common \
+        apt-transport-https \
+        curl \
     ' \
-    && apt-get install $buildDeps git vim docker-ce sudo -y \
-    && pip install docker-compose airflow[cyrpto,celery,postgres] celery \
+    && apt-get install $buildDeps git vim sudo -y \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
+    && apt-key fingerprint 0EBFCD88 \
+    && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian jessie stable" \
+    && apt-get update \
+    && apt-get install docker-ce -y \
+    && pip install docker-compose apache-airflow[cyrpto,celery,postgres]==${AIRFLOW_VERSION} docker \
+    # SUPER HACK PLEASE REMOVE AFTER AIRFLOW UPDATES (i.e. https://github.com/apache/incubator-airflow/pull/2417)
+    && sed -i -e 's/import Client/import APIClient as Client/' /usr/local/lib/python3.6/site-packages/airflow/operators/docker_operator.py \
+    && sed -i -e 's/import Client/import APIClient as Client/'  /usr/local/lib/python3.6/site-packages/airflow/hooks/docker_hook.py \
     && apt-get remove --purge -yqq $buildDeps \
-    && apt-get clean \
+    && apt-get clean -y \
+    && apt-get autoremove -y \
     && rm -rf \
         /var/lib/apt/lists/* \
         /tmp/* \
@@ -37,3 +47,13 @@ RUN apt-get update && apt-get install curl -y \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
+
+# copy the built docker credentials module to this container
+COPY --from=aws_ecr_credential_helper \
+    /go/src/github.com/awslabs/amazon-ecr-credential-helper/bin/local/docker-credential-ecr-login \
+    /usr/local/bin
+
+# this is to enable aws ecr credentials helpers to reauthorize docker
+RUN mkdir -p /.docker/ \
+    && echo '{\n    "credsStore": "ecr-login"\n}' > \
+        /.docker/config.json

@@ -15,7 +15,7 @@ Note: This project builds off of the docker image provided by https://github.com
 - [Architectural Concepts](#architectural-concepts)
 - [Setup](#setup)
 - [Where to Start](#where-to-start)
-- [Hot to Test](#how-to-test)
+- [How to Test](#how-to-test)
 - [How to Deploy](#how-to-deploy)
 - [Debug Tools](#debug-tools)
 - [Notes](#notes)

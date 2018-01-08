@@ -3,7 +3,7 @@ PUCKEL_ENTRYPOINT=airflow
 
 source /add-user-docker.sh
 
-# this doens't protect from docker but it's a little more secure
+# this doesn't protect from docker but it's a little more secure
 sudo sed -i "/$AIRFLOW_USER/d" /etc/sudoers
 echo "start script with group $DOCKER_GROUP"
 # DOCKER_GROUP from /add-user-docker.sh
