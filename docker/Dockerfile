@@ -4,17 +4,29 @@
 # BUILD: docker build --rm -t wongwill86/air-tasks .
 # SOURCE: https://github.com/wongwill86/air-tasks
 
-FROM wongwill86/air-tasks:alpine-base
+ARG BASE=alpine
+
+FROM alpine/git as version_container
+WORKDIR /.gitcopy
+ADD .git .
+RUN git rev-parse HEAD > COMMIT_VERSION
+
+FROM wongwill86/air-tasks:${BASE}-base
 MAINTAINER wongwill86
 
+ARG BASE
 ARG AIRFLOW_HOME=/usr/local/airflow
 ENV AIRFLOW_HOME ${AIRFLOW_HOME}
 ARG AIRFLOW_USER=airflow
 ENV AIRFLOW_USER ${AIRFLOW_USER}
 
+WORKDIR ${AIRFLOW_HOME}
+
+# Move base version information directly into airflow home directory
+RUN cp /COMMIT* ${AIRFLOW_HOME}/
+
 # prepare airflow user
-RUN mkdir -p ${AIRFLOW_HOME} \
-    && groupadd -r ${AIRFLOW_USER} \
+RUN groupadd -r ${AIRFLOW_USER} \
     && useradd -r -d ${AIRFLOW_HOME} -g ${AIRFLOW_USER} -s /bin/bash ${AIRFLOW_USER} \
     && chown -R ${AIRFLOW_USER}: ${AIRFLOW_HOME} \
     && usermod -aG docker ${AIRFLOW_USER} \
@@ -23,26 +35,29 @@ RUN mkdir -p ${AIRFLOW_HOME} \
     && echo "${AIRFLOW_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers
 
 # Docker config (i.e. credentials )
-RUN cp /.docker/ ${AIRFLOW_HOME}/.docker -r
+RUN cp /.docker/ .docker -r
 
 # Airflow celery config file into container
-COPY docker/config/celeryconfig.py ${AIRFLOW_HOME}/config/celeryconfig.py
+COPY docker/config/celeryconfig.py config/celeryconfig.py
 
 # Startup scripts
 COPY docker/scripts/ /
 
 # Docker compose files
-COPY docker/docker-compose-CeleryExecutor.yml ${AIRFLOW_HOME}/docker/docker-compose-CeleryExecutor.yml
+COPY docker/docker-compose-CeleryExecutor.yml docker/docker-compose-CeleryExecutor.yml
 
 # Airflow configuration
-COPY docker/config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+COPY docker/config/airflow.cfg airflow.cfg
 
 # New Plugins
-COPY plugins/ ${AIRFLOW_HOME}/plugins
+COPY plugins/ plugins
 
 # New Dags
-COPY dags/ ${AIRFLOW_HOME}/dags/
+COPY dags/ dags/
+
+# copy the current commit of this image from the version container
+COPY --from=version_container \
+    /.gitcopy/COMMIT_VERSION COMMIT_VERSION_AIR_TASKS
 
 USER ${AIRFLOW_USER}
-WORKDIR ${AIRFLOW_HOME}
 ENTRYPOINT ["/entrypoint-dood.sh"]
