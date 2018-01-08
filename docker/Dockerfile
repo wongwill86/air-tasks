@@ -24,6 +24,7 @@ ENV AIRFLOW_USER ${AIRFLOW_USER}
 WORKDIR ${AIRFLOW_HOME}
 
 # Move base version information directly into airflow home directory
+RUN mkdir -p ${AIRFLOW_HOME}/version
 RUN cp /COMMIT* ${AIRFLOW_HOME}/version
 
 # prepare airflow user
