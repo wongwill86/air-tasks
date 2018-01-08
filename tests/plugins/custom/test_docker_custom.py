@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from airflow.operators.docker_plugin import DockerRemovableContainer
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
 import unittest
@@ -75,7 +74,7 @@ class TestDockerConfigurableOperator(unittest.TestCase):
             xcom_push=True,
             xcom_all=True,
             )
-        assert '%s\n' % NEW_TEXT == operator.execute(None)
+        assert '%s\n' % NEW_TEXT == operator.execute(None).decode('utf-8')
 
 
 class TestDockerRemovableContainer(unittest.TestCase):
@@ -175,7 +174,7 @@ class TestDockerWithVariables(unittest.TestCase):
     def test_should_fail_when_variable_not_found(self, variable_class):
         variable_class.get.side_effect = DEFAULT_VARIABLES.__getitem__
 
-        bad_keys = DEFAULT_VARIABLES.keys()
+        bad_keys = list(DEFAULT_VARIABLES.keys())
         bad_keys.append('bad_key')
 
         operator = DockerWithVariablesOperator(

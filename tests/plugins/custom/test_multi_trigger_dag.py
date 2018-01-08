@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import unittest
 from airflow.operators.custom_plugin import MultiTriggerDagRunOperator
 from airflow.utils.state import State
