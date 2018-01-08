@@ -25,7 +25,7 @@ scheduler_dag = DAG(
 
 
 def param_generator():
-    iterable = xrange(0, 100)
+    iterable = range(0, 100)
     for i in iterable:
         yield i
 

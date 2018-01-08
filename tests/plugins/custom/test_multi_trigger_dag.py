@@ -183,7 +183,7 @@ class TestMultiTriggerDag(unittest.TestCase):
     def test_should_execute_generator_function(self, mock_session,
                                                dag_bag_class):
         def param_generator():
-            iterable = xrange(1, 10)
+            iterable = range(1, 10)
             for i in iterable:
                 yield i
 
@@ -200,7 +200,7 @@ class TestMultiTriggerDag(unittest.TestCase):
         TestMultiTriggerDag.verify_session(param_generator())
 
     def test_should_execute_iterable(self, mock_session, dag_bag_class):
-        params_list = xrange(1, 10)
+        params_list = range(1, 10)
 
         dag_bag_class.return_value = TestMultiTriggerDag.create_mock_dag_bag()
 
