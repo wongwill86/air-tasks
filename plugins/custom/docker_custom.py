@@ -18,13 +18,13 @@ class DockerConfigurableOperator(DockerOperator):
     def __init__(self, container_args={}, host_args={}, *args, **kwargs):
         self.container_args = container_args
         self.host_args = host_args
-        super(DockerConfigurableOperator, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     # This needs to be updated whenever we update to a new version of airflow!
     def execute(self, context):
         self.log.info('Starting docker container from image %s', self.image)
 
-        tls_config = self.__get_tls_config()
+        tls_config = self._DockerOperator__get_tls_config()
 
         if self.docker_conn_id:
             self.cli = self.get_hook().get_conn()
@@ -105,11 +105,11 @@ class DockerRemovableContainer(DockerConfigurableOperator):
                  remove=True,
                  *args, **kwargs):
         self.remove = remove
-        super(DockerRemovableContainer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def execute(self, context):
         try:
-            return super(DockerRemovableContainer, self).execute(context)
+            return super().execute(context)
         finally:
             if self.cli and self.container and self.remove:
                 self.cli.stop(self.container, timeout=1)
@@ -125,7 +125,7 @@ class DockerWithVariablesOperator(DockerRemovableContainer):
                  *args, **kwargs):
         self.variables = variables
         self.mount_point = mount_point
-        super(DockerWithVariablesOperator, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def execute(self, context):
         with TemporaryDirectory(prefix='dockervariables') as tmp_var_dir:
@@ -135,7 +135,7 @@ class DockerWithVariablesOperator(DockerRemovableContainer):
                     value_file.write(str(value))
             self.volumes.append('{0}:{1}'.format(tmp_var_dir,
                                                  self.mount_point))
-            return super(DockerWithVariablesOperator, self).execute(context)
+            return super().execute(context)
 
 
 class CustomPlugin(AirflowPlugin):

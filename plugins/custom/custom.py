@@ -32,7 +32,7 @@ class MultiTriggerDagRunOperator(BaseOperator):
             trigger_dag_id,
             params_list,
             *args, **kwargs):
-        super(MultiTriggerDagRunOperator, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.trigger_dag_id = trigger_dag_id
         self.params_list = params_list
         if hasattr(self.params_list, '__len__'):

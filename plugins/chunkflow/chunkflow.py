@@ -20,7 +20,7 @@ class ChunkFlowOperator(DockerConfigurableOperator):
                  *args, **kwargs
                  ):
         print("using " + image_id + ':' + image_version)
-        super(ChunkFlowOperator, self).__init__(
+        super().__init__(
             image=image_id + ':' + image_version,
             command=command % task_json.replace('"', '\\"'),
             network_mode='bridge',
