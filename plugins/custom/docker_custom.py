@@ -22,21 +22,18 @@ class DockerConfigurableOperator(DockerOperator):
 
     # This needs to be updated whenever we update to a new version of airflow!
     def execute(self, context):
-        logging.info('Starting docker container from image ' + self.image)
+        self.log.info('Starting docker container from image %s', self.image)
 
-        tls_config = None
-        if self.tls_ca_cert and self.tls_client_cert and self.tls_client_key:
-            tls_config = tls.TLSConfig(
-                    ca_cert=self.tls_ca_cert,
-                    client_cert=(self.tls_client_cert, self.tls_client_key),
-                    verify=True,
-                    ssl_version=self.tls_ssl_version,
-                    assert_hostname=self.tls_hostname
+        tls_config = self.__get_tls_config()
+
+        if self.docker_conn_id:
+            self.cli = self.get_hook().get_conn()
+        else:
+            self.cli = Client(
+                base_url=self.docker_url,
+                version=self.api_version,
+                tls=tls_config
             )
-            self.docker_url = self.docker_url.replace('tcp://', 'https://')
-
-        self.cli = Client(base_url=self.docker_url, version=self.api_version,
-                          tls=tls_config)
 
         if ':' not in self.image:
             image = self.image + ':latest'
@@ -44,10 +41,10 @@ class DockerConfigurableOperator(DockerOperator):
             image = self.image
 
         if self.force_pull or len(self.cli.images(name=image)) == 0:
-            logging.info('Pulling docker image ' + image)
+            self.log.info('Pulling docker image %s', image)
             for l in self.cli.pull(image, stream=True):
                 output = json.loads(l.decode('utf-8'))
-                logging.info("{}".format(output['status']))
+                self.log.info("%s", output['status'])
 
         cpu_shares = int(round(self.cpus * 1024))
 
@@ -65,10 +62,11 @@ class DockerConfigurableOperator(DockerOperator):
                 'command': self.get_command(),
                 'cpu_shares': cpu_shares,
                 'environment': self.environment,
+                'host_config': self.cli.create_host_config(**host_args),
                 'image': image,
                 'mem_limit': self.mem_limit,
                 'user': self.user,
-                'host_config': self.cli.create_host_config(**host_args)
+                'working_dir': self.working_dir
             }
 
             container_args.update(self.container_args)
@@ -79,17 +77,20 @@ class DockerConfigurableOperator(DockerOperator):
 
             line = ''
             for line in self.cli.logs(container=self.container['Id'],
-                                      stream=True):
-                logging.info("{}".format(line.strip()))
+                    stream=True):
+                line = line.strip()
+                if hasattr(line, 'decode'):
+                    line = line.decode('utf-8')
+                self.log.info(line)
 
             exit_code = self.cli.wait(self.container['Id'])
             if exit_code != 0:
                 raise AirflowException('docker container failed')
 
-            if self.xcom_push:
+            if self.xcom_push_flag:
                 return self.cli.logs(
                     container=self.container['Id']) if self.xcom_all else str(
-                        line.strip())
+                        line)
 
 
 class DockerRemovableContainer(DockerConfigurableOperator):
