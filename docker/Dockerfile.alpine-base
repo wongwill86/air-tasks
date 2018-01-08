@@ -38,7 +38,7 @@ RUN set -ex \
     && tar -xvf docker-${DOCKER_VERSION}.tgz \
     && mv docker/* /usr/local/bin/ \
     && rm -rf docker docker-${DOCKER_VERSION}.tgz docker \
-    && pip install apache-airflow[crypto,celery,postgres]==${AIRFLOW_VERSION} docker \
+    && pip install docker-compose apache-airflow[crypto,celery,postgres]==${AIRFLOW_VERSION} docker \
     # SUPER HACK PLEASE REMOVE AFTER AIRFLOW UPDATES (i.e. https://github.com/apache/incubator-airflow/pull/2417)
     && sed -i -e 's/import Client/import APIClient as Client/' /usr/local/lib/python3.6/site-packages/airflow/operators/docker_operator.py \
     && sed -i -e 's/import Client/import APIClient as Client/'  /usr/local/lib/python3.6/site-packages/airflow/hooks/docker_hook.py \
