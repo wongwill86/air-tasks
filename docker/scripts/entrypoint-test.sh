@@ -1,6 +1,4 @@
 #!/bin/bash
-PUCKEL_ENTRYPOINT=/entrypoint.sh
-
 source /add-user-docker.sh
 
 # this doens't protect from docker but it's a little more secure

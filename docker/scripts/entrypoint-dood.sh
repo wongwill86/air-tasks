@@ -1,5 +1,5 @@
 #!/bin/bash
-PUCKEL_ENTRYPOINT=airflow
+COMMAND=airflow
 
 source /add-user-docker.sh
 
@@ -8,7 +8,7 @@ sudo sed -i "/$AIRFLOW_USER/d" /etc/sudoers
 echo "start script with group $DOCKER_GROUP"
 # DOCKER_GROUP from /add-user-docker.sh
 if [ -z ${DOCKER_GROUP} ]; then
-    exec ${PUCKEL_ENTRYPOINT} $*
+    exec ${COMMAND} $*
 else
-    exec sg ${DOCKER_GROUP} "${PUCKEL_ENTRYPOINT} $*"
+    exec sg ${DOCKER_GROUP} "${COMMAND} $*"
 fi
