@@ -40,7 +40,7 @@ RUN groupadd -r ${AIRFLOW_USER} \
 RUN cp /.docker/ .docker -r
 
 # Airflow celery config file into container
-COPY docker/config/celeryconfig.py config/celeryconfig.py
+COPY config/celeryconfig.py config/celeryconfig.py
 
 # Startup scripts
 COPY docker/scripts/ /
@@ -49,7 +49,7 @@ COPY docker/scripts/ /
 COPY docker/docker-compose-CeleryExecutor.yml docker/docker-compose-CeleryExecutor.yml
 
 # Airflow configuration
-COPY docker/config/airflow.cfg airflow.cfg
+COPY config/airflow.cfg airflow.cfg
 
 # New Plugins
 COPY plugins/ plugins

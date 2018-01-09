@@ -168,7 +168,8 @@ class TestDockerWithVariables(unittest.TestCase):
         assert operator
         assert operator.task_id == TASK_ID
 
-        assert show_items == variables_to_show_items(DEFAULT_VARIABLES)
+        assert str(show_items, 'utf-8') == variables_to_show_items(
+            DEFAULT_VARIABLES)
 
     @patch_plugin_file('plugins/custom/docker', 'Variable', autospec=True)
     def test_should_fail_when_variable_not_found(self, variable_class):

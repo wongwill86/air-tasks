@@ -8,7 +8,7 @@ RUN if which apk; then \
     else \
         apt-get update && apt-get install apt-transport-https build-essential -y; \
     fi
-RUN pip install pytest pytest-watch pytest-env pytest-cov-exclude pytest-xdist pylama mock
+RUN pip install pytest pytest-watch pytest-env pytest-cov-exclude pytest-xdist pytest-datadir pylama mock
 ENV PYTHONDONTWRITEBYTECODE 1 
 USER airflow
 ENTRYPOINT ["/entrypoint-test.sh"]

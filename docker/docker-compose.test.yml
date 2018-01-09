@@ -13,7 +13,9 @@ services:
             - ../tests:/usr/local/airflow/tests
             - ../plugins:/usr/local/airflow/plugins
             - ../dags:/usr/local/airflow/dags
+            - ../config:/usr/local/airflow/config
             - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp:/tmp
         environment:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY

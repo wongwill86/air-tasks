@@ -1,12 +1,8 @@
-from __future__ import unicode_literals
 from airflow.operators.chunkflow_plugin import ChunkFlowOperator
 from airflow.operators.chunkflow_plugin import chunkflow_subdag_from_file
 
 from airflow.models import DAG
 from datetime import datetime, timedelta
-from pytest import fixture
-from distutils import dir_util
-import os
 
 DAG_ARGS = {
     'owner': 'airflow',
@@ -22,23 +18,6 @@ PARENT_DAG_ID = 'parent_dag'
 IMAGE_ID = 'alpine'
 IMAGE_VERSION = 'latest'
 COMMAND = 'echo "json is: \n %s"'
-
-
-@fixture
-def datadir(tmpdir, request):
-    '''
-    https://stackoverflow.com/a/29631801/1470224
-    Fixture responsible for searching a folder with the same name of test
-    module and, if available, moving all contents to a temporary directory
-    so tests can use them freely.
-    '''
-    filename = request.module.__file__
-    test_dir, _ = os.path.splitext(filename)
-
-    if os.path.isdir(test_dir):
-        dir_util.copy_tree(test_dir, bytes(tmpdir))
-
-    return tmpdir
 
 
 class TestChunkFlowOperator(object):
@@ -82,27 +61,27 @@ class TestChunkFlowTasksFileOperator(object):
         return operator
 
     def test_empty(self, datadir):
-        task_filename = str(datadir.join('empty.txt'))
+        task_filename = datadir / 'empty.txt'
         operator = \
-            TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
+            TestChunkFlowTasksFileOperator.create_task(task_filename)
 
         assert operator
         assert operator.task_id == TASK_ID
         assert len(operator.subdag.task_ids) == 0
 
     def test_none(self, datadir):
-        task_filename = str(datadir.join('no_tasks.txt'))
+        task_filename = datadir / 'no_tasks.txt'
         operator = \
-            TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
+            TestChunkFlowTasksFileOperator.create_task(task_filename)
 
         assert operator
         assert operator.task_id == TASK_ID
         assert len(operator.subdag.task_ids) == 0
 
     def test_single(self, datadir):
-        task_filename = str(datadir.join('single.txt'))
+        task_filename = datadir / 'single.txt'
         operator = \
-            TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
+            TestChunkFlowTasksFileOperator.create_task(task_filename)
 
         assert operator
         assert operator.task_id == TASK_ID
@@ -113,9 +92,10 @@ class TestChunkFlowTasksFileOperator(object):
             )
 
     def test_many(self, datadir):
-        task_filename = str(datadir.join('many.txt'))
+        task_filename = datadir / 'many.txt'
+        print(task_filename)
         operator = \
-            TestChunkFlowTasksFileOperator.create_task(bytes(task_filename))
+            TestChunkFlowTasksFileOperator.create_task(task_filename)
 
         assert operator
         assert operator.task_id == TASK_ID

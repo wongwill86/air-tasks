@@ -1,7 +1,6 @@
 import os
 import json
-import logging
-from docker import APIClient as Client, tls
+from docker import APIClient as Client
 from airflow.exceptions import AirflowException
 from airflow.plugins_manager import AirflowPlugin
 from airflow.models import Variable
@@ -15,9 +14,16 @@ class DockerConfigurableOperator(DockerOperator):
     with the exception that we are able to inject container and host arguments
     before the container is run.
     """ # noqa
-    def __init__(self, container_args={}, host_args={}, *args, **kwargs):
-        self.container_args = container_args
-        self.host_args = host_args
+    def __init__(self, container_args=None, host_args=None, *args, **kwargs):
+        if container_args is None:
+            self.container_args = {}
+        else:
+            self.container_args = container_args
+
+        if host_args is None:
+            self.host_args = {}
+        else:
+            self.host_args = host_args
         super().__init__(*args, **kwargs)
 
     # This needs to be updated whenever we update to a new version of airflow!
@@ -76,8 +82,8 @@ class DockerConfigurableOperator(DockerOperator):
             self.cli.start(self.container['Id'])
 
             line = ''
-            for line in self.cli.logs(container=self.container['Id'],
-                    stream=True):
+            for line in self.cli.logs(
+                    container=self.container['Id'], stream=True):
                 line = line.strip()
                 if hasattr(line, 'decode'):
                     line = line.decode('utf-8')
@@ -132,7 +138,9 @@ class DockerWithVariablesOperator(DockerRemovableContainer):
             for key in self.variables:
                 value = Variable.get(key)
                 with open(os.path.join(tmp_var_dir, key), 'w') as value_file:
-                    value_file.write(str(value))
+                    # import pdb
+                    # pdb.set_trace()
+                    value_file.write(value)
             self.volumes.append('{0}:{1}'.format(tmp_var_dir,
                                                  self.mount_point))
             return super().execute(context)
