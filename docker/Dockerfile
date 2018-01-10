@@ -43,7 +43,7 @@ RUN cp /.docker/ .docker -r
 COPY config/celeryconfig.py config/celeryconfig.py
 
 # Startup scripts
-COPY scripts/ /
+COPY scripts/ scripts
 
 # Docker compose files
 COPY deploy/docker-compose-CeleryExecutor.yml deploy/docker-compose-CeleryExecutor.yml
@@ -64,4 +64,4 @@ COPY --from=version_container \
     /.gitcopy/COMMIT_TAGS version/COMMIT_TAGS_AIR_TASKS.${BASE}
 
 USER ${AIRFLOW_USER}
-ENTRYPOINT ["/entrypoint-dood.sh"]
+ENTRYPOINT ["scripts/entrypoint-dood.sh"]

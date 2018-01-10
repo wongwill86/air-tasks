@@ -3,7 +3,7 @@ services:
     sut:
         build:
             args:
-                image_name: $IMAGE_NAME
+                IMAGE_NAME: $IMAGE_NAME
             context: ../
             dockerfile: docker/Dockerfile.test
             cache_from:

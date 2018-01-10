@@ -1,14 +1,8 @@
-ARG image_name
-FROM $image_name
 ARG IMAGE_NAME
+FROM ${IMAGE_NAME}
+COPY scripts/entrypoint-test.sh scripts/entrypoint-test.sh
 USER root
-COPY docker/scripts/entrypoint-test.sh /entrypoint-test.sh
-RUN if which apk; then \
-        apk add build-base --no-cache; \
-    else \
-        apt-get update && apt-get install apt-transport-https build-essential -y; \
-    fi
 RUN pip install pytest pytest-watch pytest-env pytest-cov-exclude pytest-xdist pytest-datadir pylama mock
-ENV PYTHONDONTWRITEBYTECODE 1 
 USER airflow
-ENTRYPOINT ["/entrypoint-test.sh"]
+ENV PYTHONDONTWRITEBYTECODE 1 
+ENTRYPOINT ["scripts/entrypoint-test.sh"]

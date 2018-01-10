@@ -39,6 +39,8 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install docker-ce -y \
     && pip install docker-compose apache-airflow[cyrpto,celery,postgres]==${AIRFLOW_VERSION} docker \
+    # this is really only needed for testing (pytest-cov-exclude), include here so we don't need gcc for test build
+    && pip install ujson \
     # SUPER HACK PLEASE REMOVE AFTER AIRFLOW UPDATES (i.e. https://github.com/apache/incubator-airflow/pull/2417)
     && sed -i -e 's/import Client/import APIClient as Client/' /usr/local/lib/python3.6/site-packages/airflow/operators/docker_operator.py \
     && sed -i -e 's/import Client/import APIClient as Client/'  /usr/local/lib/python3.6/site-packages/airflow/hooks/docker_hook.py \
@@ -65,6 +67,6 @@ RUN mkdir -p /.docker/ \
 
 # copy the current commit from  the version container
 COPY --from=version_container \
-    /.gitcopy/COMMIT_VERSION /COMMIT_VERSION_BASE.SLIM
+    /.gitcopy/COMMIT_VERSION /COMMIT_VERSION_BASE.slim
 COPY --from=version_container \
-    /.gitcopy/COMMIT_TAGS /COMMIT_TAGS_BASE.SLIM
+    /.gitcopy/COMMIT_TAGS /COMMIT_TAGS_BASE.slim
