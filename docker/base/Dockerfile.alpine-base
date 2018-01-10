@@ -34,11 +34,18 @@ RUN set -ex \
        libxslt-dev \
        libxml2-dev \
        linux-headers \
+       git \
     && wget https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz \
     && tar -xvf docker-${DOCKER_VERSION}.tgz \
     && mv docker/* /usr/local/bin/ \
     && rm -rf docker docker-${DOCKER_VERSION}.tgz docker \
-    && pip install docker-compose apache-airflow[crypto,celery,postgres]==${AIRFLOW_VERSION} docker \
+    # Temporarily use this performance branch of airflow instead of pip install apache-airflow[cyrpto,celery,postgres]==${AIRFLOW_VERSION}
+    && git clone https://github.com/wongwill86/incubator-airflow.git --depth 1 -b performance-latest \
+    # Deleting this symlink not handled correctly by shutil.copy
+    && rm -rf incubator-airflow/airflow/www/static/docs \
+    && pip install incubator-airflow/[crypto,celery,postgres] \
+    && rm -rf incubator-airflow \
+    && pip install docker-compose docker \
     # this is really only needed for testing (pytest-cov-exclude), include here so we don't need gcc for test build
     && pip install ujson \ 
     # SUPER HACK PLEASE REMOVE AFTER AIRFLOW UPDATES (i.e. https://github.com/apache/incubator-airflow/pull/2417)

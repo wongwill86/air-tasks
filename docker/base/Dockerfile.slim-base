@@ -38,7 +38,11 @@ RUN apt-get update \
     && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian jessie stable" \
     && apt-get update \
     && apt-get install docker-ce -y \
-    && pip install docker-compose apache-airflow[cyrpto,celery,postgres]==${AIRFLOW_VERSION} docker \
+    # Temporarily use this performance branch of airflow instead of pip install apache-airflow[cyrpto,celery,postgres]==${AIRFLOW_VERSION}
+    && git clone https://github.com/wongwill86/incubator-airflow.git --depth 1 -b performance-latest \
+    && pip install incubator-airflow/[crypto,celery,postgres] \
+    && rm -rf incubator-airflow \
+    && pip install docker-compose docker \
     # this is really only needed for testing (pytest-cov-exclude), include here so we don't need gcc for test build
     && pip install ujson \
     # SUPER HACK PLEASE REMOVE AFTER AIRFLOW UPDATES (i.e. https://github.com/apache/incubator-airflow/pull/2417)
