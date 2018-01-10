@@ -52,7 +52,7 @@ templated_resize_command = """
 {% set queue_sizes = task_instance.xcom_pull(task_ids=params.task_id) %}
 {%
 set docker_compose_command='docker-compose -f ' +
-    conf.get('core', 'airflow_home') + '/docker/docker-compose-CeleryExecutor.yml' +
+    conf.get('core', 'airflow_home') + '/deploy/docker-compose-CeleryExecutor.yml' +
     ' up -d --no-recreate --no-deps --no-build --no-color'
 %}
 {%

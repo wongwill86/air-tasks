@@ -46,7 +46,7 @@ COPY config/celeryconfig.py config/celeryconfig.py
 COPY scripts/ /
 
 # Docker compose files
-COPY docker/docker-compose-CeleryExecutor.yml docker/docker-compose-CeleryExecutor.yml
+COPY deploy/docker-compose-CeleryExecutor.yml deploy/docker-compose-CeleryExecutor.yml
 
 # Airflow configuration
 COPY config/airflow.cfg airflow.cfg

@@ -77,7 +77,7 @@ See [Variables]( https://airflow.apache.org/concepts.html#variables )
 ### Compose File
 This file is a schedule of services necessary to start Air-tasks
 
-See https://github.com/wongwill86/air-tasks/blob/master/docker/docker-compose-CeleryExecutor.yml
+See https://github.com/wongwill86/air-tasks/blob/master/deploy/docker-compose-CeleryExecutor.yml
 
 This is a description of all the services for [docker-compose]( https://docs.docker.com/compose/compose-file/ ).
 
@@ -146,12 +146,12 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
 ## Where to Start
 1. [Install requirements](#setup)
 2. Clone this repo
-3. Uncomment **every** dag and plugin folder mounts in docker/docker-compose-CeleryExecutor.yml
+3. Uncomment **every** dag and plugin folder mounts in deploy/docker-compose-CeleryExecutor.yml
     ```
     #- ../dags/:/usr/local/airflow/dags
     #- ../plugins:/usr/local/airflow/plugins
     ```
-3. *(Optional: Only for development)* Replace **every** air-tasks tag with your tag in docker/docker-compose-CeleryExecutor.yml
+3. *(Optional: Only for development)* Replace **every** air-tasks tag with your tag in deploy/docker-compose-CeleryExecutor.yml
     ```
     <every service that has this>:
         image: wongwill86/air-tasks:<your tag>
@@ -171,15 +171,15 @@ See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/ex
     ```
     export PYTHONDONTWRITEBYTECODE=1 
     export IMAGE_NAME=wongwill86/air-tasks:<your tag>
-    docker-compose -f docker/docker-compose.test.yml -p ci build
+    docker-compose -f deploy/docker-compose.test.yml -p ci build
     ```
 3. Run test container
     ```
-    docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut
+    docker-compose -f deploy/docker-compose.test.yml -p ci run --rm sut
     ```
 4. *(Optional)* Watch / Test. 
     ```
-    docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
+    docker-compose -f deploy/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
     ```
     *Warning 1: if nothing runs, make sure all tests pass first*
 
@@ -188,7 +188,7 @@ See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/ex
 ## How to Deploy
 ### Local
 ```
-docker-compose -f docker/docker-compose-CeleryExecutor.yml up -d
+docker-compose -f deploy/docker-compose-CeleryExecutor.yml up -d
 ```
 
 ### Swarm
@@ -197,7 +197,7 @@ echo '<blank or username here>' | docker secret create basic_auth_username -
 echo '<blank or password here>' | docker secret create basic_auth_password -
 echo '<blank ssl certificate here>' | docker secret create ssl_certificate -
 echo '<blank ssl certificate key here>' | docker secret create ssl_certificate_key -
-docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
+docker stack deploy -c deploy/docker-compose-CeleryExecutor.yml <stack name>
 ```
 
 ### AWS
@@ -295,7 +295,7 @@ If you need to run tasks on different machine instance types, this can be achiev
         queue='other-instance-type',
         dag=dag)
     ```
-2. In the *[docker compose file](https://github.com/wongwill86/air-tasks/blob/gpu/docker/docker-compose-CeleryExecutor.yml)*, create a new service copied and pasted from `worker-worker`. This will create workers that will listen to this new queue topic (`other-instance-type`) and only deploy on machines with the docker engine label: `[ engine.labels.infrakit-role == other-instance-type ]`.
+2. In the *[docker compose file](https://github.com/wongwill86/air-tasks/blob/master/deploy/docker-compose-CeleryExecutor.yml)*, create a new service copied and pasted from `worker-worker`. This will create workers that will listen to this new queue topic (`other-instance-type`) and only deploy on machines with the docker engine label: `[ engine.labels.infrakit-role == other-instance-type ]`.
     ```
     worker-other-instance-type:
 
