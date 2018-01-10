@@ -43,7 +43,7 @@ RUN cp /.docker/ .docker -r
 COPY config/celeryconfig.py config/celeryconfig.py
 
 # Startup scripts
-COPY docker/scripts/ /
+COPY scripts/ /
 
 # Docker compose files
 COPY docker/docker-compose-CeleryExecutor.yml docker/docker-compose-CeleryExecutor.yml
