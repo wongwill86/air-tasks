@@ -1,0 +1,9 @@
+#!/bin/bash
+if [[ $CACHE_TAG == *"slim"* ]]; then
+    BASE = slim
+else
+    BASE = alpine
+fi
+
+echo "Building $BASE ..."
+docker build --build-arg BASE=$BASE -t $IMAGE_NAME .

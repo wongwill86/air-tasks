@@ -1,0 +1,11 @@
+version: '3.4'
+services:
+    sut:
+        build:
+            args:
+                image_name: $IMAGE_NAME
+            cache_from:
+                - $CACHE_TAG
+                - $IMAGE_NAME
+        command:
+            - airflow version
