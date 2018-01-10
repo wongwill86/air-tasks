@@ -61,7 +61,7 @@ COPY dags/ dags/
 COPY --from=version_container \
     /.gitcopy/COMMIT_VERSION version/COMMIT_VERSION_AIR_TASKS
 COPY --from=version_container \
-    /.gitcopy/COMMIT_TAGS version/COMMIT_TAGS_AIR_TASKS.SLIM
+    /.gitcopy/COMMIT_TAGS version/COMMIT_TAGS_AIR_TASKS.${BASE}
 
 USER ${AIRFLOW_USER}
 ENTRYPOINT ["/entrypoint-dood.sh"]

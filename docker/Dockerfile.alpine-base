@@ -74,4 +74,4 @@ RUN mkdir -p /.docker/ \
 COPY --from=version_container \
     /.gitcopy/COMMIT_VERSION /COMMIT_VERSION_BASE.ALPINE
 COPY --from=version_container \
-    /.gitcopy/COMMIT_TAGS /COMMIT_TAGS_BASE.SLIM
+    /.gitcopy/COMMIT_TAGS /COMMIT_TAGS_BASE.ALPINE
