@@ -4,7 +4,8 @@
 # BUILD: docker build --rm -t wongwill86/air-tasks .
 # SOURCE: https://github.com/wongwill86/air-tasks
 
-ARG BASE=alpine
+ARG BASE_DIST=alpine
+ARG BASE_TAG=0.0.2
 
 FROM alpine/git as version_container
 WORKDIR /.gitcopy
@@ -12,10 +13,11 @@ ADD .git .
 RUN git rev-parse HEAD > COMMIT_VERSION
 RUN git describe --tags > COMMIT_TAGS
 
-FROM wongwill86/air-tasks:${BASE}-base
+FROM wongwill86/air-tasks:base-${BASE_DIST}-${BASE_TAG}
 MAINTAINER wongwill86
 
-ARG BASE
+ARG BASE_DIST
+ARG BASE_TAG
 ARG AIRFLOW_HOME=/usr/local/airflow
 ENV AIRFLOW_HOME ${AIRFLOW_HOME}
 ARG AIRFLOW_USER=airflow
@@ -61,7 +63,7 @@ COPY dags/ dags/
 COPY --from=version_container \
     /.gitcopy/COMMIT_VERSION version/COMMIT_VERSION_AIR_TASKS
 COPY --from=version_container \
-    /.gitcopy/COMMIT_TAGS version/COMMIT_TAGS_AIR_TASKS.${BASE}
+    /.gitcopy/COMMIT_TAGS version/COMMIT_TAGS_AIR_TASKS.${BASE_DIST}-${BASE_TAG}
 
 USER ${AIRFLOW_USER}
 ENTRYPOINT ["scripts/entrypoint-dood.sh"]
