@@ -36,8 +36,6 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
-            - REDIS_HOST=rabbitmq
-            - REDIS_PORT=5672
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -68,8 +66,6 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
-            - REDIS_HOST=rabbitmq
-            - REDIS_PORT=5672
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -96,8 +92,6 @@ services:
             - rabbitmq
         environment:
             - EXECUTOR=Celery
-            - REDIS_HOST=rabbitmq
-            - REDIS_PORT=5672
         #ports:
             #- "5555:5555"
         command: flower
@@ -123,8 +117,6 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
-            - REDIS_HOST=rabbitmq
-            - REDIS_PORT=5672
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -161,11 +153,6 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
-            - REDIS_HOST=rabbitmq
-            - REDIS_PORT=5672
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
         command: worker -q worker
         deploy:
             mode: global
