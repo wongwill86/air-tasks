@@ -8,7 +8,7 @@ A curated set of tools for managing distributed task workflows.
 * [Docker Infrakit](https://github.com/docker/infrakit): Infrastructure Orchestration to deploy on the cloud
 
 
-Note: This project builds off of the docker image provided by https://github.com/puckel/docker-airflow and infrakit examples https://github.com/infrakit/examples
+Note: This project was inspired by https://github.com/puckel/docker-airflow and infrakit examples https://github.com/infrakit/examples
 
 ## Table of Contents
 - [Core Concepts](#core-concepts)
@@ -146,7 +146,7 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
 ## Where to Start
 1. [Install requirements](#setup)
 2. Clone this repo
-3. Uncomment **every** dag and plugin folder mounts in deploy/docker-compose-CeleryExecutor.yml
+3. *(Optional: Only for development)* Uncomment **every** dag and plugin folder mounts in deploy/docker-compose-CeleryExecutor.yml
     ```
     #- ../dags/:/usr/local/airflow/dags
     #- ../plugins:/usr/local/airflow/plugins
