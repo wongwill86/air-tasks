@@ -1,9 +1,13 @@
 #!/bin/bash
 if [[ $CACHE_TAG == *"slim"* ]]; then
-    BASE_DIST = slim
-else
-    BASE_DIST = alpine
+    BASE_DIST=slim
+elif [[ $CACHE_TAG == *"alpine"* ]]; then
+    BASE_DIST=alpine
 fi
 
 echo "Building $BASE_DIST ..."
-docker build --build-arg BASE_DIST=$BASE_DIST -t $IMAGE_NAME .
+if [ -n $BASE_DIST ]; then
+    docker build --build-arg BASE_DIST=$BASE_DIST -t $IMAGE_NAME .
+else
+    docker build -t $IMAGE_NAME .
+fi
