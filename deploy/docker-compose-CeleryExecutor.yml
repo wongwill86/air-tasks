@@ -23,7 +23,7 @@ services:
 
     # single shot initialize the database
     init-db:
-        image: wongwill86/air-tasks:alpine
+        image: wongwill86/air-tasks:branch-customAF
         restart: on-failure
         depends_on:
             - postgres
@@ -43,6 +43,7 @@ services:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
+            #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
@@ -52,7 +53,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     webserver:
-        image: wongwill86/air-tasks:alpine
+        image: wongwill86/air-tasks:branch-customAF
         restart: always
         depends_on:
             - postgres
@@ -73,6 +74,7 @@ services:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
+            #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
@@ -86,7 +88,7 @@ services:
                 window: 120s
 
     flower:
-        image: wongwill86/air-tasks:alpine
+        image: wongwill86/air-tasks:branch-customAF
         restart: always
         depends_on:
             - rabbitmq
@@ -100,7 +102,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     scheduler:
-        image: wongwill86/air-tasks:alpine
+        image: wongwill86/air-tasks:branch-customAF
         restart: always
         depends_on:
             - webserver
@@ -108,6 +110,7 @@ services:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
+            #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - LOAD_EX=y
@@ -120,7 +123,7 @@ services:
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
-        command: scheduler
+        command: scheduler -p
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -136,7 +139,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     worker-worker:
-        image: wongwill86/air-tasks:alpine
+        image: wongwill86/air-tasks:branch-customAF
         restart: always
         depends_on:
             - scheduler
@@ -144,6 +147,7 @@ services:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
+            #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
@@ -160,7 +164,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == worker ]
 
     worker-manager:
-        image: wongwill86/air-tasks:alpine
+        image: wongwill86/air-tasks:branch-customAF
         restart: always
         depends_on:
             - scheduler
@@ -168,6 +172,7 @@ services:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
+            #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
@@ -194,8 +199,8 @@ services:
             - "443:443"
         depends_on:
             - webserver
-            #- flower
-            #- visualizer
+            - flower
+            - visualizer
             - rabbitmq
         deploy:
             placement:
@@ -308,7 +313,7 @@ services:
             - ssl_certificate_key
 
     add-secrets:
-        image: wongwill86/air-tasks:alpine
+        image: wongwill86/air-tasks:branch-customAF
         depends_on:
             - scheduler
         environment:

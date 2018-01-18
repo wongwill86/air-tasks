@@ -5,7 +5,7 @@
 # SOURCE: https://github.com/wongwill86/air-tasks
 
 ARG BASE_DIST=alpine
-ARG BASE_TAG=0.0.2
+ARG BASE_TAG=0.0.2-customAF
 
 FROM alpine/git as version_container
 WORKDIR /.gitcopy
