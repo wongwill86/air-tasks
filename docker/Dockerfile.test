@@ -1,8 +1,0 @@
-ARG IMAGE_NAME
-FROM ${IMAGE_NAME}
-COPY scripts/entrypoint-test.sh scripts/entrypoint-test.sh
-USER root
-RUN pip install pytest pytest-watch pytest-env pytest-cov-exclude pytest-xdist pytest-datadir pylama mock
-USER airflow
-ENV PYTHONDONTWRITEBYTECODE 1
-ENTRYPOINT ["scripts/entrypoint-test.sh"]

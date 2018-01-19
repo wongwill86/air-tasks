@@ -47,7 +47,7 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
-        command: initdb
+        command: airflow initdb
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -78,7 +78,7 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
-        command: webserver
+        command: airflow webserver
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -96,7 +96,7 @@ services:
             - EXECUTOR=Celery
         #ports:
             #- "5555:5555"
-        command: flower
+        command: airflow flower
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -123,7 +123,7 @@ services:
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
-        command: scheduler -p
+        command: airflow scheduler -p
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -157,7 +157,7 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
-        command: worker -q worker
+        command: airflow worker -q worker
         deploy:
             mode: global
             placement:
@@ -187,7 +187,7 @@ services:
             # - POSTGRES_DB=airflow
             - INFRAKIT_IMAGE
             - INFRAKIT_GROUPS_URL
-        command: worker -q manager
+        command: airflow worker -q manager
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]

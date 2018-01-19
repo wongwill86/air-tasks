@@ -1,4 +1,4 @@
-# VERSION 0.0.2
+# VERSION 0.0.3
 # AUTHOR: Will Wong
 # DESCRIPTION: Docker airflow with ECR registry and DooD (Docker outside of Dkr)
 # BUILD: docker build --rm -t wongwill86/air-tasks .
@@ -6,6 +6,7 @@
 
 ARG BASE_DIST=alpine
 ARG BASE_TAG=0.0.2-customAF
+ARG BASE_TEST=
 
 FROM alpine/git as version_container
 WORKDIR /.gitcopy
@@ -13,7 +14,7 @@ ADD .git .
 RUN git rev-parse HEAD > COMMIT_VERSION
 RUN git describe --tags > COMMIT_TAGS
 
-FROM wongwill86/air-tasks:base-${BASE_DIST}-${BASE_TAG}
+FROM wongwill86/air-tasks:base-${BASE_DIST}-${BASE_TAG}${BASE_TEST}
 MAINTAINER wongwill86
 
 ARG BASE_DIST
