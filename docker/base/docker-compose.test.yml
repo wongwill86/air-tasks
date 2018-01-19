@@ -4,6 +4,7 @@ services:
         build:
             args:
                 IMAGE_NAME: $IMAGE_NAME
+            context: ./
             dockerfile: Dockerfile.base.test
             cache_from:
                 - $CACHE_TAG
