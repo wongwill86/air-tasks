@@ -1,13 +1,29 @@
 #!/bin/bash
+# Pieced together undocumented docker cloud build behavior from:
+#     https://github.com/andyneff/highland_builder/blob/master/builder.py
+
+cd /src/$BUILD_CODE
+
 if [[ $CACHE_TAG == *"slim"* ]]; then
     BASE_DIST=slim
 elif [[ $CACHE_TAG == *"alpine"* ]]; then
     BASE_DIST=alpine
 fi
 
+# equivalent to clean_path
+if [[ $BUILD_PATH == "/"* ]]; then
+    BUILD_PATH_CUSTOM=${BUILD_PATH:1}
+else
+    BUILD_PATH_CUSTOM=${BUILD_PATH}
+fi
+
+if [[ $BUILD_PATH_CUSTOM != "./"* ]]; then
+    BUILD_PATH_CUSTOM=./${BUILD_PATH_CUSTOM}
+fi
+
 echo "Building $BASE_DIST ..."
 if [ -n $BASE_DIST ]; then
-    docker build --build-arg BASE_DIST=$BASE_DIST -t $IMAGE_NAME .
+    docker build -t $IMAGE_NAME -f $DOCKERFILE_PATH .
 else
-    docker build -t $IMAGE_NAME .
+    docker build --build-arg BASE_DIST=$BASE_DIST -t $IMAGE_NAME -f $DOCKERFILE_PATH .
 fi
