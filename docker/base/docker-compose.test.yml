@@ -1,7 +1,12 @@
 version: '3.3'
 services:
     sut:
-        image: $IMAGE_NAME
+        build:
+            args:
+                IMAGE_NAME: $IMAGE_NAME
+            dockerfile: Dockerfile.base.test
+            cache_from:
+                - $CACHE_TAG
         command:
             - airflow
             - version

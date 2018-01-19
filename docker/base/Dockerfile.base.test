@@ -1,0 +1,6 @@
+ARG IMAGE_NAME
+FROM ${IMAGE_NAME}
+USER root
+RUN pip install pytest pytest-watch pytest-env pytest-cov-exclude pytest-xdist pytest-datadir pylama mock
+USER airflow
+ENV PYTHONDONTWRITEBYTECODE 1

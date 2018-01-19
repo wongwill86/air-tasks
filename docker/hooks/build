@@ -1,4 +1,5 @@
 #!/bin/bash
+# Build with custom build args
 # Pieced together undocumented docker cloud build behavior from:
 #     https://github.com/andyneff/highland_builder/blob/master/builder.py
 
