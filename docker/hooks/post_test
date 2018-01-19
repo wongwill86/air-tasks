@@ -1,0 +1,9 @@
+#!/bin/bash
+# Tag the the built test image for reuse
+# Pieced together undocumented docker cloud build behavior from:
+#     https://github.com/andyneff/highland_builder/blob/master/builder.py
+
+BUILT_TEST_IMAGE=${BUILD_CODE}_sut
+CACHED_TEST_IMAGE=ci_sut
+
+docker tag $BUILT_TEST_IMAGE ci_sut

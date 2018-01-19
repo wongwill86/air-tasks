@@ -60,11 +60,12 @@ COPY plugins/ plugins
 # New Dags
 COPY dags/ dags/
 
+USER ${AIRFLOW_USER}
+ENTRYPOINT ["scripts/entrypoint-dood.sh"]
+
 # copy the current commit of this image from the version container
 COPY --from=version_container \
     /.gitcopy/COMMIT_VERSION version/COMMIT_VERSION_AIR_TASKS
 COPY --from=version_container \
     /.gitcopy/COMMIT_TAGS version/COMMIT_TAGS_AIR_TASKS.${BASE_DIST}-${BASE_TAG}
 
-USER ${AIRFLOW_USER}
-ENTRYPOINT ["scripts/entrypoint-dood.sh"]

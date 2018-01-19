@@ -2,6 +2,12 @@
 # Also push out the built test image
 # Pieced together undocumented docker cloud build behavior from:
 #     https://github.com/andyneff/highland_builder/blob/master/builder.py
+if [[ $CACHE_TAG == *"slim"* ]]; then
+    BASE_DIST=slim
+elif [[ $CACHE_TAG == *"alpine"* ]]; then
+    BASE_DIST=alpine
+fi
+
 LOCAL_TEST_IMAGE=${BUILD_CODE}_sut:latest
 PUSH_TEST_IMAGE=${IMAGE_NAME}-test
 
