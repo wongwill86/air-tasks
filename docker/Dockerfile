@@ -13,8 +13,6 @@ WORKDIR /.gitcopy
 ADD .git .
 RUN git rev-parse HEAD > COMMIT_VERSION
 RUN git describe --tags > COMMIT_TAGS
-RUN git rev-parse HEAD > COMMIT_VERSION
-RUN git describe --tags > COMMIT_TAGS
 
 FROM wongwill86/air-tasks:base-${BASE_DIST}-${BASE_TAG}${BASE_TEST}
 MAINTAINER wongwill86
