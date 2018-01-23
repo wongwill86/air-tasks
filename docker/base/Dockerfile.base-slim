@@ -13,9 +13,11 @@ RUN make
 
 FROM alpine/git as version_container
 WORKDIR /.gitcopy
-ADD .git .
-RUN git rev-parse HEAD > COMMIT_VERSION
-RUN git describe --tags --always > COMMIT_TAGS
+COPY .git/refs/heads/ ./heads
+COPY .git/refs/tags/ ./tags
+COPY .git/HEAD ./HEAD
+RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT_VERSION
+RUN grep $(cat COMMIT_VERSION) tags/* -l | xargs -n 1 -r basename > COMMIT_TAGS
 
 FROM python:3.6-slim
 MAINTAINER wongwill86
