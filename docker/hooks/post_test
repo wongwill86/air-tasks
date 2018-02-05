@@ -4,6 +4,7 @@
 #     https://github.com/andyneff/highland_builder/blob/master/builder.py
 
 BUILT_TEST_IMAGE=${BUILD_CODE}_sut
-CACHED_TEST_IMAGE=${IMAGE_NAME}_ci_sut
+CACHED_TEST_IMAGE=${DOCKER_REPO}:${IMAGE_NAME}_ci_sut
 
+echo 'Tagging to ' $CACHED_TEST_IMAGE
 docker tag $BUILT_TEST_IMAGE $CACHED_TEST_IMAGE

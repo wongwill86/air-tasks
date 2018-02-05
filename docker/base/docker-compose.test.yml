@@ -7,7 +7,7 @@ services:
             context: ./
             dockerfile: Dockerfile.base.test
             cache_from:
-                - $CACHE_TAG
+                - ${DOCKER_REPO}:${CACHE_TAG}
         command:
             - airflow
             - version

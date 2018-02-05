@@ -24,7 +24,7 @@ fi
 
 echo "Building $BASE_DIST ..."
 if [ -n $BASE_DIST ]; then
-    docker build -t $IMAGE_NAME -f $DOCKERFILE_PATH . 
+    docker build -t $IMAGE_NAME -f $DOCKERFILE_PATH --cache-from=$DOCKER_REPO:$CACHE_TAG . 
 else
-    docker build --build-arg BASE_DIST=$BASE_DIST -t $IMAGE_NAME -f $DOCKERFILE_PATH .
+    docker build --build-arg BASE_DIST=$BASE_DIST -t $IMAGE_NAME -f $DOCKERFILE_PATH --cache-from=$DOCKER_REPO:$CACHE_TAG .
 fi
