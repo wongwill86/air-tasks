@@ -7,7 +7,7 @@ services:
             context: ../
             dockerfile: docker/Dockerfile
             cache_from:
-                - ci_sut
+                - ${IMAGE_NAME}_ci_sut
         volumes:
             - ../tests:/usr/local/airflow/tests
             - ../plugins:/usr/local/airflow/plugins

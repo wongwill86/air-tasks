@@ -4,6 +4,6 @@
 #     https://github.com/andyneff/highland_builder/blob/master/builder.py
 
 BUILT_TEST_IMAGE=${BUILD_CODE}_sut
-CACHED_TEST_IMAGE=ci_sut
+CACHED_TEST_IMAGE=${IMAGE_NAME}_ci_sut
 
-docker tag $BUILT_TEST_IMAGE ci_sut
+docker tag $BUILT_TEST_IMAGE $CACHED_TEST_IMAGE
