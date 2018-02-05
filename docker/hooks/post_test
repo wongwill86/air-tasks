@@ -9,3 +9,4 @@ CACHED_TEST_IMAGE=${CACHE_REPO}_ci_sut
 
 echo 'Tagging to ' $CACHED_TEST_IMAGE
 docker tag $BUILT_TEST_IMAGE $CACHED_TEST_IMAGE
+docker push $CACHED_TEST_IMAGE
