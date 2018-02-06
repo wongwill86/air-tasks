@@ -1,5 +1,5 @@
 #!/bin/bash
-# Also push out the built test image
+# Tag the the built test image for reuse
 # Pieced together undocumented docker cloud build behavior from:
 #     https://hub.docker.com/r/docker/highland_builder/
 
