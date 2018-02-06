@@ -3,9 +3,11 @@ services:
     sut:
         build:
             args:
+                IMAGE_NAME: $IMAGE_NAME
                 BASE_TEST: -test
             context: ../
-            dockerfile: docker/Dockerfile
+            #dockerfile: docker/Dockerfile
+            dockerfile: docker/Dockerfile.test
             cache_from:
                 #- index.docker.io/wongwill86/air-tasks:branch-test_cache-test
                 - ci_sut
