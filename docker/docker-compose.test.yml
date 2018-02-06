@@ -22,4 +22,4 @@ services:
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
         command:
-            - pytest --pylama -n8
+            - pytest --pylama -n4
