@@ -11,16 +11,8 @@ RUN git clone https://github.com/awslabs/amazon-ecr-credential-helper.git
 WORKDIR /go/src/github.com/awslabs/amazon-ecr-credential-helper
 RUN make
 
-FROM alpine/git as version_container
-WORKDIR /.gitcopy
-COPY .git/refs/heads/ ./heads
-COPY .git/refs/tags/ ./tags
-COPY .git/HEAD ./HEAD
-RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT_VERSION
-RUN grep $(cat COMMIT_VERSION) tags/* -l | xargs -n 1 -r basename > COMMIT_TAGS
-
 FROM python:3.6-alpine3.7
-MAINTAINER wongwill86
+LABEL maintainer=wongwill86
 
 ARG AIRFLOW_VERSION=1.9.0
 ARG DOCKER_VERSION=17.12.0-ce
@@ -86,3 +78,10 @@ COPY --from=version_container \
     /.gitcopy/COMMIT_VERSION /COMMIT_VERSION_BASE.alpine
 COPY --from=version_container \
     /.gitcopy/COMMIT_TAGS /COMMIT_TAGS_BASE.alpine
+
+# Get commit hash and tags
+COPY .git/refs/heads/ ./heads
+COPY .git/refs/tags/ ./tags
+COPY .git/HEAD ./HEAD
+RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT_VERSION_BASE.alpine
+RUN grep $(cat COMMIT_VERSION.${BASE_DIST}-${BASE_TAG}) tags/* -l | xargs -n 1 -r basename > COMMIT_TAGS_BASE.alpine

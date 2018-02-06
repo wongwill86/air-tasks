@@ -1,5 +1,0 @@
-ARG image_name
-FROM $image_name
-ARG IMAGE_NAME
-RUN pip install pytest pytest-watch pytest-env pytest-cov-exclude pytest-xdist pylama mock
-ENV PYTHONDONTWRITEBYTECODE 1 

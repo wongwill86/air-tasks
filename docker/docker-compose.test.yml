@@ -1,14 +1,14 @@
-version: '3.3'
+# requires 2.3 to support 'target' when highland_builder uses docker compose
+version: '2.3'
 services:
     sut:
         build:
             args:
-                IMAGE_NAME: $IMAGE_NAME
                 BASE_TEST: -test
             context: ../
-            #dockerfile: docker/Dockerfile
-            dockerfile: docker/Dockerfile.test
+            dockerfile: docker/Dockerfile
             cache_from:
+                - $IMAGE_NAME
                 - ci_sut
                 - ${DOCKER_REPO}:${CACHE_TAG}-test
         volumes:

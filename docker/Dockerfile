@@ -8,14 +8,6 @@ ARG BASE_DIST=alpine
 ARG BASE_TAG=0.0.2-customAF
 ARG BASE_TEST=
 
-FROM alpine/git as version_container
-WORKDIR /.gitcopy
-COPY .git/refs/heads/ ./heads
-COPY .git/refs/tags/ ./tags
-COPY .git/HEAD ./HEAD
-RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT_VERSION
-RUN grep $(cat COMMIT_VERSION) tags/* -l | xargs -n 1 -r basename > COMMIT_TAGS
-
 FROM wongwill86/air-tasks:base-${BASE_DIST}-${BASE_TAG}${BASE_TEST}
 MAINTAINER wongwill86
 
@@ -65,9 +57,9 @@ COPY dags/ dags/
 USER ${AIRFLOW_USER}
 ENTRYPOINT ["scripts/entrypoint-dood.sh"]
 
-# copy the current commit of this image from the version container
-COPY --from=version_container \
-    /.gitcopy/COMMIT_VERSION version/COMMIT_VERSION.${BASE_DIST}-${BASE_TAG}
-COPY --from=version_container \
-    /.gitcopy/COMMIT_TAGS version/COMMIT_TAGS_AIR_TASKS.${BASE_DIST}-${BASE_TAG}
-
+WORKDIR ${AIRFLOW_HOME}/version
+COPY .git/refs/heads/ ./heads
+COPY .git/refs/tags/ ./tags
+COPY .git/HEAD ./HEAD
+RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT_VERSION.${BASE_DIST}-${BASE_TAG}
+RUN grep $(cat COMMIT_VERSION.${BASE_DIST}-${BASE_TAG}) tags/* -l | xargs -n 1 -r basename > COMMIT_TAGS_AIR_TASKS.${BASE_DIST}-${BASE_TAG}

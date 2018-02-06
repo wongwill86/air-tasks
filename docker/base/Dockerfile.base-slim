@@ -20,7 +20,7 @@ RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT_VERSION
 RUN grep $(cat COMMIT_VERSION) tags/* -l | xargs -n 1 -r basename > COMMIT_TAGS
 
 FROM python:3.6-slim
-MAINTAINER wongwill86
+LABEL maintainer=wongwill86
 
 ARG AIRFLOW_VERSION=1.9.0
 
@@ -71,8 +71,9 @@ RUN mkdir -p /.docker/ \
     && echo '{\n    "credsStore": "ecr-login"\n}' > \
         /.docker/config.json
 
-# copy the current commit from  the version container
-COPY --from=version_container \
-    /.gitcopy/COMMIT_VERSION /COMMIT_VERSION_BASE.slim
-COPY --from=version_container \
-    /.gitcopy/COMMIT_TAGS /COMMIT_TAGS_BASE.slim
+# Get commit hash and tags
+COPY .git/refs/heads/ ./heads
+COPY .git/refs/tags/ ./tags
+COPY .git/HEAD ./HEAD
+RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT_VERSION_BASE.slim
+RUN grep $(cat COMMIT_VERSION.${BASE_DIST}-${BASE_TAG}) tags/* -l | xargs -n 1 -r basename > COMMIT_TAGS_BASE.slim
