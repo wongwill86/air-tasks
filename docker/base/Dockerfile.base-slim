@@ -75,5 +75,7 @@ RUN mkdir -p /.docker/ \
 COPY .git/refs/heads/ ./heads
 COPY .git/refs/tags/ ./tags
 COPY .git/HEAD ./HEAD
-RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT_VERSION_BASE.slim
-RUN grep $(cat COMMIT_VERSION.${BASE_DIST}-${BASE_TAG}) tags/* -l | xargs -n 1 -r basename > COMMIT_TAGS_BASE.slim
+RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT \
+    && grep $(cat COMMIT) tags/* -l | xargs -n 1 -r basename > TAGS \
+    && cp COMMIT /COMMIT.base.slim \
+    && cp TAGS /TAGS.base.slim

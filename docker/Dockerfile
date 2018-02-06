@@ -54,12 +54,17 @@ COPY plugins/ plugins
 # New Dags
 COPY dags/ dags/
 
-USER ${AIRFLOW_USER}
 ENTRYPOINT ["scripts/entrypoint-dood.sh"]
 
-WORKDIR ${AIRFLOW_HOME}/version
+# Get commit hash and tags
+WORKDIR ${AIRFLOW_HOME}/.git
 COPY .git/refs/heads/ ./heads
 COPY .git/refs/tags/ ./tags
 COPY .git/HEAD ./HEAD
-RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT_VERSION.${BASE_DIST}-${BASE_TAG}
-RUN grep $(cat COMMIT_VERSION.${BASE_DIST}-${BASE_TAG}) tags/* -l | xargs -n 1 -r basename > COMMIT_TAGS_AIR_TASKS.${BASE_DIST}-${BASE_TAG}
+RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT \
+    && grep $(cat COMMIT) tags/* -l | xargs -n 1 -r basename > TAGS \
+    && cp COMMIT ${AIRFLOW_HOME}/version/COMMIT.air-tasks.${BASE_DIST}-${BASE_TAG} \
+    && cp TAGS ${AIRFLOW_HOME}/version/TAGS.air-tasks.${BASE_DIST}-${BASE_TAG}
+
+USER ${AIRFLOW_USER}
+WORKDIR ${AIRFLOW_HOME}
