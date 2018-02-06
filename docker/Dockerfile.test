@@ -6,4 +6,3 @@ COPY docker/scripts/entrypoint-test.sh /entrypoint-test.sh
 RUN pip install pytest pytest-watch pytest-env pytest-cov-exclude pytest-xdist pylama mock
 ENV PYTHONDONTWRITEBYTECODE 1 
 USER airflow
-ENTRYPOINT ["/entrypoint-test.sh"]
