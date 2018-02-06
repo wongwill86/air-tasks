@@ -9,7 +9,6 @@ services:
             #dockerfile: docker/Dockerfile
             dockerfile: docker/Dockerfile.test
             cache_from:
-                #- index.docker.io/wongwill86/air-tasks:branch-test_cache-test
                 - ci_sut
                 - ${DOCKER_REPO}:${CACHE_TAG}-test
         volumes:
