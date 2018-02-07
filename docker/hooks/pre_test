@@ -6,8 +6,8 @@
 
 CACHE_REPO=$DOCKER_REPO:$CACHE_TAG
 CACHED_TEST_IMAGE=${CACHE_REPO}-test
-#if docker pull $CACHED_TEST_IMAGE; then
-    #echo 'Pulled $CACHED_TEST_IMAGE '
-#else
-    #echo 'Failed to pull $CACHED_TEST_IMAGE'
-#fi
+if docker pull $CACHED_TEST_IMAGE; then
+	echo 'Pulled $CACHED_TEST_IMAGE '
+else
+	echo 'Failed to pull $CACHED_TEST_IMAGE'
+fi
