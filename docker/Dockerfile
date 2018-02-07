@@ -33,7 +33,7 @@ RUN groupadd -r ${AIRFLOW_USER} \
     # host's gid, we remove this permission from entrypoint-dood.sh script
     && echo "${AIRFLOW_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers
 
-# Docker config (i.e. credentials )
+# Docker config (i.e. credentials helper from base image)
 RUN cp /.docker/ .docker -r
 
 # Airflow celery config file into container
@@ -54,8 +54,6 @@ COPY plugins/ plugins
 # New Dags
 COPY dags/ dags/
 
-ENTRYPOINT ["scripts/entrypoint-dood.sh"]
-
 # Get commit hash and tags
 WORKDIR ${AIRFLOW_HOME}/.git
 COPY .git/refs/heads/ ./heads
@@ -68,3 +66,4 @@ RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT \
 
 USER ${AIRFLOW_USER}
 WORKDIR ${AIRFLOW_HOME}
+ENTRYPOINT ["scripts/entrypoint-dood.sh"]
