@@ -5,7 +5,7 @@
 # SOURCE: https://github.com/wongwill86/air-tasks
 
 ARG BASE_DIST=alpine
-ARG BASE_TAG=0.0.2-customAF
+ARG BASE_TAG=0.0.3-customAF
 ARG BASE_TEST=
 
 FROM wongwill86/air-tasks:base-${BASE_DIST}-${BASE_TAG}${BASE_TEST}
