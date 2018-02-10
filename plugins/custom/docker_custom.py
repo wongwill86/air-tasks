@@ -60,17 +60,17 @@ class DockerConfigurableOperator(DockerOperator):
 
             host_args = {
                 'binds': self.volumes,
+                'cpu_shares': cpu_shares,
+                'mem_limit': self.mem_limit,
                 'network_mode': self.network_mode
             }
             host_args.update(self.host_args)
 
             container_args = {
                 'command': self.get_command(),
-                'cpu_shares': cpu_shares,
                 'environment': self.environment,
                 'host_config': self.cli.create_host_config(**host_args),
                 'image': image,
-                'mem_limit': self.mem_limit,
                 'user': self.user,
                 'working_dir': self.working_dir
             }
@@ -89,7 +89,7 @@ class DockerConfigurableOperator(DockerOperator):
                     line = line.decode('utf-8')
                 self.log.info(line)
 
-            exit_code = self.cli.wait(self.container['Id'])
+            exit_code = self.cli.wait(self.container['Id'])['StatusCode']
             if exit_code != 0:
                 raise AirflowException('docker container failed')
 
