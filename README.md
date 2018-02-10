@@ -171,15 +171,15 @@ See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/ex
     ```
     export PYTHONDONTWRITEBYTECODE=1 
     export IMAGE_NAME=wongwill86/air-tasks:<your tag>
-    docker-compose -f deploy/docker-compose.test.yml -p ci build
+    docker-compose -f docker/docker-compose.test.yml -p ci build
     ```
 3. Run test container
     ```
-    docker-compose -f deploy/docker-compose.test.yml -p ci run --rm sut
+    docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut
     ```
 4. *(Optional)* Watch / Test. 
     ```
-    docker-compose -f deploy/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
+    docker-compose -f docker/docker-compose.test.yml -p ci run --rm sut ptw -- --pylama
     ```
     *Warning 1: if nothing runs, make sure all tests pass first*
 
@@ -326,4 +326,13 @@ To access a private AWS container registry, remember to set aws environment vari
 - AWS_DEFAULT_REGION
 
 Docker login to AWS ECR will automatically be set up.
+
+### Base Images
+The main [Dockerfile](https://github.com/wongwill86/air-tasks/blob/master/docker/Dockerfile) is built on top of one of two base images: [Alpine](https://github.com/wongwill86/air-tasks/blob/master/docker/base/Dockerfile.base-alpine)(default) and [Slim](https://github.com/wongwill86/air-tasks/blob/master/docker/base/Dockerfile.base-slim). Additionally, this base image is used to build the test base image which includes python test libraries. This is useful for testing derived images so that the test libraries do not need to be reinstalled. See [docker-compose.test.yml](https://github.com/wongwill86/air-tasks/blob/master/docker/docker-compose.test.yml) for more details. These base images should automatically be built in docker cloud.
+
+If for any reason you require building new base images:
+1. `docker build -f docker/base/Dockerfile.base-slim -t wongwill86/air-tasks:<your base tag> . # build the base image`
+2. `export IMAGE_NAME=wongwill86/air-tasks:<your base tag> # prepare base image to build test base image`
+3. `docker-compose -f docker/docker-compose.test.yml -p ci_base build # build test base image`
+4. `docker tag ci_base_sut wongwill86/air-tasks:<your base tag>-test # retag build test base image for testing`
 
