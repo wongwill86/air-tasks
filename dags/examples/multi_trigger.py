@@ -24,7 +24,7 @@ scheduler_dag = DAG(
 )
 
 
-def param_generator():
+def get_generator():
     iterable = range(0, 100)
     for i in iterable:
         yield i
@@ -33,7 +33,7 @@ def param_generator():
 operator = MultiTriggerDagRunOperator(
     task_id='trigger_%s' % TARGET_DAG_ID,
     trigger_dag_id=TARGET_DAG_ID,
-    params_list=param_generator(),
+    params_list=get_generator,
     default_args=default_args,
     dag=scheduler_dag)
 

@@ -38,8 +38,13 @@ class MultiTriggerDagRunOperator(BaseOperator):
         if hasattr(self.params_list, '__len__'):
             assert len(self.params_list) > 0
         else:
-            assert (isinstance(params_list, collections.Iterable) or
-                    isinstance(params_list, types.GeneratorType))
+            assert callable(params_list), 'params_list must either be a ' + \
+                'list or a thunked generator'
+            generator = params_list()
+            assert (isinstance(generator, collections.Iterable) or
+                    isinstance(generator, types.GeneratorType)), \
+                'Generator functions not supported directly, return a ' + \
+                'thunked generator instead'
 
     def execute(self, context):
         session = settings.Session()
