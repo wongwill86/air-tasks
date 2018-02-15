@@ -179,8 +179,22 @@ class TestMultiTriggerDag(unittest.TestCase):
 
         TestMultiTriggerDag.verify_session(params_list)
 
-    def test_should_execute_generator_function(self, mock_session,
-                                               dag_bag_class):
+    def test_should_fail_generator(self, mock_session, dag_bag_class):
+        def param_generator():
+            iterable = range(1, 10)
+            for i in iterable:
+                yield i
+
+        dag_bag_class.return_value = TestMultiTriggerDag.create_mock_dag_bag()
+
+        with self.assertRaises(AssertionError):
+            MultiTriggerDagRunOperator(
+                task_id=TASK_ID,
+                trigger_dag_id=TRIGGER_DAG_ID,
+                params_list=param_generator(),
+                default_args=DAG_ARGS)
+
+    def test_should_execute_generator_thunk(self, mock_session, dag_bag_class):
         def param_generator():
             iterable = range(1, 10)
             for i in iterable:
@@ -191,7 +205,7 @@ class TestMultiTriggerDag(unittest.TestCase):
         operator = MultiTriggerDagRunOperator(
             task_id=TASK_ID,
             trigger_dag_id=TRIGGER_DAG_ID,
-            params_list=param_generator(),
+            params_list=param_generator,
             default_args=DAG_ARGS)
 
         operator.execute(None)
@@ -199,16 +213,17 @@ class TestMultiTriggerDag(unittest.TestCase):
         TestMultiTriggerDag.verify_session(param_generator())
 
     def test_should_execute_iterable(self, mock_session, dag_bag_class):
-        params_list = range(1, 10)
+        def param_generator():
+            return range(1, 10)
 
         dag_bag_class.return_value = TestMultiTriggerDag.create_mock_dag_bag()
 
         operator = MultiTriggerDagRunOperator(
             task_id=TASK_ID,
             trigger_dag_id=TRIGGER_DAG_ID,
-            params_list=params_list,
+            params_list=param_generator,
             default_args=DAG_ARGS)
 
         operator.execute(None)
 
-        TestMultiTriggerDag.verify_session(params_list)
+        TestMultiTriggerDag.verify_session(param_generator())
