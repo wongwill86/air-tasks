@@ -22,7 +22,7 @@ WORKDIR ${AIRFLOW_HOME}
 
 # Move base version information directly into airflow home directory
 RUN mkdir -p ${AIRFLOW_HOME}/version
-RUN cp /COMMIT* ${AIRFLOW_HOME}/version
+RUN cp -r /version ${AIRFLOW_HOME}
 
 # prepare airflow user
 RUN groupadd -r ${AIRFLOW_USER} \
@@ -36,33 +36,17 @@ RUN groupadd -r ${AIRFLOW_USER} \
 # Docker config (i.e. credentials helper from base image)
 RUN cp /.docker/ .docker -r
 
-# Airflow celery config file into container
-COPY config/celeryconfig.py config/celeryconfig.py
+# Copy repo contents into docker image ( see .dockerignore to see skipped folders )
+COPY . .
 
-# Startup scripts
-COPY scripts/ scripts
-
-# Docker compose files
-COPY deploy/docker-compose-CeleryExecutor.yml deploy/docker-compose-CeleryExecutor.yml
-
-# Airflow configuration
-COPY config/airflow.cfg airflow.cfg
-
-# New Plugins
-COPY plugins/ plugins
-
-# New Dags
-COPY dags/ dags/
-
-# Get commit hash and tags
-WORKDIR ${AIRFLOW_HOME}/.git
-COPY .git/refs/heads/ ./heads
-COPY .git/refs/tags/ ./tags
-COPY .git/HEAD ./HEAD
-RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT \
-    && grep $(cat COMMIT) tags/* -l | xargs -n 1 -r basename > TAGS \
-    && cp COMMIT ${AIRFLOW_HOME}/version/COMMIT.air-tasks.${BASE_DIST}-${BASE_TAG} \
-    && cp TAGS ${AIRFLOW_HOME}/version/TAGS.air-tasks.${BASE_DIST}-${BASE_TAG}
+# Get commit hash and tags these three files need to be excluded from .dockerignore:
+# .git/refs/heads/
+# .git/refs/tags/
+# .git/HEAD
+RUN cat .git/refs/$(cat .git/HEAD | sed -e's/ref: refs\///g') > version/COMMIT \
+    && grep $(cat version/COMMIT) .git/refs/tags/* -l | xargs -n 1 -r basename > version/TAGS \
+    && mv version/COMMIT version/air-tasks.COMMIT.${BASE_DIST}-${BASE_TAG} \
+    && mv version/TAGS version/air-tasks.TAGS.${BASE_DIST}-${BASE_TAG}
 
 USER ${AIRFLOW_USER}
 WORKDIR ${AIRFLOW_HOME}

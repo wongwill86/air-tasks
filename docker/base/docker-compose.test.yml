@@ -4,8 +4,8 @@ services:
         build:
             args:
                 IMAGE_NAME: $IMAGE_NAME
-            context: ./
-            dockerfile: Dockerfile.base.test
+            context: ../../
+            dockerfile: docker/base/Dockerfile.base.test
             cache_from:
                 - ${DOCKER_REPO}:${CACHE_TAG}
         command:

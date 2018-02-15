@@ -71,11 +71,13 @@ RUN mkdir -p /.docker/ \
     && echo '{\n    "credsStore": "ecr-login"\n}' > \
         /.docker/config.json
 
-# Get commit hash and tags
-COPY .git/refs/heads/ ./heads
-COPY .git/refs/tags/ ./tags
-COPY .git/HEAD ./HEAD
-RUN cat $(cat HEAD | sed -e's/ref: refs\///g') > COMMIT \
-    && grep $(cat COMMIT) tags/* -l | xargs -n 1 -r basename > TAGS \
-    && cp COMMIT /COMMIT.base.slim \
-    && cp TAGS /TAGS.base.slim
+# Get commit hash and tags these three files need to be excluded from .dockerignore:
+# .git/refs/heads/
+# .git/refs/tags/
+# .git/HEAD
+COPY .git .git
+RUN mkdir version
+RUN cat .git/refs/$(cat .git/HEAD | sed -e's/ref: refs\///g') > version/COMMIT \
+    && grep $(cat version/COMMIT) .git/refs/tags/* -l | xargs -n 1 -r basename > version/TAGS \
+    && mv version/COMMIT version/base.COMMIT.slim \
+    && mv version/TAGS version/base.TAGS.slim
