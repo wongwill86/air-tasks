@@ -34,8 +34,8 @@ RUN groupadd -r ${AIRFLOW_USER} \
     && echo "${AIRFLOW_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers
 
 # Docker config (i.e. credentials helper from base image)
-RUN cp /.docker/ .docker -r
-
+RUN cp /.docker/ .docker -r && \
+	ln -s config/airflow.cfg airflow.cfg
 # Copy repo contents into docker image ( see .dockerignore to see skipped folders )
 COPY . .
 

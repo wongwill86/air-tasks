@@ -23,14 +23,14 @@ services:
 
     # single shot initialize the database
     init-db:
-        image: wongwill86/air-tasks:branch-customAF
+        image: wongwill86/air-tasks:branch-airflow-custom
         restart: on-failure
         depends_on:
             - postgres
             - rabbitmq
         environment:
             - LOAD_EX=y
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
             - EXECUTOR=Celery
             - AIRFLOW_HOME=/usr/local/airflow
             - AWS_ACCESS_KEY_ID
@@ -53,7 +53,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     webserver:
-        image: wongwill86/air-tasks:branch-customAF
+        image: wongwill86/air-tasks:branch-airflow-custom
         restart: always
         depends_on:
             - postgres
@@ -61,7 +61,7 @@ services:
             - init-db
         environment:
             - LOAD_EX=y
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
             - EXECUTOR=Celery
             - AIRFLOW_HOME=/usr/local/airflow
             - AWS_ACCESS_KEY_ID
@@ -88,7 +88,7 @@ services:
                 window: 120s
 
     flower:
-        image: wongwill86/air-tasks:branch-customAF
+        image: wongwill86/air-tasks:branch-airflow-custom
         restart: always
         depends_on:
             - rabbitmq
@@ -102,7 +102,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     scheduler:
-        image: wongwill86/air-tasks:branch-customAF
+        image: wongwill86/air-tasks:branch-airflow-custom
         restart: always
         depends_on:
             - webserver
@@ -114,7 +114,7 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - LOAD_EX=y
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
             - EXECUTOR=Celery
             - AIRFLOW_HOME=/usr/local/airflow
             - AWS_ACCESS_KEY_ID
@@ -139,7 +139,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     worker-worker:
-        image: wongwill86/air-tasks:branch-customAF
+        image: wongwill86/air-tasks:branch-airflow-custom
         restart: always
         depends_on:
             - scheduler
@@ -151,7 +151,7 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
             - EXECUTOR=Celery
             - AIRFLOW_HOME=/usr/local/airflow
             - AWS_ACCESS_KEY_ID
@@ -164,7 +164,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == worker ]
 
     worker-manager:
-        image: wongwill86/air-tasks:branch-customAF
+        image: wongwill86/air-tasks:branch-airflow-custom
         restart: always
         depends_on:
             - scheduler
@@ -176,7 +176,7 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
             - EXECUTOR=Celery
             - AIRFLOW_HOME=/usr/local/airflow
             - AWS_ACCESS_KEY_ID
@@ -313,11 +313,11 @@ services:
             - ssl_certificate_key
 
     add-secrets:
-        image: wongwill86/air-tasks:branch-customAF
+        image: wongwill86/air-tasks:branch-airflow-custom
         depends_on:
             - scheduler
         environment:
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
             - EXECUTOR=Celery
             - AIRFLOW_HOME=/usr/local/airflow
         entrypoint: python /secrets_to_airflow_variables.py
