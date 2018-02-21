@@ -20,9 +20,9 @@ ENV AIRFLOW_USER airflow
 
 USER root
 RUN curl -fsSL https://get.docker.com/ | sh \
-    && pip install docker docker-compose \
-    && pip install celery -U \
-    && apt-get install sudo \
+    && apt-get install -y sudo mysql-server libmysqlclient-dev\
+    && pip install 'docker<3.0.0' docker-compose \
+    && pip install celery apache-airflow[crypto,celery,postgres,mysql,hive,jdbc]==1.8.1 -U \
     && buildDeps=' \
         python-dev \
         libkrb5-dev \
