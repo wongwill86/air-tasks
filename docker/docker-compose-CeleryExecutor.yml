@@ -9,17 +9,17 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     postgres:
-        image: postgres:9.6-alpine
+        image: mysql:5.5
         environment:
-            - POSTGRES_USER=airflow
-            - POSTGRES_PASSWORD=airflow
-            - POSTGRES_DB=airflow
+            - MYSQL_USER=airflow
+            - MYSQL_PASSWORD=airflow
+            - MYSQL_DATABASE=airflow
         #ports:
             #- "5432:5432"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
-        command: postgres -c max_connections=10000 -c shared_buffers=16GB
+        #command: postgres -c max_connections=10000 -c shared_buffers=16GB
 
     webserver:
         image: wongwill86/air-tasks:branch-ranl
