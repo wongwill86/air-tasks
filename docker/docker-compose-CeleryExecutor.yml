@@ -9,11 +9,12 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     postgres:
-        image: mysql:5.5
+        image: mysql:5.7
         environment:
             - MYSQL_USER=airflow
             - MYSQL_PASSWORD=airflow
             - MYSQL_DATABASE=airflow
+            - MYSQL_ROOT_PASSWORD=root_password
         #ports:
             #- "5432:5432"
         deploy:
@@ -37,6 +38,7 @@ services:
             - AWS_DEFAULT_REGION
             - REDIS_HOST=rabbitmq
             - REDIS_PORT=5672
+            - POSTGRES_PORT=3306
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -65,6 +67,7 @@ services:
             - EXECUTOR=Celery
             - REDIS_HOST=rabbitmq
             - REDIS_PORT=5672
+            - POSTGRES_PORT=3306
         #ports:
             #- "5555:5555"
         command: flower
@@ -92,6 +95,7 @@ services:
             - AWS_DEFAULT_REGION
             - REDIS_HOST=rabbitmq
             - REDIS_PORT=5672
+            - POSTGRES_PORT=3306
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -130,6 +134,7 @@ services:
             - AWS_DEFAULT_REGION
             - REDIS_HOST=rabbitmq
             - REDIS_PORT=5672
+            - POSTGRES_PORT=3306
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -159,6 +164,7 @@ services:
             - AWS_DEFAULT_REGION
             - REDIS_HOST=rabbitmq
             - REDIS_PORT=5672
+            - POSTGRES_PORT=3306
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
@@ -299,6 +305,7 @@ services:
             - AIRFLOW_HOME=/usr/local/airflow
             - REDIS_HOST=rabbitmq
             - REDIS_PORT=5672
+            - POSTGRES_PORT=3306
         entrypoint: python /secrets_to_airflow_variables.py
         deploy:
             restart_policy:
