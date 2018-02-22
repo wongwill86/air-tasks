@@ -20,7 +20,7 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
-        #command: postgres -c max_connections=10000 -c shared_buffers=16GB
+        command: --max_connections=10000
 
     webserver:
         image: wongwill86/air-tasks:branch-ranl
