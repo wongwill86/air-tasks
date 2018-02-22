@@ -20,7 +20,7 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
-        command: --max_connections=10000
+        command: --max_connections=10000 --wait-timeout=3600 --interactive-timeout=3600
 
     webserver:
         image: wongwill86/air-tasks:branch-ranl
