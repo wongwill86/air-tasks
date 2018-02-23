@@ -9,7 +9,7 @@ services:
             cache_from:
                 - $IMAGE_NAME
                 - ci_sut
-                - ${DOCKER_REPO}:${CACHE_TAG}-test
+                - ${IMAGE_NAME}-test
         volumes:
             - ../tests:/usr/local/airflow/tests
             - ../plugins:/usr/local/airflow/plugins

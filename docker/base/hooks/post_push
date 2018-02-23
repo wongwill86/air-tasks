@@ -4,8 +4,7 @@
 #     https://hub.docker.com/r/docker/highland_builder/
 
 BUILT_TEST_IMAGE=${BUILD_CODE}_sut
-CACHE_REPO=$DOCKER_REPO:$CACHE_TAG
-CACHED_TEST_IMAGE=${CACHE_REPO}-test
+CACHED_TEST_IMAGE=${IMAGE_NAME}-test
 
 echo 'Tagging to ' $CACHED_TEST_IMAGE
 docker tag $BUILT_TEST_IMAGE $CACHED_TEST_IMAGE
