@@ -10,7 +10,7 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2017, 5, 1),
-    'cactchup_by_default': False,
+    'catchup_by_default': False,
     'retries': 1,
     'retry_delay': timedelta(seconds=2),
     'retry_exponential_backoff': True,
