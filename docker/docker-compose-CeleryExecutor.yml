@@ -15,8 +15,8 @@ services:
             - MYSQL_PASSWORD=airflow
             - MYSQL_DATABASE=airflow
             - MYSQL_ROOT_PASSWORD=root_password
-        #ports:
-            #- "5432:5432"
+        ports:
+            - "3306:3306"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
