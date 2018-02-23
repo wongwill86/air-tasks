@@ -9,5 +9,3 @@ echo DOCKER_REPO: $DOCKER_REPO
 echo CACHE_TAG: $CACHE_TAG
 echo IMAGE_NAME: $IMAGE_NAME
 echo DOCKER_REPO: $DOCKER_REPO
-
-export CACHE_TAG=$(echo $IMAGE_NAME | cut -d':' -f 2)
