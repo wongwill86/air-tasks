@@ -374,6 +374,6 @@ If for any reason you require building new base images:
 | Source Type | Source | Docker Tag | Dockerfile location | Build Context
 | - | - | - | - | - |
 | Branch | master | latest | Dockerfile | / |
-| Branch | /^(.{1,5}&#124;.{7}&#124;([^m]&#124;m[^a]&#124;ma[^s]&#124;mas[^t]&#124;mast[^e]&#124;maste[^r])(.*))$/ | {source-ref | docker/Dockerfile | / |
+| Branch | /^(.{1,5}&#124;.{7}&#124;([^m]&#124;m[^a]&#124;ma[^s]&#124;mas[^t]&#124;mast[^e]&#124;maste[^r])(.*))$/ | {source-ref} | docker/Dockerfile | / |
 | Tag | /^base-([0-9.a-zA-Z-]+)$/ | base-alpine-{\1} | docker/base/Dockerfile.base-alpine | / |
 | Tag | /^base-([0-9.a-zA-Z-]+)$/ | base-slim-{\1} | docker/base/Dockerfile.base-slim | / |
