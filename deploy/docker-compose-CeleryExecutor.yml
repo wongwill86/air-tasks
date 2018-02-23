@@ -23,7 +23,7 @@ services:
 
     # single shot initialize the database
     init-db:
-        image: wongwill86/air-tasks:branch-airflow-custom
+        image: wongwill86/air-tasks:latest
         restart: on-failure
         depends_on:
             - postgres
@@ -53,7 +53,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     webserver:
-        image: wongwill86/air-tasks:branch-airflow-custom
+        image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - postgres
@@ -88,7 +88,7 @@ services:
                 window: 120s
 
     flower:
-        image: wongwill86/air-tasks:branch-airflow-custom
+        image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - rabbitmq
@@ -102,7 +102,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     scheduler:
-        image: wongwill86/air-tasks:branch-airflow-custom
+        image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - webserver
@@ -139,7 +139,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     worker-worker:
-        image: wongwill86/air-tasks:branch-airflow-custom
+        image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - scheduler
@@ -164,7 +164,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == worker ]
 
     worker-manager:
-        image: wongwill86/air-tasks:branch-airflow-custom
+        image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
             - scheduler
@@ -313,7 +313,7 @@ services:
             - ssl_certificate_key
 
     add-secrets:
-        image: wongwill86/air-tasks:branch-airflow-custom
+        image: wongwill86/air-tasks:latest
         depends_on:
             - scheduler
         environment:
