@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo $SOURCE_BRANCH
+echo $SOURCE_COMMIT
+echo $COMMIT_MSG
+echo $DOCKER_REPO
+echo $CACHE_TAG
+echo $IMAGE_NAME
+echo $DOCKER_REPO
