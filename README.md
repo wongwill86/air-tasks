@@ -8,14 +8,14 @@ A curated set of tools for managing distributed task workflows.
 * [Docker Infrakit](https://github.com/docker/infrakit): Infrastructure Orchestration to deploy on the cloud
 
 
-Note: This project builds off of the docker image provided by https://github.com/puckel/docker-airflow and infrakit examples https://github.com/infrakit/examples
+Note: This project was inspired by https://github.com/puckel/docker-airflow and infrakit examples https://github.com/infrakit/examples
 
 ## Table of Contents
 - [Core Concepts](#core-concepts)
 - [Architectural Concepts](#architectural-concepts)
 - [Setup](#setup)
 - [Where to Start](#where-to-start)
-- [Hot to Test](#how-to-test)
+- [How to Test](#how-to-test)
 - [How to Deploy](#how-to-deploy)
 - [Debug Tools](#debug-tools)
 - [Notes](#notes)
@@ -77,7 +77,7 @@ See [Variables]( https://airflow.apache.org/concepts.html#variables )
 ### Compose File
 This file is a schedule of services necessary to start Air-tasks
 
-See https://github.com/wongwill86/air-tasks/blob/master/docker/docker-compose-CeleryExecutor.yml
+See https://github.com/wongwill86/air-tasks/blob/master/deploy/docker-compose-CeleryExecutor.yml
 
 This is a description of all the services for [docker-compose]( https://docs.docker.com/compose/compose-file/ ).
 
@@ -146,12 +146,12 @@ See https://github.com/wongwill86/air-tasks/blob/master/dags/manager/scaler.py f
 ## Where to Start
 1. [Install requirements](#setup)
 2. Clone this repo
-3. Uncomment **every** dag and plugin folder mounts in docker/docker-compose-CeleryExecutor.yml
+3. *(Optional: Only for development)* Uncomment **every** dag and plugin folder mounts in deploy/docker-compose-CeleryExecutor.yml
     ```
     #- ../dags/:/usr/local/airflow/dags
     #- ../plugins:/usr/local/airflow/plugins
     ```
-3. *(Optional: Only for development)* Replace **every** air-tasks tag with your tag in docker/docker-compose-CeleryExecutor.yml
+3. *(Optional: Only for development)* Replace **every** air-tasks tag with your tag in deploy/docker-compose-CeleryExecutor.yml
     ```
     <every service that has this>:
         image: wongwill86/air-tasks:<your tag>
@@ -188,7 +188,7 @@ See other [examples](https://github.com/wongwill86/air-tasks/tree/master/dags/ex
 ## How to Deploy
 ### Local
 ```
-docker-compose -f docker/docker-compose-CeleryExecutor.yml up -d
+docker-compose -f deploy/docker-compose-CeleryExecutor.yml up -d
 ```
 
 ### Swarm
@@ -197,7 +197,7 @@ echo '<blank or username here>' | docker secret create basic_auth_username -
 echo '<blank or password here>' | docker secret create basic_auth_password -
 echo '<blank ssl certificate here>' | docker secret create ssl_certificate -
 echo '<blank ssl certificate key here>' | docker secret create ssl_certificate_key -
-docker stack deploy -c docker/docker-compose-CeleryExecutor.yml <stack name>
+docker stack deploy -c deploy/docker-compose-CeleryExecutor.yml <stack name>
 ```
 
 ### AWS
@@ -295,7 +295,7 @@ If you need to run tasks on different machine instance types, this can be achiev
         queue='other-instance-type',
         dag=dag)
     ```
-2. In the *[docker compose file](https://github.com/wongwill86/air-tasks/blob/gpu/docker/docker-compose-CeleryExecutor.yml)*, create a new service copied and pasted from `worker-worker`. This will create workers that will listen to this new queue topic (`other-instance-type`) and only deploy on machines with the docker engine label: `[ engine.labels.infrakit-role == other-instance-type ]`.
+2. In the *[docker compose file](https://github.com/wongwill86/air-tasks/blob/master/deploy/docker-compose-CeleryExecutor.yml)*, create a new service copied and pasted from `worker-worker`. This will create workers that will listen to this new queue topic (`other-instance-type`) and only deploy on machines with the docker engine label: `[ engine.labels.infrakit-role == other-instance-type ]`.
     ```
     worker-other-instance-type:
 
@@ -326,4 +326,13 @@ To access a private AWS container registry, remember to set aws environment vari
 - AWS_DEFAULT_REGION
 
 Docker login to AWS ECR will automatically be set up.
+
+### Base Images
+The main [Dockerfile](https://github.com/wongwill86/air-tasks/blob/master/docker/Dockerfile) is built on top of one of two base images: [Alpine](https://github.com/wongwill86/air-tasks/blob/master/docker/base/Dockerfile.base-alpine)(default) and [Slim](https://github.com/wongwill86/air-tasks/blob/master/docker/base/Dockerfile.base-slim). Additionally, this base image is used to build the test base image which includes python test libraries. This is useful for testing derived images so that the test libraries do not need to be reinstalled. See [docker-compose.test.yml](https://github.com/wongwill86/air-tasks/blob/master/docker/docker-compose.test.yml) for more details. These base images should automatically be built in docker cloud.
+
+If for any reason you require building new base images:
+1. `docker build -f docker/base/Dockerfile.base-slim -t wongwill86/air-tasks:<your base tag> . # build the base image`
+2. `export IMAGE_NAME=wongwill86/air-tasks:<your base tag> # prepare base image to build test base image`
+3. `docker-compose -f docker/docker-compose.test.yml -p ci_base build # build test base image`
+4. `docker tag ci_base_sut wongwill86/air-tasks:<your base tag>-test # retag build test base image for testing`
 

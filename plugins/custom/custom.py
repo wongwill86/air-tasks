@@ -20,9 +20,8 @@ class MultiTriggerDagRunOperator(BaseOperator):
 
     :param trigger_dag_id: the dag_id to trigger
     :type trigger_dag_id: str
-    :param params_list: list of dicts for DAG level parameters that are made
-        acesssible in templates
- namespaced under params for each dag run.
+    :param params_list: list of dicts or a thunked generator for DAG level parameters that are made acesssible
+        in templates namespaced under params for each dag run.
     :type params: Iterable<dict> or types.GeneratorType
     """
 
@@ -32,14 +31,20 @@ class MultiTriggerDagRunOperator(BaseOperator):
             trigger_dag_id,
             params_list,
             *args, **kwargs):
-        super(MultiTriggerDagRunOperator, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.trigger_dag_id = trigger_dag_id
         self.params_list = params_list
+
         if hasattr(self.params_list, '__len__'):
             assert len(self.params_list) > 0
         else:
-            assert (isinstance(params_list, collections.Iterable) or
-                    isinstance(params_list, types.GeneratorType))
+            if callable(params_list):
+                generator = params_list()
+            else:
+                generator = params_list
+            assert (isinstance(generator, collections.Iterable) or isinstance(generator, types.GeneratorType)), \
+                ('Params list returned %s, must return either an iterable, generator, or callable to returns an ' +
+                'iterable or generator') % type(generator)
 
     def execute(self, context):
         session = settings.Session()
@@ -49,8 +54,7 @@ class MultiTriggerDagRunOperator(BaseOperator):
         assert trigger_dag is not None
 
         trigger_id = 0
-        # for trigger_id in range(0, len(self.params_list)):
-        for params in self.params_list:
+        for params in self.params_list if not callable(self.params_list) else self.params_list():
             dr = trigger_dag.create_dagrun(run_id='trig_%s_%d_%s' %
                                            (self.trigger_dag_id, trigger_id,
                                             datetime.now().isoformat()),
