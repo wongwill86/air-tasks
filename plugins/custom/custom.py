@@ -44,7 +44,7 @@ class MultiTriggerDagRunOperator(BaseOperator):
                 generator = params_list
             assert (isinstance(generator, collections.Iterable) or isinstance(generator, types.GeneratorType)), \
                 ('Params list returned %s, must return either an iterable, generator, or callable to returns an ' +
-                'iterable or generator') % type(generator)
+                 'iterable or generator') % type(generator)
 
     def execute(self, context):
         session = settings.Session()
