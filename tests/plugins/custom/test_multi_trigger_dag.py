@@ -179,7 +179,7 @@ class TestMultiTriggerDag(unittest.TestCase):
 
         TestMultiTriggerDag.verify_session(params_list)
 
-    def test_should_fail_generator(self, mock_session, dag_bag_class):
+    def test_should_execute_generator(self, mock_session, dag_bag_class):
         def param_generator():
             iterable = range(1, 10)
             for i in iterable:
@@ -187,14 +187,17 @@ class TestMultiTriggerDag(unittest.TestCase):
 
         dag_bag_class.return_value = TestMultiTriggerDag.create_mock_dag_bag()
 
-        with self.assertRaises(AssertionError):
-            MultiTriggerDagRunOperator(
-                task_id=TASK_ID,
-                trigger_dag_id=TRIGGER_DAG_ID,
-                params_list=param_generator(),
-                default_args=DAG_ARGS)
+        operator = MultiTriggerDagRunOperator(
+            task_id=TASK_ID,
+            trigger_dag_id=TRIGGER_DAG_ID,
+            params_list=param_generator(),
+            default_args=DAG_ARGS)
 
-    def test_should_execute_generator_thunk(self, mock_session, dag_bag_class):
+        operator.execute(None)
+
+        TestMultiTriggerDag.verify_session(param_generator())
+
+    def test_should_execute_thunked_generator(self, mock_session, dag_bag_class):
         def param_generator():
             iterable = range(1, 10)
             for i in iterable:

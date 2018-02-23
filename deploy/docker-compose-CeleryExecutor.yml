@@ -123,7 +123,7 @@ services:
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
-        command: airflow scheduler -p
+        command: airflow scheduler
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
