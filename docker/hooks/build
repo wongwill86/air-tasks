@@ -22,9 +22,10 @@ if [[ $BUILD_PATH_CUSTOM != "./"* ]]; then
     BUILD_PATH_CUSTOM=./${BUILD_PATH_CUSTOM}
 fi
 
+CACHE_REPO=$DOCKER_REPO:$CACHE_TAG
 echo "Building $BASE_DIST using cache $IMAGE_NAME..."
 if [ -n $BASE_DIST ]; then
-    docker build -t $IMAGE_NAME -f $DOCKERFILE_PATH --cache-from=$IMAGE_NAME . 
+    docker build -t $IMAGE_NAME -f $DOCKERFILE_PATH --cache-from=$CACHE_REPO . 
 else
-    docker build --build-arg BASE_DIST=$BASE_DIST -t $IMAGE_NAME -f $DOCKERFILE_PATH --cache-from=$IMAGE_NAME .
+    docker build --build-arg BASE_DIST=$BASE_DIST -t $IMAGE_NAME -f $DOCKERFILE_PATH --cache-from=$CACHE_REPO .
 fi
