@@ -1,4 +1,4 @@
-# VERSION 0.0.3
+# VERSION 0.0.4
 # AUTHOR: Will Wong
 # DESCRIPTION: Docker airflow with ECR registry and DooD (Docker outside of Dkr)
 # BUILD: docker build --rm -t wongwill86/air-tasks .

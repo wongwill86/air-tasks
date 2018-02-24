@@ -349,7 +349,7 @@ Docker login to AWS ECR will automatically be set up.
 
 ### Base Images
 The main [Dockerfile](https://github.com/wongwill86/air-tasks/blob/master/docker/Dockerfile) is built on top of one of two base images:
-* [Alpine](https://github.com/wongwill86/air-tasks/blob/master/docker/base/Dockerfile.base-alpine)(default)
+* [Alpine](https://github.com/wongwill86/air-tasks/blob/master/docker/base/Dockerfile.base-alpine) (default)
 * [Slim](https://github.com/wongwill86/air-tasks/blob/master/docker/base/Dockerfile.base-slim)
 
 Additionally, this base image is used to build the test image which includes python test libraries. This is useful for testing derived images so that the test libraries do not need to be reinstalled. See [docker-compose.test.yml](https://github.com/wongwill86/air-tasks/blob/master/docker/docker-compose.test.yml) for more details. These base images should automatically be built in docker cloud.
