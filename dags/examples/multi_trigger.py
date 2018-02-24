@@ -10,7 +10,7 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2017, 5, 1),
-    'cactchup_by_default': False,
+    'catchup_by_default': False,
     'retries': 1,
     'retry_delay': timedelta(seconds=2),
     'retry_exponential_backoff': True,
@@ -24,8 +24,8 @@ scheduler_dag = DAG(
 )
 
 
-def param_generator():
-    iterable = xrange(0, 100)
+def get_generator():
+    iterable = range(0, 100)
     for i in iterable:
         yield i
 
@@ -33,7 +33,7 @@ def param_generator():
 operator = MultiTriggerDagRunOperator(
     task_id='trigger_%s' % TARGET_DAG_ID,
     trigger_dag_id=TARGET_DAG_ID,
-    params_list=param_generator(),
+    params_list=get_generator,
     default_args=default_args,
     dag=scheduler_dag)
 

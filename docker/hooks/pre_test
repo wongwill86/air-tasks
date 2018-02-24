@@ -1,0 +1,12 @@
+#!/bin/bash
+# Test to pull image manually for cache
+# Pieced together undocumented docker cloud build behavior from:
+#     https://hub.docker.com/r/docker/highland_builder/
+
+
+CACHED_TEST_IMAGE=${IMAGE_NAME}-test
+if docker pull $CACHED_TEST_IMAGE; then
+	echo 'Pulled $CACHED_TEST_IMAGE '
+else
+	echo 'Failed to pull $CACHED_TEST_IMAGE'
+fi

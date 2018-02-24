@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from airflow.operators.docker_plugin import DockerRemovableContainer
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
 import unittest
@@ -10,7 +9,7 @@ DAG_ARGS = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2017, 5, 1),
-    'cactchup_by_default': False,
+    'catchup_by_default': False,
     'retries': 1,
     'retry_delay': timedelta(seconds=2),
     'retry_exponential_backoff': True,
@@ -75,7 +74,7 @@ class TestDockerConfigurableOperator(unittest.TestCase):
             xcom_push=True,
             xcom_all=True,
             )
-        assert '%s\n' % NEW_TEXT == operator.execute(None)
+        assert '%s\n' % NEW_TEXT == operator.execute(None).decode('utf-8')
 
 
 class TestDockerRemovableContainer(unittest.TestCase):
@@ -169,13 +168,14 @@ class TestDockerWithVariables(unittest.TestCase):
         assert operator
         assert operator.task_id == TASK_ID
 
-        assert show_items == variables_to_show_items(DEFAULT_VARIABLES)
+        assert str(show_items, 'utf-8') == variables_to_show_items(
+            DEFAULT_VARIABLES)
 
     @patch_plugin_file('plugins/custom/docker', 'Variable', autospec=True)
     def test_should_fail_when_variable_not_found(self, variable_class):
         variable_class.get.side_effect = DEFAULT_VARIABLES.__getitem__
 
-        bad_keys = DEFAULT_VARIABLES.keys()
+        bad_keys = list(DEFAULT_VARIABLES.keys())
         bad_keys.append('bad_key')
 
         operator = DockerWithVariablesOperator(
