@@ -29,16 +29,7 @@ services:
             - postgres
             - rabbitmq
         environment:
-            - LOAD_EX=y
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
-            - EXECUTOR=Celery
-            - AIRFLOW_HOME=/usr/local/airflow
-            - AWS_ACCESS_KEY_ID
-            - AWS_SECRET_ACCESS_KEY
-            - AWS_DEFAULT_REGION
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
@@ -60,16 +51,7 @@ services:
             - rabbitmq
             - init-db
         environment:
-            - LOAD_EX=y
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
-            - EXECUTOR=Celery
-            - AIRFLOW_HOME=/usr/local/airflow
-            - AWS_ACCESS_KEY_ID
-            - AWS_SECRET_ACCESS_KEY
-            - AWS_DEFAULT_REGION
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
@@ -92,8 +74,6 @@ services:
         restart: always
         depends_on:
             - rabbitmq
-        environment:
-            - EXECUTOR=Celery
         #ports:
             #- "5555:5555"
         command: airflow flower
@@ -113,16 +93,7 @@ services:
             #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
-            - LOAD_EX=y
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
-            - EXECUTOR=Celery
-            - AIRFLOW_HOME=/usr/local/airflow
-            - AWS_ACCESS_KEY_ID
-            - AWS_SECRET_ACCESS_KEY
-            - AWS_DEFAULT_REGION
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
         command: airflow scheduler
         deploy:
             placement:
@@ -152,8 +123,6 @@ services:
             - /tmp:/tmp
         environment:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
-            - EXECUTOR=Celery
-            - AIRFLOW_HOME=/usr/local/airflow
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
@@ -177,14 +146,9 @@ services:
             - /tmp:/tmp
         environment:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
-            - EXECUTOR=Celery
-            - AIRFLOW_HOME=/usr/local/airflow
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
             - INFRAKIT_IMAGE
             - INFRAKIT_GROUPS_URL
         command: airflow worker -q manager
@@ -318,8 +282,6 @@ services:
             - scheduler
         environment:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
-            - EXECUTOR=Celery
-            - AIRFLOW_HOME=/usr/local/airflow
         entrypoint: python /secrets_to_airflow_variables.py
         deploy:
             restart_policy:
