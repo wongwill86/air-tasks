@@ -21,6 +21,18 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
         command: postgres -c max_connections=1000 -c shared_buffers=4096MB
 
+    pgbouncer:
+        image: brainsam/pgbouncer
+        environment:
+            - DB_HOST=postgres
+            - DB_USER=airflow
+            - DB_PASSWORD=airflow
+            - POOL_MODE=transaction
+            - MAX_CLIENT_CONN=1000
+            - DEFAULT_POOL_SIZE=300
+            - MIN_POOL_SIZE=100
+            - CLIENT_IDLE_TIMEOUT=600
+
     # single shot initialize the database
     init-db:
         image: wongwill86/air-tasks:latest
