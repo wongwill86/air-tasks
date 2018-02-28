@@ -14,8 +14,8 @@ services:
             - POSTGRES_USER=airflow
             - POSTGRES_PASSWORD=airflow
             - POSTGRES_DB=airflow
-        #ports:
-            #- "5432:5432"
+        ports:
+            - "5432:5432"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
