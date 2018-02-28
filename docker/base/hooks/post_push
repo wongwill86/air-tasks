@@ -1,0 +1,21 @@
+#!/bin/bash
+# Also push out the built test image
+# Pieced together undocumented docker cloud build behavior from:
+#     https://hub.docker.com/r/docker/highland_builder/
+
+BUILT_TEST_IMAGE=${BUILD_CODE}_sut
+CACHED_TEST_IMAGE=${IMAGE_NAME}-test
+
+echo 'Tagging to ' $CACHED_TEST_IMAGE
+docker tag $BUILT_TEST_IMAGE $CACHED_TEST_IMAGE
+
+echo "Starting push of $CACHED_TEST_IMAGE"
+for i in {1..5}; do 
+    if docker push $CACHED_TEST_IMAGE; then
+        echo "Pushed $CACHED_TEST_IMAGE"
+        break
+    else
+        echo 'Push failed. Attempt $((i +1)) in 30 seconds.'
+        sleep 30
+    fi
+done;

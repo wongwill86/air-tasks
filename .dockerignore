@@ -1,0 +1,16 @@
+# prevent from adding these files/folders into the docker image
+.cache
+.git
+.ropeproject
+cloud
+secrets
+tests
+docker
+.env
+.*
+# we need these 3 git folders to be included for version tagging
+!.git/refs/heads/*
+.git/refs/heads/*/*
+!.git/refs/tags/*
+.git/refs/tags/*/*
+!.git/HEAD

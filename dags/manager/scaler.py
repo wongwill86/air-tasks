@@ -18,6 +18,8 @@ from airflow.utils.db import provide_session
 from airflow import models
 import requests
 import json
+import logging
+logger = logging.root.getChild(__name__)
 
 DAG_ID = 'z_manager_cluster_scaler'
 
@@ -52,7 +54,7 @@ templated_resize_command = """
 {% set queue_sizes = task_instance.xcom_pull(task_ids=params.task_id) %}
 {%
 set docker_compose_command='docker-compose -f ' +
-    conf.get('core', 'airflow_home') + '/docker/docker-compose-CeleryExecutor.yml' +
+    conf.get('core', 'airflow_home') + '/deploy/docker-compose-CeleryExecutor.yml' +
     ' up -d --no-recreate --no-deps --no-build --no-color'
 %}
 {%
@@ -122,8 +124,8 @@ def get_queue_sizes():
             stats = json.loads(response.text)
             size = stats['messages_ready'] + stats['messages_unacknowledged']
             queue_sizes[queue_name] = size
-        except Exception as e:
-            print('No tasks found for %s because %s' % (queue_name, e.message))
+        except Exception:
+            logger.exception('No tasks found for %s', queue_name)
             queue_sizes[queue_name] = 0
 
     return queue_sizes

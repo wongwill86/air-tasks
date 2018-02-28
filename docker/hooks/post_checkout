@@ -1,0 +1,11 @@
+#!/bin/bash
+# This file exists because At some point, docker cloud was incorrectly setting the environment variable CACHE_TAG
+# incorrectly but IMAGE_NAME was somehow correct
+
+echo SOURCE_BRANCH: $SOURCE_BRANCH
+echo SOURCE_COMMIT: $SOURCE_COMMIT
+echo COMMIT_MSG: $COMMIT_MSG
+echo DOCKER_REPO: $DOCKER_REPO
+echo CACHE_TAG: $CACHE_TAG
+echo IMAGE_NAME: $IMAGE_NAME
+echo DOCKER_REPO: $DOCKER_REPO

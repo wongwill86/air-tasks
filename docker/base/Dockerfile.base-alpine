@@ -1,0 +1,85 @@
+# VERSION 0.0.4-customAF
+# AUTHOR: Will Wong
+# DESCRIPTION: Alpine base image with dockerized airflow and ECR registry and DooD (Docker outside of Docker)
+# BUILD: docker build --rm -t wongwill86/air-tasks:base-alpine -f /docker/base/Dockerfile.base-slim .
+# SOURCE: https://github.com/wongwill86/air-tasks
+
+# Compile AWS credential helper
+FROM golang:1.8.3 as aws_ecr_credential_helper
+WORKDIR /go/src/github.com/awslabs/
+RUN git clone https://github.com/awslabs/amazon-ecr-credential-helper.git
+WORKDIR /go/src/github.com/awslabs/amazon-ecr-credential-helper
+RUN make
+
+FROM python:3.6-alpine3.7
+LABEL maintainer=wongwill86
+
+ARG AIRFLOW_VERSION=1.9.0
+ARG DOCKER_VERSION=17.12.0-ce
+
+RUN set -ex \
+    && apk add --no-cache bash wget shadow sudo \
+    && apk add --no-cache --virtual .build-dependencies \
+       build-base \
+       python3-dev \
+       postgresql-dev \
+       libffi-dev \
+       openblas-dev \
+       libxslt-dev \
+       libxml2-dev \
+       linux-headers \
+       git \
+    && wget https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz \
+    && tar -xvf docker-${DOCKER_VERSION}.tgz \
+    && mv docker/* /usr/local/bin/ \
+    && rm -rf docker docker-${DOCKER_VERSION}.tgz docker \
+    # Temporarily use this performance branch of airflow instead of pip install apache-airflow[cyrpto,celery,postgres]==${AIRFLOW_VERSION}
+    && git clone https://github.com/wongwill86/incubator-airflow.git --depth 1 -b v1-9-stable-performance \
+    # Deleting this symlink not handled correctly by shutil.copy
+    && rm -rf incubator-airflow/airflow/www/static/docs \
+    && pip install incubator-airflow/[crypto,celery,postgres] \
+    && rm -rf incubator-airflow \
+    && pip install docker-compose docker \
+    # this is really only needed for testing (pytest-cov-exclude), include here so we don't need gcc for test build
+    && pip install ujson \ 
+    # SUPER HACK PLEASE REMOVE AFTER AIRFLOW UPDATES (i.e. https://github.com/apache/incubator-airflow/pull/2417)
+    && sed -i -e 's/import Client/import APIClient as Client/' /usr/local/lib/python3.6/site-packages/airflow/operators/docker_operator.py \
+    && sed -i -e 's/import Client/import APIClient as Client/'  /usr/local/lib/python3.6/site-packages/airflow/hooks/docker_hook.py \
+    && find /usr/local \
+        \( -type d -a -name test -o -name tests \) \
+        -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) \
+        -exec rm -rf '{}' + \
+    && runDeps="$( \
+        scanelf --needed --nobanner --recursive /usr/local \
+                | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
+                | sort -u \
+                | xargs -r apk info --installed \
+                | sort -u \
+    )" \
+    && apk add --virtual .run-dependencies $runDeps \
+    && apk del .build-dependencies
+
+# Prep docker group
+RUN delgroup ping
+RUN addgroup -g 999 docker
+
+# copy the built docker credentials module to this container
+COPY --from=aws_ecr_credential_helper \
+    /go/src/github.com/awslabs/amazon-ecr-credential-helper/bin/local/docker-credential-ecr-login \
+    /usr/local/bin
+
+# this is to enable aws ecr credentials helpers to reauthorize docker
+RUN mkdir -p /.docker/ \
+    && echo '{\n    "credsStore": "ecr-login"\n}' > \
+        /.docker/config.json
+
+# Get commit hash and tags these three files need to be excluded from .dockerignore:
+# .git/refs/heads/
+# .git/refs/tags/
+# .git/HEAD
+COPY .git .git
+RUN mkdir version
+RUN cat .git/refs/$(cat .git/HEAD | sed -e's/ref: refs\///g') > version/COMMIT \
+    && grep $(cat version/COMMIT) .git/refs/tags/* -l | xargs -n 1 -r basename > version/TAGS \
+    && mv version/COMMIT version/base.COMMIT.alpine \
+    && mv version/TAGS version/base.TAGS.alpine
