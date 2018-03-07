@@ -23,7 +23,7 @@ services:
 
     # single shot initialize the database
     init-db:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:jingpengw
         restart: on-failure
         depends_on:
             - postgres
@@ -32,8 +32,8 @@ services:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
@@ -44,7 +44,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     webserver:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:jingpengw
         restart: always
         depends_on:
             - postgres
@@ -54,8 +54,8 @@ services:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
@@ -70,7 +70,7 @@ services:
                 window: 120s
 
     flower:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:jingpengw
         restart: always
         depends_on:
             - rabbitmq
@@ -82,14 +82,14 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     scheduler:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:jingpengw
         restart: always
         depends_on:
             - webserver
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
@@ -110,14 +110,14 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     worker-worker:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:jingpengw
         restart: always
         depends_on:
             - scheduler
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
@@ -133,14 +133,14 @@ services:
                 constraints: [ engine.labels.infrakit-role == worker ]
 
     worker-manager:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:jingpengw
         restart: always
         depends_on:
             - scheduler
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
+            - ../dags/:/usr/local/airflow/dags
+            - ../plugins:/usr/local/airflow/plugins
             #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
@@ -277,7 +277,7 @@ services:
             - ssl_certificate_key
 
     add-secrets:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:jingpengw
         depends_on:
             - scheduler
         environment:
