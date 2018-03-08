@@ -38,7 +38,7 @@ services:
 
     # single shot initialize the database
     init-db:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:pcg-pinky100-v0
         restart: on-failure
         depends_on:
             - postgres
@@ -62,7 +62,7 @@ services:
                 condition: on-failure
 
     webserver:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:pcg-pinky100-v0
         restart: always
         depends_on:
             - init-db
@@ -87,7 +87,7 @@ services:
                 window: 120s
 
     flower:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:pcg-pinky100-v0
         restart: always
         depends_on:
             - init-db
@@ -102,7 +102,7 @@ services:
                 condition: any
 
     scheduler:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:pcg-pinky100-v0
         restart: always
         depends_on:
             - init-db
@@ -135,8 +135,18 @@ services:
             restart_policy:
                 condition: any
 
+    cloudsql-proxy:
+        image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        restart: always
+        ports:
+            - "3306:3306"
+        command: ./cloud_sql_proxy -instances=neuromancer-seung-import:us-east1:nkem-chunkedgraph-generation=tcp:0.0.0.0:3306
+        deploy:
+            placement:
+                constraints: [ engine.labels.infrakit-role == worker ]
+
     worker-worker:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:pcg-pinky100-v0
         restart: always
         depends_on:
             - init-db
@@ -162,7 +172,7 @@ services:
                 condition: any
 
     worker-manager:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:pcg-pinky100-v0
         restart: always
         depends_on:
             - init-db
@@ -314,7 +324,7 @@ services:
             - ssl_certificate_key
 
     add-secrets:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:pcg-pinky100-v0
         restart: on-failure
         depends_on:
             - init-db
