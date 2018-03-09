@@ -46,7 +46,7 @@ services:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
-            #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
+            #- ../config:/usr/local/airflow/config
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
@@ -54,6 +54,9 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
+        deploy:
+            restart_policy:
+                condition: on-failure
 
     webserver:
         image: wongwill86/air-tasks:latest
@@ -68,7 +71,7 @@ services:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
-            #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
+            #- ../config:/usr/local/airflow/config
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
@@ -97,12 +100,14 @@ services:
         image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
-            - webserver
+            - postgres
+            - rabbitmq
+            - init-db
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
-            #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
+            #- ../config:/usr/local/airflow/config
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
@@ -125,12 +130,12 @@ services:
         image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
-            - scheduler
+            - init-db
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
-            #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
+            #- ../config:/usr/local/airflow/config
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
@@ -148,12 +153,12 @@ services:
         image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
-            - scheduler
+            - init-db
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
-            #- ../config/airflow.cfg:/usr/local/airflow/airflow.cfg
+            #- ../config:/usr/local/airflow/config
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
@@ -291,7 +296,8 @@ services:
     add-secrets:
         image: wongwill86/air-tasks:latest
         depends_on:
-            - scheduler
+            - init-db
+            - webserver
         environment:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
         entrypoint: python /secrets_to_airflow_variables.py
