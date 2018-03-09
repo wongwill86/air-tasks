@@ -34,7 +34,7 @@ RUN set -ex \
     && mv docker/* /usr/local/bin/ \
     && rm -rf docker docker-${DOCKER_VERSION}.tgz docker \
     # Temporarily use this performance branch of airflow instead of pip install apache-airflow[cyrpto,celery,postgres]==${AIRFLOW_VERSION}
-    && git clone https://github.com/wongwill86/incubator-airflow.git --depth 1 -b v1-9-stable-performance \
+    && git clone https://github.com/wongwill86/incubator-airflow.git --depth 1 -b v1-9-stable-dag_import_speed \
     # Deleting this symlink not handled correctly by shutil.copy
     && rm -rf incubator-airflow/airflow/www/static/docs \
     && pip install incubator-airflow/[crypto,celery,postgres] \
