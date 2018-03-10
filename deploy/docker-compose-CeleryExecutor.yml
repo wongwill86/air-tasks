@@ -62,9 +62,8 @@ services:
         image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
-            - postgres
-            - rabbitmq
             - init-db
+            - rabbitmq
         environment:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
         volumes:
@@ -88,6 +87,7 @@ services:
         image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
+            - init-db
             - rabbitmq
         #ports:
             #- "5555:5555"
@@ -100,9 +100,8 @@ services:
         image: wongwill86/air-tasks:latest
         restart: always
         depends_on:
-            - postgres
-            - rabbitmq
             - init-db
+            - rabbitmq
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
@@ -131,6 +130,7 @@ services:
         restart: always
         depends_on:
             - init-db
+            - rabbitmq
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
@@ -154,6 +154,7 @@ services:
         restart: always
         depends_on:
             - init-db
+            - rabbitmq
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
