@@ -95,6 +95,8 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
+            restart_policy:
+                condition: any
 
     scheduler:
         image: wongwill86/air-tasks:latest
@@ -114,9 +116,12 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
+            restart_policy:
+                condition: any
 
     visualizer:
         image: dockersamples/visualizer:stable
+        restart: always
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
@@ -124,6 +129,8 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
+            restart_policy:
+                condition: any
 
     worker-worker:
         image: wongwill86/air-tasks:latest
@@ -148,6 +155,8 @@ services:
             mode: global
             placement:
                 constraints: [ engine.labels.infrakit-role == worker ]
+            restart_policy:
+                condition: any
 
     worker-manager:
         image: wongwill86/air-tasks:latest
@@ -173,9 +182,12 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
+            restart_policy:
+                condition: any
 
     proxy:
         image: nginx:1.13.5-alpine
+        restart: always
         ports:
             - "80:80"
             - "443:443"
@@ -187,6 +199,8 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
+            restart_policy:
+                condition: any
         #volumes:
             #- ../secrets:/run/secrets/
         command:
@@ -296,6 +310,7 @@ services:
 
     add-secrets:
         image: wongwill86/air-tasks:latest
+        restart: on-failure
         depends_on:
             - init-db
             - webserver
