@@ -1,11 +1,11 @@
-# VERSION 0.0.4
+# VERSION 0.0.5-customAF
 # AUTHOR: Will Wong
 # DESCRIPTION: Docker airflow with ECR registry and DooD (Docker outside of Dkr)
 # BUILD: docker build --rm -t wongwill86/air-tasks .
 # SOURCE: https://github.com/wongwill86/air-tasks
 
 ARG BASE_DIST=alpine
-ARG BASE_TAG=0.0.4-customAF
+ARG BASE_TAG=0.0.5-customAF
 ARG BASE_TEST=
 
 FROM wongwill86/air-tasks:base-${BASE_DIST}-${BASE_TAG}${BASE_TEST}
