@@ -23,7 +23,7 @@ services:
 
     # single shot initialize the database
     init-db:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:branch-ranl
         restart: on-failure
         depends_on:
             - postgres
