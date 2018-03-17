@@ -9,3 +9,10 @@ echo DOCKER_REPO: $DOCKER_REPO
 echo CACHE_TAG: $CACHE_TAG
 echo IMAGE_NAME: $IMAGE_NAME
 echo DOCKER_REPO: $DOCKER_REPO
+
+echo "Manually pulling cache layers because docker cloud's CACHE_TAG is unstable for build rules that target multiple docker tags"
+if docker pull $IMAGE_NAME; then
+	echo "Pulled cache layers for $IMAGE_NAME"
+else
+	echo "Failed to pull cache layers for $IMAGE_NAME"
+fi
