@@ -197,7 +197,6 @@ services:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../dags/:/usr/local/airflow/dags
             #- ../plugins:/usr/local/airflow/plugins
-            #- ../config:/usr/local/airflow/config
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
