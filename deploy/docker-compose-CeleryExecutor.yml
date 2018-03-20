@@ -182,7 +182,7 @@ services:
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
-        command: worker -q cpu
+        command: airflow worker -q cpu
         deploy:
             mode: global
             placement:
@@ -212,7 +212,7 @@ services:
             # - POSTGRES_USER=airflow
             # - POSTGRES_PASSWORD=airflow
             # - POSTGRES_DB=airflow
-        command: worker -q gpu
+        command: airflow worker -q gpu
         deploy:
             mode: global
             placement:
