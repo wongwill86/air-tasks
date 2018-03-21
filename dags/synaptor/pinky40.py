@@ -29,14 +29,14 @@ cleft_cvname = "gs://neuroglancer/pinky40_v11/clefts"
 wshed_cvname = "gs://neuroglancer/pinky40_v11/watershed"
 
 # FULL VOLUME COORDS
-start_coord = (10240,4096,0)
-vol_shape   = (57344,40960,1024)
+start_coord = (10240,7680,0)
+vol_shape   = (55296,36864,1024)
 chunk_shape = (1024,1024,1024)
 
-# TEST VOLUME COORDS
-start_coord = (38912, 24576, 512)
-vol_shape = (2048, 2048, 256)
-chunk_shape = (1024, 1024, 128)
+# TEST VOLUME COORDS 
+#start_coord = (45696, 9920, 320)
+#vol_shape = (2048, 2048, 256)
+#chunk_shape = (1024, 1024, 128)
 
 cc_thresh = 0.25
 sz_thresh1 = 100
@@ -102,11 +102,11 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
     chunk_end_str = " ".join(map(str,chunk_end))
 
     return DockerWithVariablesOperator(
-        ["project_name","google-secret.json","aws-secret.json"],
+        ["google-secret.json","aws-secret.json"],
         mount_point="/root/.cloudvolume/secrets",
         task_id="chunk_ccs_" + "_".join(map(str,chunk_begin)),
         command=("chunk_ccs {out_cvname} {cleft_cvname} {proc_dir_path} " +
-                 "{cc_thresh} {sz_thresh}" +
+                 "{cc_thresh} {sz_thresh} " +
                  "--chunk_begin {chunk_begin_str} " +
                  "--chunk_end {chunk_end_str}"
                  ).format(out_cvname=out_cvname, cleft_cvname=cleft_cvname,
@@ -116,21 +116,21 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
                           chunk_end_str=chunk_end_str),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        #queue="cpu",
+        queue="cpu",
         dag=dag
         )
 
 
 def merge_ccs(dag):
     return DockerWithVariablesOperator(
-        ["project_name","google-secret.json","aws-secret.json"],
+        ["google-secret.json","aws-secret.json"],
         mount_point="/root/.cloudvolume/secrets",
         task_id="merge_ccs",
         command=("merge_ccs {proc_dir_path} {sz_thresh}"
                       ).format(proc_dir_path=proc_dir_path, sz_thresh=sz_thresh1),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        #queue="cpu",
+        queue="cpu",
         dag=dag
         )
 
@@ -142,7 +142,7 @@ def asynet_pass(dag, chunk_begin, chunk_end):
     patchsz_str = " ".join(map(str,patch_sz))
 
     return DockerWithVariablesOperator(
-        ["project_name","google-secret.json","aws-secret.json"],
+        ["google-secret.json","aws-secret.json"],
         host_args={"runtime": "nvidia"},
         mount_point="/root/.cloudvolume/secrets",
         task_id="chunk_edges" + "_".join(map(str,chunk_begin)),
@@ -162,7 +162,7 @@ def asynet_pass(dag, chunk_begin, chunk_end):
                                proc_dir_path=proc_dir_path),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        #queue="gpu",
+        queue="gpu",
         dag=dag
         )
 
@@ -170,16 +170,16 @@ def asynet_pass(dag, chunk_begin, chunk_end):
 def merge_edges(dag):
     voxel_res_str = " ".join(map(str,voxel_res))
     return DockerWithVariablesOperator(
-        ["project_name","google-secret.json","aws-secret.json"],
+        ["google-secret.json","aws-secret.json"],
         mount_point="/root/.cloudvolume/secrets",
         task_id="merge_edges",
-        command=("merge_edges {proc_dir_path} {dist_thr} {size_thr}" +
+        command=("merge_edges {proc_dir_path} {dist_thr} {size_thr} " +
                       "--voxel_res {voxel_res_str} "
                       ).format(proc_dir_path=proc_dir_path, dist_thr=dist_thr,
-                               size_thr=size_thr2, voxel_res_str=voxel_res_str),
+                               size_thr=sz_thresh2, voxel_res_str=voxel_res_str),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        #queue="cpu",
+        queue="cpu",
         dag=dag
         )
 
@@ -188,7 +188,7 @@ def remap_ids(dag, chunk_begin, chunk_end):
     chunk_begin_str = " ".join(map(str,chunk_begin))
     chunk_end_str = " ".join(map(str,chunk_end))
     return DockerWithVariablesOperator(
-        ["project_name","google-secret.json","aws-secret.json"],
+        ["google-secret.json","aws-secret.json"],
         mount_point="/root/.cloudvolume/secrets",
         task_id="remap_ids" + "_".join(map(str,chunk_begin)),
         command=("remap_ids {cleft_cvname} {cleft_cvname} {proc_dir_path} " +
@@ -200,7 +200,7 @@ def remap_ids(dag, chunk_begin, chunk_end):
                                chunk_end_str=chunk_end_str),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        #queue="cpu",
+        queue="cpu",
         dag=dag
         )
 

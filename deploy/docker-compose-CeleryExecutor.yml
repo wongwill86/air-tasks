@@ -171,7 +171,7 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
             - EXECUTOR=Celery
             - AIRFLOW_HOME=/usr/local/airflow
             - AWS_ACCESS_KEY_ID
@@ -201,7 +201,7 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
             - EXECUTOR=Celery
             - AIRFLOW_HOME=/usr/local/airflow
             - AWS_ACCESS_KEY_ID
