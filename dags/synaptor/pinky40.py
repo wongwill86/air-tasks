@@ -7,11 +7,11 @@ DAG_ID = 'synaptor_pinky40'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime.now(),
+    'start_date': datetime(2018,3,21),
     'cactchup_by_default': False,
-    'retries': 1,
-    'retry_delay': timedelta(seconds=2),
-    'retry_exponential_backoff': True,
+    'retries': 2,
+    'retry_delay': timedelta(minutes=30),
+    'retry_exponential_backoff': False,
 }
 
 dag = DAG(
@@ -33,7 +33,7 @@ start_coord = (10240,7680,0)
 vol_shape   = (55296,36864,1024)
 chunk_shape = (1024,1024,1024)
 
-# TEST VOLUME COORDS 
+# TEST VOLUME COORDS
 #start_coord = (45696, 9920, 320)
 #vol_shape = (2048, 2048, 256)
 #chunk_shape = (1024, 1024, 128)
@@ -205,8 +205,9 @@ def remap_ids(dag, chunk_begin, chunk_end):
         )
 
 
-# STEP 1: chunk_ccs
 bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord)
+
+# STEP 1: chunk_ccs
 step1 = [chunk_ccs(dag, bb[0], bb[1]) for bb in bboxes]
 
 # STEP 2: merge_ccs
