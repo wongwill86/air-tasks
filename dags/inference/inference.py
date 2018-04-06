@@ -114,7 +114,9 @@ for z, y, x in itertools.product(range(GRID_SIZE[0]), range(GRID_SIZE[1]),
 print('number of inference tasks: {}'.format(len(inference_task_list)))
 
 # receive and blend tasks
-for z, y, x in range(GRID_SIZE[0]), range(GRID_SIZE[1]), range(GRID_SIZE[2]):
+for z, y, x in itertools.product(range(GRID_SIZE[0]), range(GRID_SIZE[1]),
+                                 range(GRID_SIZE[2])):
+    print('receiving task coordinates: {},{},{}'.format(z, y, x))
     task = create_receive_blend_task(z, y, x)
     zlist = [z]
     ylist = [y]
