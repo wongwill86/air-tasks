@@ -1,9 +1,17 @@
+import itertools
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
-from airflow.operators.docker_operator import DockerWithVariablesOperator
 
-GRID_SIZE = (2,5,5)
+GRID_SIZE = [3, 3, 3]
+input_dir = 'gs://neuroglancer/golden_v0/image'
+output_dir = 'gs://neuroglancer/golden_v0/affinitymap_jwu/'
+exchange_dir = 'gs://jpwu/golden_v0/exchange'
+output_dataset_start = (84, 576, 576)
+output_block_size = (84, 576, 576)
+overlap_str = '4,64,64'
+patch_size_str = '32,256,256'
+
 
 default_args = {
     'owner': 'airflow',
@@ -17,15 +25,72 @@ default_args = {
 dag = DAG(
     'inference', default_args=default_args, schedule_interval=None)
 
-def get_task_id(z,y,x, GRID_SIZE):
-    return x + y*GRID_SIZE[2] + z*GRID_SIZE[1]*GRID_SIZE[2]
 
-def create_inference_task(z,y,x, GRID_SIZE):
-    task_id = get_task_id(z,y,x, GRID_SIZE)
+def get_task_id(z, y, x):
+    global GRID_SIZE
+    index = x + y*GRID_SIZE[2] + z*GRID_SIZE[1]*GRID_SIZE[2]
+    return index
+
+
+def create_inference_donate_task(z, y, x):
+    global input_dir, exchange_dir, output_dir
+    global output_dataset_start, output_block_size, overlap_str
+    output_block_start = (ds + bs*c for ds, bs, c in
+                          zip(output_dataset_start, output_block_size,
+                              (z, y, x)))
+    output_block_start_str = str(output_block_start)[1:-1]
+    output_block_size_str = str(output_block_size)[1:-1]
     return BashOperator(
-        task_id= '{},{},{}'.format( z,y,x ),
-        bash_command = 'echo task id: {}'.format( task_id ),
-        dag=dag )
+        # remove the '[' and ']' in two ends
+        task_id='inference-donate_' + str(get_task_id(z, y, x)),
+        bash_command=('python ~/workspace/chunkflow/python/chunkflow/worker/'
+                      'inference_and_donate.py '
+                      '--input_dir {input_dir} '
+                      '--exchange_dir {exchange_dir} '
+                      '--output_dir {output_dir} '
+                      '--output_block_start  {output_block_start} '
+                      '--output_block_size {output_block_size} '
+                      '--patch_size {patch_size} '
+                      '--overlap {overlap} '.format(
+                          input_dir=input_dir,
+                          exchange_dir=exchange_dir,
+                          output_dir=output_dir,
+                          output_block_start=output_block_start_str,
+                          output_block_size=output_block_size_str,
+                          patch_size=patch_size_str,
+                          overlap=overlap_str)),
+        dag=dag)
+
+
+def create_receive_blend_task(z, y, x):
+    global exchange_dir, output_dir
+    global output_dataset_start, output_block_size, overlap_str
+    output_block_size_str = str(output_block_size)[1:-1]
+    output_block_start = (ds + bs*c for ds, bs, c in
+                          zip(output_dataset_start, output_block_size,
+                              (z, y, x)))
+    output_block_start_str = str(output_block_start)[1:-1]
+
+    task_id = 'receive-blend_' + str(get_task_id(z, y, x))
+    print(z, y, x, task_id)
+    return BashOperator(
+        task_id='receive-blend_' + str(get_task_id(z, y, x)),
+        bash_command=('python ~/workspace/chunkflow/python/chunkflow/worker/'
+                      'receive_and_donate.py '
+                      '--exchange_dir {exchange_dir} '
+                      '--output_dir {output_dir} '
+                      '--output_block_start  {output_block_start} '
+                      '--output_block_size {output_block_size} '
+                      '--patch_size {patch_size} '
+                      '--overlap {overlap} '.format(
+                          exchange_dir=exchange_dir,
+                          output_dir=output_dir,
+                          output_block_start=output_block_start_str,
+                          output_block_size=output_block_size_str,
+                          patch_size=patch_size_str,
+                          overlap=overlap_str)),
+        dag=dag)
+
 
 begin_task = BashOperator(
     task_id='begin_task',
@@ -38,55 +103,32 @@ done_task = BashOperator(
     dag=dag)
 
 
-inference_task_list = []
-for z in range( GRID_SIZE[0] ):
-    for y in range( GRID_SIZE[1] ):
-        for x in range( GRID_SIZE[2] ):
-            task = create_inference_task( z,y,x, GRID_SIZE )
-            inference_task_list.append( task )
+# inference and donate tasks
+inference_task_list = list()
+for z, y, x in itertools.product(range(GRID_SIZE[0]), range(GRID_SIZE[1]),
+                                 range(GRID_SIZE[2])):
+    task = create_inference_donate_task(z, y, x)
+    inference_task_list.append(task)
+    task.set_upstream(begin_task)
 
-def is_donor(x):
-    return x%2 == 0
+print('number of inference tasks: {}'.format(len(inference_task_list)))
 
-def is_receiver(x):
-    return x%2 > 0
-
-for z in range( GRID_SIZE[0] ):
-    for y in range( GRID_SIZE[1] ):
-        for x in range( GRID_SIZE[2] ):
-            task_id = get_task_id(z,y,x, GRID_SIZE)
-            if is_donor(x) and is_donor(y) and is_donor(z):
-                inference_task_list[task_id].set_upstream( begin_task )
-            elif is_receiver(x) and is_receiver(y) and is_receiver(z):
-                inference_task_list[task_id].set_downstream( done_task )
-
-            if is_receiver( x ):
-                if x>0:
-                    upstream_task = inference_task_list[ \
-                                            get_task_id(z,y,x-1, GRID_SIZE) ]
-                    inference_task_list[task_id].set_upstream( upstream_task )
-                if x<GRID_SIZE[2]-1:
-                    upstream_task = inference_task_list[ \
-                                            get_task_id(z,y,x+1, GRID_SIZE) ]
-                    inference_task_list[task_id].set_upstream( upstream_task )
-            if is_receiver( y ):
-                if y>0:
-                    upstream_task = inference_task_list[ \
-                                            get_task_id(z,y-1,x, GRID_SIZE) ]
-                    inference_task_list[task_id].set_upstream( upstream_task )
-                if y<GRID_SIZE[1]-1:
-                    upstream_task = inference_task_list[ \
-                                            get_task_id(z,y+1,x, GRID_SIZE) ]
-                    inference_task_list[task_id].set_upstream( upstream_task )
-            if is_receiver( z ):
-                if z>0:
-                    upstream_task = inference_task_list[ \
-                                            get_task_id(z-1,y,x, GRID_SIZE) ]
-                    inference_task_list[task_id].set_upstream( upstream_task )
-                if z<GRID_SIZE[0]-1:
-                    upstream_task = inference_task_list[ \
-                                            get_task_id(z+1,y,x, GRID_SIZE) ]
-                    inference_task_list[task_id].set_upstream( upstream_task )
-
-
-
+# receive and blend tasks
+for z, y, x in range(GRID_SIZE[0]), range(GRID_SIZE[1]), range(GRID_SIZE[2]):
+    task = create_receive_blend_task(z, y, x)
+    zlist = [z]
+    ylist = [y]
+    xlist = [x]
+    if z > 0:
+        zlist.append(z-1)
+    if y > 0:
+        ylist.append(y-1)
+    if x > 0:
+        xlist.append(x-1)
+    # scan the neighboring blocks
+    for zn, yn, xn in itertools.product(zlist, ylist, xlist):
+        if zn != z or yn != y or xn != x:
+            # this is a neighboring block
+            task_index = get_task_id(zn, yn, xn)
+            task.set_upstream(inference_task_list[task_index])
+            task.set_downstream(done_task)
