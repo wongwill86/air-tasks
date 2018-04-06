@@ -26,12 +26,6 @@ dag = DAG(
     'inference', default_args=default_args, schedule_interval=None)
 
 
-def get_task_id(z, y, x):
-    global GRID_SIZE
-    index = x + y*GRID_SIZE[2] + z*GRID_SIZE[1]*GRID_SIZE[2]
-    return index
-
-
 def create_inference_donate_task(z, y, x):
     global input_dir, exchange_dir, output_dir
     global output_dataset_start, output_block_size, overlap_str
@@ -42,7 +36,7 @@ def create_inference_donate_task(z, y, x):
     output_block_size_str = str(output_block_size)[1:-1]
     return BashOperator(
         # remove the '[' and ']' in two ends
-        task_id='inference-donate_' + str(get_task_id(z, y, x)),
+        task_id='inference-donate_{}_{}_{}'.format(z, y, x),
         bash_command=('python ~/workspace/chunkflow/python/chunkflow/worker/'
                       'inference_and_donate.py '
                       '--input_dir {input_dir} '
@@ -71,10 +65,10 @@ def create_receive_blend_task(z, y, x):
                               (z, y, x)))
     output_block_start_str = str(output_block_start)[1:-1]
 
-    task_id = 'receive-blend_' + str(get_task_id(z, y, x))
+    task_id = 'receive-blend_{}_{}_{}'.format(z, y, x)
     print(z, y, x, task_id)
     return BashOperator(
-        task_id='receive-blend_' + str(get_task_id(z, y, x)),
+        task_id='receive-blend_{}_{}_{}'.format(z, y, x),
         bash_command=('python ~/workspace/chunkflow/python/chunkflow/worker/'
                       'receive_and_donate.py '
                       '--exchange_dir {exchange_dir} '
@@ -92,32 +86,32 @@ def create_receive_blend_task(z, y, x):
         dag=dag)
 
 
-begin_task = BashOperator(
-    task_id='begin_task',
-    bash_command='echo "Start here"',
-    dag=dag)
-
-done_task = BashOperator(
-    task_id='end_task',
-    bash_command='echo "I AM DONE"',
-    dag=dag)
+# begin_task = BashOperator(
+#     task_id='begin_task',
+#     bash_command='echo "Start here"',
+#     dag=dag)
+#
+# done_task = BashOperator(
+#     task_id='end_task',
+#     bash_command='echo "I AM DONE"',
+#     dag=dag)
 
 
 # inference and donate tasks
-inference_task_list = list()
+inference_task_dict = dict()
 for z, y, x in itertools.product(range(GRID_SIZE[0]), range(GRID_SIZE[1]),
                                  range(GRID_SIZE[2])):
     task = create_inference_donate_task(z, y, x)
-    inference_task_list.append(task)
-    task.set_upstream(begin_task)
+    # task.set_upstream(begin_task)
+    inference_task_dict[(z, y, x)] = task
 
-print('number of inference tasks: {}'.format(len(inference_task_list)))
-
+receive_task_dict = dict()
 # receive and blend tasks
 for z, y, x in itertools.product(range(GRID_SIZE[0]), range(GRID_SIZE[1]),
                                  range(GRID_SIZE[2])):
     print('receiving task coordinates: {},{},{}'.format(z, y, x))
     task = create_receive_blend_task(z, y, x)
+    receive_task_dict[(z, y, x)] = task
     zlist = [z]
     ylist = [y]
     xlist = [x]
@@ -127,10 +121,17 @@ for z, y, x in itertools.product(range(GRID_SIZE[0]), range(GRID_SIZE[1]),
         ylist.append(y-1)
     if x > 0:
         xlist.append(x-1)
+    print(zlist, ylist, xlist)
+    called = set()
     # scan the neighboring blocks
     for zn, yn, xn in itertools.product(zlist, ylist, xlist):
+        print(zn, yn, xn)
         if zn != z or yn != y or xn != x:
+            key = (zn, yn, xn)
+            if key in called:
+                print('{} already in called: {}'.format(key, called))
+            else:
+                called.add(key)
             # this is a neighboring block
-            task_index = get_task_id(zn, yn, xn)
-            task.set_upstream(inference_task_list[task_index])
-            task.set_downstream(done_task)
+            task.set_upstream(inference_task_dict[(zn, yn, xn)])
+            # task.set_downstream(done_task)
