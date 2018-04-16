@@ -6,7 +6,7 @@ services:
             - RABBITMQ_ERLANG_COOKIE=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
         deploy:
             placement:
-                constraints: [ engine.labels.infrakit-role == rabbimq ]
+                constraints: [ engine.labels.infrakit-role == rabbitmq ]
 
     postgres:
         image: postgres:9.6-alpine
