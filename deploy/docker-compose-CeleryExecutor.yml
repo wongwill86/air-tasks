@@ -26,7 +26,7 @@ services:
     pgbouncer:
         image: brainsam/pgbouncer
         environment:
-            - DB_HOST=postgres
+            - DB_HOST=172.31.31.250
             - DB_USER=airflow
             - DB_PASSWORD=airflow
             - POOL_MODE=transaction
