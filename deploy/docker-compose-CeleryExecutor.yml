@@ -20,13 +20,13 @@ services:
             - /var/lib/postgresql/data:/var/lib/postgresql/data
         deploy:
             placement:
-                constraints: [ engine.labels.infrakit-role == manager ]
-        command: postgres -c max_connections=10000 -c shared_buffers=64GB
+                constraints: [ engine.labels.infrakit-role == database ]
+        command: -c max_connections=10000 -c shared_buffers=64GB
 
     pgbouncer:
         image: brainsam/pgbouncer
         environment:
-            - DB_HOST=172.31.31.250
+            - DB_HOST=172.31.31.254
             - DB_USER=airflow
             - DB_PASSWORD=airflow
             - POOL_MODE=transaction
@@ -38,7 +38,7 @@ services:
             - "6432:6432"
         deploy:
             placement:
-                constraints: [ engine.labels.infrakit-role == manager ]
+                constraints: [ engine.labels.infrakit-role == database ]
 
     # single shot initialize the database
     init-db:
@@ -60,7 +60,7 @@ services:
         command: airflow initdb
         deploy:
             placement:
-                constraints: [ engine.labels.infrakit-role == manager ]
+                constraints: [ engine.labels.infrakit-role == database ]
         deploy:
             restart_policy:
                 condition: on-failure
