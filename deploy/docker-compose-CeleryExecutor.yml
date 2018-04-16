@@ -32,6 +32,9 @@ services:
             - DEFAULT_POOL_SIZE=300
             - MIN_POOL_SIZE=100
             - CLIENT_IDLE_TIMEOUT=600
+        deploy:
+            placement:
+                constraints: [ engine.labels.infrakit-role == manager ]
 
     # single shot initialize the database
     init-db:
