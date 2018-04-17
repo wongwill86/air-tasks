@@ -21,7 +21,7 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == database ]
-        command: -c max_connections=10000 -c shared_buffers=64GB
+        command: -c max_connections=10000 -c shared_buffers=16GB
 
     pgbouncer:
         image: brainsam/pgbouncer
