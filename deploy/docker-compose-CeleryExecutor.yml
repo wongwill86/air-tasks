@@ -9,7 +9,7 @@ services:
                 constraints: [ engine.labels.infrakit-role == rabbitmq ]
 
     postgres:
-        image: mysql:5.5
+        image: mysql:5.7
         environment:
             - MYSQL_USER=airflow
             - MYSQL_PASSWORD=airflow
