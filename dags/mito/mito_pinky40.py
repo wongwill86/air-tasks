@@ -2,7 +2,7 @@ from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
 
-DAG_ID = 'synaptor_pinky40'
+DAG_ID = 'mito_pinky40'
 
 default_args = {
     'owner': 'airflow',
@@ -40,7 +40,7 @@ chunk_shape = (1024,1024,1024)
 #chunk_shape = (1024, 1024, 128)
 
 cc_thresh = 0.19
-sz_thresh1 = 100
+sz_thresh1 = 460
 sz_thresh2 = 500 #???
 cc_dil_param = 0
 
@@ -120,7 +120,7 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
                           chunk_end_str=chunk_end_str, mip_str = str(mip)),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="cpu",
+        #queue="cpu",
         dag=dag
         )
 
@@ -134,7 +134,7 @@ def merge_ccs(dag):
                       ).format(proc_dir_path=proc_dir_path, sz_thresh=sz_thresh1),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="cpu",
+        #queue="cpu",
         dag=dag
         )
 
@@ -165,7 +165,7 @@ def asynet_pass(dag, chunk_begin, chunk_end):
                                proc_dir_path=proc_dir_path),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="gpu",
+        #queue="gpu",
         dag=dag
         )
 
@@ -182,7 +182,7 @@ def merge_edges(dag):
                                size_thr=sz_thresh2, voxel_res_str=voxel_res_str),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="cpu",
+#        queue="cpu",
         dag=dag
         )
 
@@ -204,7 +204,7 @@ def remap_ids(dag, chunk_begin, chunk_end):
                                chunk_end_str=chunk_end_str, mip_str=str(mip)),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="cpu",
+#        queue="cpu",
         dag=dag
         )
 
@@ -222,7 +222,7 @@ def chunk_overlaps(dag, chunk_begin, chunk_end):
                                chunk_end_str=chunk_end_str, mip=str(mip)),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="cpu",
+       # queue="cpu",
         dag=dag
         )
 
@@ -235,7 +235,7 @@ def merge_overlaps(dag):
                       ).format(proc_dir_path=proc_dir_path),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="cpu",
+        #queue="cpu",
         dag=dag
         )
 
