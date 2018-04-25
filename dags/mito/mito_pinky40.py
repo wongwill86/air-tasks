@@ -9,9 +9,10 @@ default_args = {
     'depends_on_past': False,
     'start_date': datetime(2018,4,24),
     'cactchup_by_default': False,
-    'retries': 2,
-    'retry_delay': timedelta(minutes=30),
-    'retry_exponential_backoff': False,
+    'retries': 10,
+    'retry_delay': timedelta(seconds=2),
+    'max_retry_delay': timedelta(minutes=10),
+    'retry_exponential_backoff': True,
 }
 
 dag = DAG(
