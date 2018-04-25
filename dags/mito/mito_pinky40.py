@@ -30,8 +30,8 @@ cc_cvname = "gs://neuroglancer/pinky40_v11/mito_objects"
 #wshed_cvname = "gs://neuroglancer/pinky40_v11/watershed"
 
 # FULL VOLUME COORDS
-start_coord = (10240,7680,0)
-vol_shape   = (55296,36864,1024)
+start_coord = (5120,2048,0)
+vol_shape   = (28672,20480,1024)
 chunk_shape = (1024,1024,1024)
 
 # TEST VOLUME COORDS
