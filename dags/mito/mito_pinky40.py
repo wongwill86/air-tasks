@@ -100,64 +100,58 @@ def bounds1D(full_width, step_size):
 
 
 def chunk_ccs(dag, chunk_begin, chunk_end):
-
     chunk_begin_str = " ".join(map(str,chunk_begin))
     chunk_end_str = " ".join(map(str,chunk_end))
-
     return DockerWithVariablesOperator(
-        ["google-secret.json","aws-secret.json"],
+        ["project_name","google-secret.json"],
         mount_point="/root/.cloudvolume/secrets",
         task_id="chunk_ccs_" + "_".join(map(str,chunk_begin)),
-        command=("chunk_ccs {out_cvname} {cleft_cvname} {proc_dir_path} " +
+        command=("chunk_ccs {out_cvname} {cc_cvname} {proc_dir_path} " +
                  "{cc_thresh} {sz_thresh} " +
                  "--chunk_begin {chunk_begin_str} " +
-                 "--chunk_end {chunk_end_str}" +
+                 "--chunk_end {chunk_end_str} " +
 		 "--mip {mip_str}"
-                 ).format(out_cvname=out_cvname, cleft_cvname=cleft_cvname,
+                 ).format(out_cvname=out_cvname, cc_cvname=cc_cvname,
                           proc_dir_path=proc_dir_path, cc_thresh=cc_thresh,
-                          sz_thresh=sz_thresh1, cc_dil_param=cc_dil_param,
+                          sz_thresh=sz_thresh, cc_dil_param=cc_dil_param,
                           chunk_begin_str=chunk_begin_str,
-                          chunk_end_str=chunk_end_str, mip_str = str(mip)),
+                          chunk_end_str=chunk_end_str, mip_str=str(mip)),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         #queue="cpu",
         dag=dag
         )
-
 
 def merge_ccs(dag):
     return DockerWithVariablesOperator(
-        ["google-secret.json","aws-secret.json"],
+        ["project_name","google-secret.json"],
         mount_point="/root/.cloudvolume/secrets",
         task_id="merge_ccs",
         command=("merge_ccs {proc_dir_path} {sz_thresh}"
-                      ).format(proc_dir_path=proc_dir_path, sz_thresh=sz_thresh1),
+                      ).format(proc_dir_path=proc_dir_path, sz_thresh=sz_thresh),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         #queue="cpu",
         dag=dag
         )
 
-def asynet_pass(dag, chunk_begin, chunk_end):
 
+def asynet_pass(dag, chunk_begin, chunk_end):
     chunk_begin_str = " ".join(map(str,chunk_begin))
     chunk_end_str = " ".join(map(str,chunk_end))
     patchsz_str = " ".join(map(str,patch_sz))
-
     return DockerWithVariablesOperator(
-        ["google-secret.json","aws-secret.json"],
+        ["project_name","google-secret.json"],
         host_args={"runtime": "nvidia"},
         mount_point="/root/.cloudvolume/secrets",
-        task_id="chunk_edges" + "_".join(map(str,chunk_begin)),
-        command=("chunk_edges {img_cvname} {cleft_cvname} {seg_cvname} " +
-                      "{proc_dir_path} {num_samples} {dil_param} " +
+        task_id="asynet_pass" + "_".join(map(str,chunk_begin)),
+        command=("asynet_pass {img_cvname} {cc_cvname} {seg_cvname} " +
+                      "{num_samples} {dil_param} {proc_dir_path} " +
                       "--chunk_begin {chunk_begin_str} " +
                       "--chunk_end {chunk_end_str} " +
-                      "--wshed_cvname {wshed_cvname} " +
                       "--patchsz {patchsz_str}"
-                      ).format(img_cvname=img_cvname, cleft_cvname=cleft_cvname,
-                               seg_cvname=seg_cvname, wshed_cvname=wshed_cvname,
-                               num_samples=num_samples,
+                      ).format(img_cvname=img_cvname, cc_cvname=cc_cvname,
+                               seg_cvname=seg_cvname, num_samples=num_samples,
                                dil_param=asyn_dil_param,
                                chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str,
@@ -165,7 +159,7 @@ def asynet_pass(dag, chunk_begin, chunk_end):
                                proc_dir_path=proc_dir_path),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        #queue="gpu",
+        #queue="cpu",
         dag=dag
         )
 
@@ -173,16 +167,16 @@ def asynet_pass(dag, chunk_begin, chunk_end):
 def merge_edges(dag):
     voxel_res_str = " ".join(map(str,voxel_res))
     return DockerWithVariablesOperator(
-        ["google-secret.json","aws-secret.json"],
+        ["project_name","google-secret.json"],
         mount_point="/root/.cloudvolume/secrets",
         task_id="merge_edges",
-        command=("merge_edges {proc_dir_path} {dist_thr} {size_thr} " +
+        command=("merge_edges {proc_dir_path} {dist_thr} " +
                       "--voxel_res {voxel_res_str} "
                       ).format(proc_dir_path=proc_dir_path, dist_thr=dist_thr,
-                               size_thr=sz_thresh2, voxel_res_str=voxel_res_str),
+                               voxel_res_str=voxel_res_str),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-#        queue="cpu",
+        #queue="cpu",
         dag=dag
         )
 
@@ -191,20 +185,19 @@ def remap_ids(dag, chunk_begin, chunk_end):
     chunk_begin_str = " ".join(map(str,chunk_begin))
     chunk_end_str = " ".join(map(str,chunk_end))
     return DockerWithVariablesOperator(
-        ["google-secret.json","aws-secret.json"],
+        ["project_name","google-secret.json"],
         mount_point="/root/.cloudvolume/secrets",
         task_id="remap_ids" + "_".join(map(str,chunk_begin)),
-        command=("remap_ids {cleft_cvname} {cleft_cvname} {proc_dir_path} " +
+        command=("remap_ids {cc_cvname} {cc_cvname} {proc_dir_path} " +
                       "--chunk_begin {chunk_begin_str} " +
                       "--chunk_end {chunk_end_str} " +
 		      "--mip {mip_str}"
-                      ).format(cleft_cvname=cleft_cvname,
-                               proc_dir_path=proc_dir_path,
+                      ).format(cc_cvname=cc_cvname, proc_dir_path=proc_dir_path,
                                chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str, mip_str=str(mip)),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-#        queue="cpu",
+        #queue="cpu",
         dag=dag
         )
 
@@ -212,25 +205,27 @@ def chunk_overlaps(dag, chunk_begin, chunk_end):
     chunk_begin_str = " ".join(map(str,chunk_begin))
     chunk_end_str = " ".join(map(str,chunk_end))
     return DockerWithVariablesOperator(
-        ["google-secret.json","aws-secret.json"],
-        mount_point="/root/.cloudvolume/secrets",
+        ["project_name","google-secret.json"],
         task_id="chunk_overlaps"+ "_".join(map(str,chunk_begin)),
-        command=("chunk_overlaps {seg_cvname} {base_seg_cvname} {proc_dir_path}" +
+        mount_point="/root/.cloudvolume/secrets",
+        command=("chunk_overlaps {seg_cvname} {base_seg_cvname} {proc_dir_path} " +
                       "--chunk_begin {chunk_begin_str} " +
                       "--chunk_end {chunk_end_str} --mip {mip}"
-                      ).format(seg_cvname=cc_cvname, base_seg_cvname=seg_cvname,                               			   chunk_begin_str=chunk_begin_str,
+                      ).format(seg_cvname=cc_cvname, base_seg_cvname=seg_cvname,
+                               proc_dir_path=proc_dir_path,
+                               chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str, mip=str(mip)),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-       # queue="cpu",
+        #queue="cpu",
         dag=dag
         )
 
 def merge_overlaps(dag):
     return DockerWithVariablesOperator(
-        ["google-secret.json","aws-secret.json"],
-        mount_point="/root/.cloudvolume/secrets",
+        ["project_name","google-secret.json"],
         task_id="merge_overlaps",
+        mount_point="/root/.cloudvolume/secrets",
         command=("merge_overlaps {proc_dir_path} "
                       ).format(proc_dir_path=proc_dir_path),
         default_args=default_args,
@@ -238,6 +233,7 @@ def merge_overlaps(dag):
         #queue="cpu",
         dag=dag
         )
+
 
 # STEP 1: chunk_ccs
 bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord)
