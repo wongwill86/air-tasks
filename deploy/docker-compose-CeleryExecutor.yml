@@ -35,7 +35,7 @@ services:
 
     # single shot initialize the database
     init-db:
-        image: wongwill86/air-tasks:nick
+        image: wongwill86/air-tasks:agataf
         restart: on-failure
         depends_on:
             - postgres
@@ -59,7 +59,7 @@ services:
                 condition: on-failure
 
     webserver:
-        image: wongwill86/air-tasks:nick
+        image: wongwill86/air-tasks:agataf
         restart: always
         depends_on:
             - init-db
@@ -84,7 +84,7 @@ services:
                 window: 120s
 
     flower:
-        image: wongwill86/air-tasks:nick
+        image: wongwill86/air-tasks:agataf
         restart: always
         depends_on:
             - init-db
@@ -99,7 +99,7 @@ services:
                 condition: any
 
     scheduler:
-        image: wongwill86/air-tasks:nick
+        image: wongwill86/air-tasks:agataf
         restart: always
         depends_on:
             - init-db
@@ -133,7 +133,7 @@ services:
                 condition: any
 
     worker-worker:
-        image: wongwill86/air-tasks:nick
+        image: wongwill86/air-tasks:agataf
         restart: always
         depends_on:
             - init-db
@@ -157,65 +157,6 @@ services:
                 constraints: [ engine.labels.infrakit-role == worker ]
             restart_policy:
                 condition: any
-
-    worker-CPU:
-        image: wongwill86/air-tasks:nick
-        restart: always
-        depends_on:
-            - scheduler
-        volumes:
-            # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
-            #- ../config:/usr/local/airflow/config
-            - /var/run/docker.sock:/var/run/docker.sock
-            - /tmp:/tmp
-        environment:
-            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
-            - EXECUTOR=Celery
-            - AIRFLOW_HOME=/usr/local/airflow
-            - AWS_ACCESS_KEY_ID
-            - AWS_SECRET_ACCESS_KEY
-            - AWS_DEFAULT_REGION
-            - REDIS_HOST=rabbitmq
-            - REDIS_PORT=5672
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-        command: airflow worker -q cpu
-        deploy:
-            mode: global
-            placement:
-                constraints: [ engine.labels.infrakit-role == cpu ]
-
-    worker-GPU:
-        image: wongwill86/air-tasks:nick
-        restart: always
-        depends_on:
-            - scheduler
-        volumes:
-            # Warning mounting dags/plugins not working for autoscaler
-            #- ../dags/:/usr/local/airflow/dags
-            #- ../plugins:/usr/local/airflow/plugins
-            - /var/run/docker.sock:/var/run/docker.sock
-            - /tmp:/tmp
-        environment:
-            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
-            - EXECUTOR=Celery
-            - AIRFLOW_HOME=/usr/local/airflow
-            - AWS_ACCESS_KEY_ID
-            - AWS_SECRET_ACCESS_KEY
-            - AWS_DEFAULT_REGION
-            - REDIS_HOST=rabbitmq
-            - REDIS_PORT=5672
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-        command: airflow worker -q gpu
-        deploy:
-            mode: global
-            placement:
-                constraints: [ engine.labels.infrakit-role == gpu ]
 
     worker-manager:
         image: wongwill86/air-tasks:nick
