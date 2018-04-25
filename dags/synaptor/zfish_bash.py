@@ -28,10 +28,16 @@ dag = DAG(
 
 # =============
 # run-specific args
-img_cvname = "gs://neuroglancer/zfish_v1/image"
-seg_cvname = "gs://neuroglancer/zfish_v1/consensus-20171130"
-out_cvname = "s3://neuroglancer/zfish_v1/psd"
-cc_cvname = "gs://neuroglancer/zfish_v1/cleft_test"
+#img_cvname = "gs://neuroglancer/zfish_v1/image"
+#seg_cvname = "gs://neuroglancer/zfish_v1/consensus-20171130"
+#out_cvname = "s3://neuroglancer/zfish_v1/psd"
+#cc_cvname = "gs://neuroglancer/zfish_v1/cleft_test"
+
+#img_cvname = "gs://neuroglancer/zfish_v1/image"
+#seg_cvname = "gs://neuroglancer/zfish_v1/consensus-20171130"
+out_cvname = "gs://neuroglancer/agataf/golden_cube/mito"
+cc_cvname = "gs://neuroglancer/agataf/golden_cube/mito_objects"
+
 
 # FULL VOLUME COORDS
 start_coord = (14336, 12288, 16384)
@@ -42,19 +48,23 @@ chunk_shape = (1024,1024,1792)
 #start_coord = (57216, 28992, 17280)
 #vol_shape = (3072, 3072, 384)
 #chunk_shape = (1024, 1024, 128)
+start_coord = (0,0,0)
+vol_shape   = (1024, 1024, 128)
+chunk_shape = (512, 512, 128)
 
-cc_thresh = 0.1
-sz_thresh = 200
+cc_thresh = 0.19
+sz_thresh = 500
 cc_dil_param = 0
 
 num_samples = 2
 asyn_dil_param = 5
-patch_sz = (160, 160, 18)
+patch_sz = (160, 160, 16)
 
 voxel_res = (5, 5, 45)
 dist_thr = 1000
+mip = 1
 
-proc_dir_path = "gs://seunglab/nick/testing/airtasks"
+proc_dir_path = "gs://neuroglancer/agataf/golden_cube/proc_dir"
 # =============
 
 import itertools
@@ -103,17 +113,30 @@ def bounds1D(full_width, step_size):
 def chunk_ccs(dag, chunk_begin, chunk_end):
     chunk_begin_str = " ".join(map(str,chunk_begin))
     chunk_end_str = " ".join(map(str,chunk_end))
-    return BashOperator(
-        task_id="chunk_ccs_" + "_".join(map(str,chunk_begin)),
-        bash_command=("echo chunk_ccs {out_cvname} {cc_cvname} {proc_dir_path} " +
-                      "{cc_thresh} {sz_thresh} {cc_dil_param} " +
+    task_id="chunk_ccs_" + "_".join(map(str,chunk_begin))
+    bash_command=("chunk_ccs {out_cvname} {cc_cvname} {proc_dir_path} " +
+                      "{cc_thresh} {sz_thresh} " +
                       "--chunk_begin {chunk_begin_str} " +
-                      "--chunk_end {chunk_end_str}"
+                      "--chunk_end {chunk_end_str} "+
+                      "--mip {mip_str}"
                       ).format(out_cvname=out_cvname, cc_cvname=cc_cvname,
                                proc_dir_path=proc_dir_path, cc_thresh=cc_thresh,
                                sz_thresh=sz_thresh, cc_dil_param=cc_dil_param,
                                chunk_begin_str=chunk_begin_str,
-                               chunk_end_str=chunk_end_str),
+                               chunk_end_str=chunk_end_str, mip_str=str(mip))
+    print "docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command
+    return BashOperator(
+        task_id="chunk_ccs_" + "_".join(map(str,chunk_begin)),
+        bash_command=("echo chunk_ccs {out_cvname} {cc_cvname} {proc_dir_path} " +
+                      "{cc_thresh} {sz_thresh} " +
+                      "--chunk_begin {chunk_begin_str} " +
+                      "--chunk_end {chunk_end_str}" +
+		      "--mip {mip_str}"
+                      ).format(out_cvname=out_cvname, cc_cvname=cc_cvname,
+                               proc_dir_path=proc_dir_path, cc_thresh=cc_thresh,
+                               sz_thresh=sz_thresh, cc_dil_param=cc_dil_param,
+                               chunk_begin_str=chunk_begin_str,
+                               chunk_end_str=chunk_end_str, mip_str=str(mip)),
         default_args=default_args,
         queue="cpu",
         dag=dag
@@ -121,6 +144,9 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
 
 
 def merge_ccs(dag):
+    bash_command=("merge_ccs {proc_dir_path} {sz_thresh}"
+                      ).format(proc_dir_path=proc_dir_path, sz_thresh=sz_thresh)
+    print "docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command
     return BashOperator(
         task_id="merge_ccs",
         bash_command=("echo merge_ccs {proc_dir_path} {sz_thresh}"
@@ -196,16 +222,16 @@ for chunk in step1:
     chunk.set_downstream(step2)
 
 # STEP 3: asynet pass
-step3 = [asynet_pass(dag, bb[0], bb[1]) for bb in bboxes]
-for chunk in step3:
-    step2.set_downstream(chunk)
+#step3 = [asynet_pass(dag, bb[0], bb[1]) for bb in bboxes]
+#for chunk in step3:
+#    step2.set_downstream(chunk)
 
 # STEP 4: merge edges
-step4 = merge_edges(dag)
-for chunk in step3:
-    chunk.set_downstream(step4)
+#step4 = merge_edges(dag)
+#for chunk in step3:
+#    chunk.set_downstream(step4)
 
-# STEP 5: remap_ids
+#STEP 5: remap_ids
 step5 = [remap_ids(dag, bb[0], bb[1]) for bb in bboxes]
 for chunk in step5:
-    step4.set_downstream(chunk)
+    step2.set_downstream(chunk)

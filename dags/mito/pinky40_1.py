@@ -7,7 +7,7 @@ DAG_ID = 'synaptor_pinky40'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2018,3,21),
+    'start_date': datetime(2018,4,24),
     'cactchup_by_default': False,
     'retries': 2,
     'retry_delay': timedelta(minutes=30),
@@ -196,11 +196,12 @@ def remap_ids(dag, chunk_begin, chunk_end):
         task_id="remap_ids" + "_".join(map(str,chunk_begin)),
         command=("remap_ids {cleft_cvname} {cleft_cvname} {proc_dir_path} " +
                       "--chunk_begin {chunk_begin_str} " +
-                      "--chunk_end {chunk_end_str}"
+                      "--chunk_end {chunk_end_str} " +
+		      "--mip {mip_str}"
                       ).format(cleft_cvname=cleft_cvname,
                                proc_dir_path=proc_dir_path,
                                chunk_begin_str=chunk_begin_str,
-                               chunk_end_str=chunk_end_str),
+                               chunk_end_str=chunk_end_str, mip_str=str(mip)),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -238,9 +239,8 @@ def merge_overlaps(dag):
         dag=dag
         )
 
-bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord)
-
 # STEP 1: chunk_ccs
+bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord)
 step1 = [chunk_ccs(dag, bb[0], bb[1]) for bb in bboxes]
 
 # STEP 2: merge_ccs
@@ -250,14 +250,17 @@ for chunk in step1:
 
 # STEP 3: remap_ids
 step3 = [remap_ids(dag, bb[0], bb[1]) for bb in bboxes]
-for chunk in step3:
+# using the last remap task as an intermediate node to keep dag consistent
+for chunk in step3[:-1]:
     step2.set_downstream(chunk)
+    chunk.set_downstream(step3[-1])
 
 # STEP 4: chunk_overlaps
 step4 = [chunk_overlaps(dag, bb[0], bb[1]) for bb in bboxes]
 for chunk in step4:
-    step3.set_downstream(chunk)
+    step3[-1].set_downstream(chunk)
 
 # STEP 5: merge_overlaps
 step5 = merge_overlaps(dag)
-step4.set_downstream(step5)
+for chunk in step4:
+    chunk.set_downstream(step5)

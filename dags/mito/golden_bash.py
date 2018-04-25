@@ -13,7 +13,7 @@ DAG_ID = 'synaptor_bash'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2017, 12, 12),
+    'start_date': datetime(2017, 4, 24),
     'cactchup_by_default': False,
     'retries': 1,
     'retry_delay': timedelta(seconds=2),
@@ -34,9 +34,9 @@ dag = DAG(
 #cc_cvname = "gs://neuroglancer/zfish_v1/cleft_test"
 
 img_cvname = "gs://neuroglancer/kisuk/golden/image"
-#seg_cvname = "gs://neuroglancer/zfish_v1/consensus-20171130"
+seg_cvname = "gs://neuroglancer/golden_v0/segmentation"
 out_cvname = "gs://neuroglancer/agataf/golden/mito_inference"
-cc_cvname = "gs://neuroglancer/agataf/golden/objects"
+cc_cvname = "gs://neuroglancer/agataf/golden/objects2"
 
 
 # FULL VOLUME COORDS
@@ -46,11 +46,11 @@ chunk_shape = (1024,1024,1792)
 
 # TEST VOLUME COORDS
 start_coord = (0,0,0)
-vol_shape   = (1024, 1024, 128)
-chunk_shape = (512, 512, 128)
+vol_shape   = (1024, 1024, 256)
+chunk_shape = (512, 512, 256)
 
 cc_thresh = 0.19
-sz_thresh = 500
+sz_thresh = 400
 cc_dil_param = 0
 
 num_samples = 2
@@ -62,7 +62,8 @@ voxel_res = (5, 5, 45)
 dist_thr = 1000
 mip = 1
 
-proc_dir_path = "gs://neuroglancer/agataf/golden/proc_dir"
+
+proc_dir_path = "gs://neuroglancer/agataf/golden/proc_dir2"
 # =============
 
 import itertools
@@ -198,10 +199,11 @@ def remap_ids(dag, chunk_begin, chunk_end):
     chunk_end_str = " ".join(map(str,chunk_end))
     bash_command= ("remap_ids {cc_cvname} {cc_cvname} {proc_dir_path} " +
                       "--chunk_begin {chunk_begin_str} " +
-                      "--chunk_end {chunk_end_str}"
+                      "--chunk_end {chunk_end_str} " +
+		      "--mip {mip_str}"
                       ).format(cc_cvname=cc_cvname, proc_dir_path=proc_dir_path,
                                chunk_begin_str=chunk_begin_str,
-                               chunk_end_str=chunk_end_str)
+                               chunk_end_str=chunk_end_str, mip_str=str(mip))
     print "docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command
     return BashOperator(
         task_id="remap_ids" + "_".join(map(str,chunk_begin)),
@@ -218,13 +220,23 @@ def remap_ids(dag, chunk_begin, chunk_end):
 
 def chunk_overlaps(dag, chunk_begin, chunk_end):
     chunk_begin_str = " ".join(map(str,chunk_begin))
-    chunk_end_str = " ".join(map(str,chunk_end))
-    return BashOperator(
-        task_id="chunk_overlaps"+ "_".join(map(str,chunk_begin)),
-        command=("chunk_overlaps {seg_cvname} {base_seg_cvname} {proc_dir_path}" +
+    chunk_end_str = " ".join(map(str,chunk_end))    
+    bash_command = ("chunk_overlaps {seg_cvname} {base_seg_cvname} {proc_dir_path} " +
                       "--chunk_begin {chunk_begin_str} " +
                       "--chunk_end {chunk_end_str} --mip {mip}"
-                      ).format(seg_cvname=cc_cvname, base_seg_cvname=seg_cvname,                                                   chunk_begin_str=chunk_begin_str,
+                      ).format(seg_cvname=cc_cvname, base_seg_cvname=seg_cvname,
+			       proc_dir_path=proc_dir_path,     
+			       chunk_begin_str=chunk_begin_str,
+                               chunk_end_str=chunk_end_str, mip=str(mip))
+    print "docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command
+    return BashOperator(
+        task_id="chunk_overlaps"+ "_".join(map(str,chunk_begin)),
+        bash_command=("chunk_overlaps {seg_cvname} {base_seg_cvname} {proc_dir_path}" +
+                      "--chunk_begin {chunk_begin_str} " +
+                      "--chunk_end {chunk_end_str} --mip {mip}"
+                      ).format(seg_cvname=cc_cvname, base_seg_cvname=seg_cvname,   
+                               proc_dir_path=proc_dir_path,
+                               chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str, mip=str(mip)),
         default_args=default_args,
         queue="cpu",
@@ -232,9 +244,12 @@ def chunk_overlaps(dag, chunk_begin, chunk_end):
         )
 
 def merge_overlaps(dag):
+    bash_command = ("merge_overlaps {proc_dir_path} "
+                      ).format(proc_dir_path=proc_dir_path)
+    print "docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command
     return BashOperator(
         task_id="merge_overlaps",
-        command=("merge_overlaps {proc_dir_path} "
+        bash_command=("merge_overlaps {proc_dir_path} "
                       ).format(proc_dir_path=proc_dir_path),
         default_args=default_args,
         queue="cpu",
@@ -252,14 +267,17 @@ for chunk in step1:
 
 # STEP 3: remap_ids
 step3 = [remap_ids(dag, bb[0], bb[1]) for bb in bboxes]
-for chunk in step3:
+# using the last remap task as an intermediate node to keep dag consistent
+for chunk in step3[:-1]:
     step2.set_downstream(chunk)
+    chunk.set_downstream(step3[-1])
 
 # STEP 4: chunk_overlaps
 step4 = [chunk_overlaps(dag, bb[0], bb[1]) for bb in bboxes]
 for chunk in step4:
-    step3.set_downstream(chunk)
+    step3[-1].set_downstream(chunk)
 
 # STEP 5: merge_overlaps
 step5 = merge_overlaps(dag)
-step4.set_downstream(step5)
+for chunk in step4:
+    chunk.set_downstream(step5)
