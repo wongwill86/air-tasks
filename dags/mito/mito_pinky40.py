@@ -54,7 +54,7 @@ chunk_shape = (1024,1024,1024)
 #chunk_shape = (1024, 1024, 128)
 
 cc_thresh = 0.19
-sz_thresh = 460
+sz_thresh = 800
 #sz_thresh2 = 500 #???
 cc_dil_param = 0
 
