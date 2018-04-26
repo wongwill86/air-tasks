@@ -137,52 +137,6 @@ def merge_ccs(dag):
         dag=dag
         )
 
-
-def asynet_pass(dag, chunk_begin, chunk_end):
-    chunk_begin_str = " ".join(map(str,chunk_begin))
-    chunk_end_str = " ".join(map(str,chunk_end))
-    patchsz_str = " ".join(map(str,patch_sz))
-    return DockerWithVariablesOperator(
-        ["project_name","google-secret.json"],
-        host_args={"runtime": "nvidia"},
-        mount_point="/root/.cloudvolume/secrets",
-        task_id="asynet_pass" + "_".join(map(str,chunk_begin)),
-        command=("asynet_pass {img_cvname} {cc_cvname} {seg_cvname} " +
-                      "{num_samples} {dil_param} {proc_dir_path} " +
-                      "--chunk_begin {chunk_begin_str} " +
-                      "--chunk_end {chunk_end_str} " +
-                      "--patchsz {patchsz_str}"
-                      ).format(img_cvname=img_cvname, cc_cvname=cc_cvname,
-                               seg_cvname=seg_cvname, num_samples=num_samples,
-                               dil_param=asyn_dil_param,
-                               chunk_begin_str=chunk_begin_str,
-                               chunk_end_str=chunk_end_str,
-                               patchsz_str=patchsz_str,
-                               proc_dir_path=proc_dir_path),
-        default_args=default_args,
-        image="seunglab/synaptor:latest",
-        #queue="cpu",
-        dag=dag
-        )
-
-
-def merge_edges(dag):
-    voxel_res_str = " ".join(map(str,voxel_res))
-    return DockerWithVariablesOperator(
-        ["project_name","google-secret.json"],
-        mount_point="/root/.cloudvolume/secrets",
-        task_id="merge_edges",
-        command=("merge_edges {proc_dir_path} {dist_thr} " +
-                      "--voxel_res {voxel_res_str} "
-                      ).format(proc_dir_path=proc_dir_path, dist_thr=dist_thr,
-                               voxel_res_str=voxel_res_str),
-        default_args=default_args,
-        image="seunglab/synaptor:latest",
-        #queue="cpu",
-        dag=dag
-        )
-
-
 def remap_ids(dag, chunk_begin, chunk_end):
     chunk_begin_str = " ".join(map(str,chunk_begin))
     chunk_end_str = " ".join(map(str,chunk_end))
