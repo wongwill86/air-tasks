@@ -56,7 +56,7 @@ chunk_shape = (1024,1024,1024)
 cc_thresh = 0.98
 sz_thresh = 800
 #sz_thresh2 = 500 #???
-cc_dil_param = 0
+cc_dil_param = 2
 
 
 num_samples = 2
