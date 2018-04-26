@@ -29,6 +29,8 @@ out_cvname = "gs://neuroglancer/pinky40_v11/mitochondria2"
 cc_cvname = "gs://neuroglancer/pinky40_v11/mito_objects"
 #cleft_cvname = "gs://neuroglancer/pinky40_v11/clefts"
 #wshed_cvname = "gs://neuroglancer/pinky40_v11/watershed"
+proc_dir_path = "gs://neuroglancer/agataf/pinky40"
+
 
 # FULL VOLUME COORDS
 start_coord = (5120,2048,0)
@@ -54,7 +56,6 @@ voxel_res = (4, 4, 40)
 dist_thr = 1000
 mip = 1
 
-proc_dir_path = "gs://seunglab/agataf/pinky40"
 # =============
 
 import itertools
