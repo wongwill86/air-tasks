@@ -179,7 +179,7 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
-        command: airflow worker -q worker
+        command: airflow worker -q atomic
         deploy:
             mode: global
             placement:
