@@ -37,6 +37,12 @@ start_coord = (5120,2048,0)
 vol_shape   = (28672,20480,1024)
 chunk_shape = (1024,1024,1024)
 
+
+# NICK USES (in MIP 0):
+start_coord = (5120,3840,0)
+vol_shape   = (27648,18432,1024)
+chunk_shape = (1024,1024,1024)
+
 # NICK USES (in MIP 0):
 # start_coord = (10240,7680,0)
 # vol_shape   = (55296,36864,1024)
