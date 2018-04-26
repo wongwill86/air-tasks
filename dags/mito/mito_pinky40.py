@@ -29,13 +29,13 @@ out_cvname = "gs://neuroglancer/pinky40_v11/mitochondria2"
 cc_cvname = "gs://neuroglancer/pinky40_v11/mito_objects_Apr26"
 #cleft_cvname = "gs://neuroglancer/pinky40_v11/clefts"
 #wshed_cvname = "gs://neuroglancer/pinky40_v11/watershed"
-proc_dir_path = "gs://neuroglancer/agataf/pinky40_Apr26"
+proc_dir_path = "gs://neuroglancer/agataf/pinky40_Apr26_1"
 
 
 # FULL VOLUME COORDS
-start_coord = (5120,2048,0)
-vol_shape   = (28672,20480,1024)
-chunk_shape = (1024,1024,1024)
+#start_coord = (5120,2048,0)
+#vol_shape   = (28672,20480,1024)
+#chunk_shape = (1024,1024,1024)
 
 
 # NICK USES (in MIP 0):
@@ -53,7 +53,7 @@ chunk_shape = (1024,1024,1024)
 #vol_shape = (2048, 2048, 256)
 #chunk_shape = (1024, 1024, 128)
 
-cc_thresh = 0.19
+cc_thresh = 0.98
 sz_thresh = 800
 #sz_thresh2 = 500 #???
 cc_dil_param = 0
