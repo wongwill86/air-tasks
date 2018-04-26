@@ -336,24 +336,6 @@ services:
             - ssl_certificate
             - ssl_certificate_key
 
-    add-secrets:
-        image: wongwill86/air-tasks:latest
-        restart: on-failure
-        depends_on:
-            - init-db
-            - webserver
-        environment:
-            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
-        entrypoint: python /secrets_to_airflow_variables.py
-        deploy:
-            restart_policy:
-                condition: on-failure
-            placement:
-                constraints: [ engine.labels.infrakit-role == manager ]
-        #secrets:
-            #- basic_auth_username
-            #- basic_auth_password
-
 secrets:
     basic_auth_username:
         external: true
