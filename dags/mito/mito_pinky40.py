@@ -26,10 +26,10 @@ dag = DAG(
 img_cvname = "gs://neuroglancer/pinky40_v11/image"
 seg_cvname = "gs://neuroglancer/pinky40_v11/watershed_mst_trimmed_sem_remap"
 out_cvname = "gs://neuroglancer/pinky40_v11/mitochondria2"
-cc_cvname = "gs://neuroglancer/pinky40_v11/mito_objects"
+cc_cvname = "gs://neuroglancer/pinky40_v11/mito_objects_Apr26"
 #cleft_cvname = "gs://neuroglancer/pinky40_v11/clefts"
 #wshed_cvname = "gs://neuroglancer/pinky40_v11/watershed"
-proc_dir_path = "gs://neuroglancer/agataf/pinky40"
+proc_dir_path = "gs://neuroglancer/agataf/pinky40_Apr26"
 
 
 # FULL VOLUME COORDS
