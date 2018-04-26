@@ -123,7 +123,7 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
                                sz_thresh=sz_thresh, cc_dil_param=cc_dil_param,
                                chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str, mip_str=str(mip))
-    print "docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command
+    print("docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command)
     return BashOperator(
         task_id="chunk_ccs_" + "_".join(map(str,chunk_begin)),
         bash_command=("echo chunk_ccs {out_cvname} {cc_cvname} {proc_dir_path} " +
@@ -145,7 +145,7 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
 def merge_ccs(dag):
     bash_command=("merge_ccs {proc_dir_path} {sz_thresh}"
                       ).format(proc_dir_path=proc_dir_path, sz_thresh=sz_thresh)
-    print "docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command
+    print("docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command)
     return BashOperator(
         task_id="merge_ccs",
         bash_command=("echo merge_ccs {proc_dir_path} {sz_thresh}"
@@ -204,7 +204,7 @@ def remap_ids(dag, chunk_begin, chunk_end):
                       ).format(cc_cvname=cc_cvname, proc_dir_path=proc_dir_path,
                                chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str, mip_str=str(mip))
-    print "docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command
+    print("docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command)
     return BashOperator(
         task_id="remap_ids" + "_".join(map(str,chunk_begin)),
         bash_command=("echo remap_ids {cc_cvname} {cc_cvname} {proc_dir_path} " +
@@ -228,7 +228,7 @@ def chunk_overlaps(dag, chunk_begin, chunk_end):
 			       proc_dir_path=proc_dir_path,     
 			       chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str, mip=str(mip))
-    print "docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command
+    print("docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command)
     return BashOperator(
         task_id="chunk_overlaps"+ "_".join(map(str,chunk_begin)),
         bash_command=("chunk_overlaps {seg_cvname} {base_seg_cvname} {proc_dir_path}" +
@@ -246,7 +246,7 @@ def chunk_overlaps(dag, chunk_begin, chunk_end):
 def merge_overlaps(dag):
     bash_command = ("merge_overlaps {proc_dir_path} "
                       ).format(proc_dir_path=proc_dir_path)
-    print "docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command
+    print("docker run -it --rm -v /usr/people/agataf/.cloudvolume/secrets:/root/.cloudvolume/secrets seunglab/synaptor " + bash_command)
     return BashOperator(
         task_id="merge_overlaps",
         bash_command=("merge_overlaps {proc_dir_path} "
