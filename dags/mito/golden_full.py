@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
 
 
-DAG_ID = 'synaptor_full'
+DAG_ID = 'golden_full'
 
 default_args = {
     'owner': 'airflow',
@@ -231,7 +231,7 @@ def merge_overlaps(dag):
         ["project_name","google-secret.json"],
         task_id="merge_overlaps",
         mount_point="/root/.cloudvolume/secrets",
-        command=("merge_overlaps {proc_dir_path} "
+        bash_command=("merge_overlaps {proc_dir_path} "
                       ).format(proc_dir_path=proc_dir_path),
         default_args=default_args,
         image="seunglab/synaptor:latest",
@@ -264,4 +264,3 @@ for chunk in step4:
 step5 = merge_overlaps(dag)
 for chunk in step4:
     chunk.set_downstream(step5)
-
