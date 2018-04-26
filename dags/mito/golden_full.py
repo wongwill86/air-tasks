@@ -231,7 +231,7 @@ def merge_overlaps(dag):
         ["project_name","google-secret.json"],
         task_id="merge_overlaps",
         mount_point="/root/.cloudvolume/secrets",
-        bash_command=("merge_overlaps {proc_dir_path} "
+        command=("merge_overlaps {proc_dir_path} "
                       ).format(proc_dir_path=proc_dir_path),
         default_args=default_args,
         image="seunglab/synaptor:latest",
