@@ -4,7 +4,7 @@
 # BUILD: docker build --rm -t wongwill86/air-tasks .
 # SOURCE: https://github.com/wongwill86/air-tasks
 
-ARG BASE_DIST=alpine
+ARG BASE_DIST=slim
 ARG BASE_TAG=0.0.6-customAF
 ARG BASE_TEST=
 
@@ -19,6 +19,13 @@ ARG AIRFLOW_USER=airflow
 ENV AIRFLOW_USER ${AIRFLOW_USER}
 
 WORKDIR ${AIRFLOW_HOME}
+RUN apt-get -y update \
+    && apt-get -y install build-essential libmysqlclient-dev \
+    && git clone https://github.com/wongwill86/incubator-airflow.git --depth 1 -b v1-9-stable-3-scheduler_speed \
+    # Deleting this symlink not handled correctly by shutil.copy
+    && rm -rf incubator-airflow/airflow/www/static/docs \
+    && pip install incubator-airflow/[crypto,celery,postgres,mysql] \
+    && rm -rf incubator-airflow
 
 # Move base version information directly into airflow home directory
 RUN mkdir -p ${AIRFLOW_HOME}/version
