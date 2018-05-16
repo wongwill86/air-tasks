@@ -13,7 +13,7 @@ default_args = {
     'retry_exponential_backoff': True,
     }
 dag = DAG(
-    "pinky_20k", default_args=default_args, schedule_interval=None)
+    "pinky_20k_ws", default_args=default_args, schedule_interval=None)
 
 ws_image = "ranlu/watershed:pinky_20k"
 agg_image = "ranlu/agglomeration:pinky_20k"
