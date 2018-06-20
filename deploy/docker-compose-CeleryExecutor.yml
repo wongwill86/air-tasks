@@ -38,7 +38,7 @@ services:
 
     # single shot initialize the database
     init-db:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:chunkflow
         restart: on-failure
         depends_on:
             - postgres
@@ -62,7 +62,7 @@ services:
                 condition: on-failure
 
     webserver:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:chunkflow
         restart: always
         depends_on:
             - init-db
@@ -87,7 +87,7 @@ services:
                 window: 120s
 
     flower:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:chunkflow
         restart: always
         depends_on:
             - init-db
@@ -102,7 +102,7 @@ services:
                 condition: any
 
     scheduler:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:chunkflow
         restart: always
         depends_on:
             - init-db
@@ -136,7 +136,7 @@ services:
                 condition: any
 
     worker-worker:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:chunkflow
         restart: always
         depends_on:
             - init-db
@@ -162,7 +162,7 @@ services:
                 condition: any
 
     worker-manager:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:chunkflow
         restart: always
         depends_on:
             - init-db
@@ -314,7 +314,7 @@ services:
             - ssl_certificate_key
 
     add-secrets:
-        image: wongwill86/air-tasks:latest
+        image: wongwill86/air-tasks:chunkflow
         restart: on-failure
         depends_on:
             - init-db

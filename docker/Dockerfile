@@ -31,7 +31,8 @@ RUN groupadd -r ${AIRFLOW_USER} \
     && usermod -aG docker ${AIRFLOW_USER} \
     # unfortunately this is required to update the container docker gid to match the
     # host's gid, we remove this permission from entrypoint-dood.sh script
-    && echo "${AIRFLOW_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers
+    && echo "${AIRFLOW_USER} ALL=NOPASSWD: ALL" >> /etc/sudoers \
+	&& pip install chunkblocks
 
 # Docker config (i.e. credentials helper from base image)
 RUN cp /.docker/ .docker -r 
