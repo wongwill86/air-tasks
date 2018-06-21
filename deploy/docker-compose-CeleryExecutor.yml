@@ -221,7 +221,7 @@ services:
             - AWS_ACCESS_KEY_ID
             - AWS_SECRET_ACCESS_KEY
             - AWS_DEFAULT_REGION
-            - AIRFLOW__CELERY__CELERYD_CONCURRENCY=16
+            - AIRFLOW__CELERY__CELERYD_CONCURRENCY=64
         command: airflow worker -q atomic
         deploy:
             mode: global
