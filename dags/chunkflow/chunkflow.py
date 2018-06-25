@@ -2,21 +2,31 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
 from chunkblocks.models import Block
+from functools import reduce
 
 
 INPUT_IMAGE_SOURCE = 'gs://wwong/sub_pinky40_v11/image'
 OUTPUT_IMAGE_SOURCE = 'gs://wwong/sub_pinky40_v11/identity'
 
 # BOUNDS = (slice(10240, 14336), slice(10240, 14336), slice(0, 640))
-BOUNDS = (slice(10240, 14208), slice(10240, 14208), slice(0, 620))
+OFFSET = (10240, 10240, 0)
 TASK_SHAPE = (1024, 1024, 128)
 OVERLAP = (32, 32, 4)
 PATCH_SHAPE = (128, 128, 16)
+BOUNDS = (
+    slice(10240, 10240 + 4 * (1024 - 32) + 32),
+    slice(10240, 10240 + 4 * (1024 - 32) + 32),
+    slice(0, 5 * (128 - 4) + 4)
+)
 INFERENCE_FRAMEWORK = 'identity'
 BLEND_FAMEWORK = 'average'
 MODEL_PATH = 'none'
 NET_PATH = 'none'
 ACCELERATOR_IDS = 'none'
+
+
+def underscore_list(items):
+    return reduce(lambda x, y: x + '_' + str(y), items, '')
 
 
 def spaceless_list(items):
@@ -28,14 +38,14 @@ def get_mod_index(shape):
 
 
 def default_intermediate_name(source_name, mod_index):
-    return reduce(lambda x, y: x + '_' + str(y), mod_index, '') + '/'
+    return  '%%s/' % (source_name, underscore_list(mod_index))
 
 
 def create_inference_task(chunk):
     return DockerWithVariablesOperator(
         ['test'],
         mount_point='/test',
-        task_id='/inference_' + chunk.unit_indexe,
+        task_id='/inference_' + underscore_list(chunk.unit_index),
         command=INFERENCE_COMMAND_TEMPLATE.format(
             task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
@@ -48,7 +58,7 @@ def create_blend_task(count_print_hello):
     return DockerWithVariablesOperator(
         ['test'],
         mount_point='/test',
-        task_id='/inference_' + chunk.unit_indexe,
+        task_id='/inference_' + underscore_list(chunk.unit_index),
         command=INFERENCE_COMMAND_TEMPLATE.format(
             task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
