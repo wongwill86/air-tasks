@@ -6,7 +6,7 @@ CELERY_CONFIG = {
     'event_serializer': 'json',
     'result_serializer': 'pickle',
     'task_serializer': 'pickle',
-    'task_time_limit': 7200,
+    #'task_time_limit': 7200,
     'worker_prefetch_multiplier': 1,
     'task_acks_late': True,
     'task_reject_on_worker_lost': True,
