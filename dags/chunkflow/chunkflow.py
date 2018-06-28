@@ -6,17 +6,17 @@ from functools import reduce
 
 
 INPUT_IMAGE_SOURCE = 'gs://wwong/sub_pinky40_v11/image'
-OUTPUT_IMAGE_SOURCE = 'gs://wwong/sub_pinky40_v11/identity'
+OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40test2'
 
 # BOUNDS = (slice(10240, 14336), slice(10240, 14336), slice(0, 640))
-OFFSET = (10240, 10240, 0)
-TASK_SHAPE = (1024, 1024, 128)
-OVERLAP = (32, 32, 4)
-PATCH_SHAPE = (128, 128, 16)
+OFFSET = (0, 40960, 10240)
+TASK_SHAPE = (128, 1024, 1024)
+OVERLAP = (4, 32, 32)
+PATCH_SHAPE = (16, 128, 128)
 BOUNDS = (
-    slice(10240, 10240 + 4 * (1024 - 32) + 32),
-    slice(10240, 10240 + 4 * (1024 - 32) + 32),
-    slice(0, 5 * (128 - 4) + 4)
+    slice(0, 1 * (128 - 4) + 4),
+    slice(40960, 40960 + 1 * (1024 - 32) + 32),
+    slice(10240, 10240 + 1 * (1024 - 32) + 32),
 )
 INFERENCE_FRAMEWORK = 'identity'
 BLEND_FAMEWORK = 'average'
@@ -30,46 +30,54 @@ def underscore_list(items):
 
 
 def spaceless_list(items):
-    return str(items).replace(' ', ',')
+    return str(list(items)).replace(' ', '')
 
 
 def get_mod_index(shape):
     return tuple(abs(idx % 3) for idx in shape)
 
 
-def default_intermediate_name(source_name, mod_index):
-    return  '%%s/' % (source_name, underscore_list(mod_index))
+def default_overlap_name(source_name, mod_index):
+    return '%%s/' % (source_name, underscore_list(mod_index))
 
 
 def create_inference_task(chunk):
-    return DockerWithVariablesOperator(
-        ['test'],
-        mount_point='/test',
-        task_id='/inference_' + underscore_list(chunk.unit_index),
-        command=INFERENCE_COMMAND_TEMPLATE.format(
-            task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
+
+    task = DockerWithVariablesOperator(
+        ['google-secret.json'],
+        mount_point='/usr/local/chunkflow/.cloudvolume/secrets',
+        task_id='inference_zyx' + underscore_list(chunk.unit_index),
+        command="sh -c 'stat /usr/local/chunkflow/.cloudvolume/secrets && sleep 120'",
+        # command=INFERENCE_COMMAND_TEMPLATE.format(
+        #     task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
         image='wongwill86/chunkflow:scratch',
         dag=dag
     )
+    print(task.command)
+
+    return task
 
 
 def create_blend_task(count_print_hello):
     return DockerWithVariablesOperator(
-        ['test'],
-        mount_point='/test',
-        task_id='/inference_' + underscore_list(chunk.unit_index),
+        ['google-secret.json'],
+        mount_point='/usr/local/chunkflow/.cloudvolume/secrets',
+        task_id='blend_zyx' + underscore_list(chunk.unit_index),
         command=INFERENCE_COMMAND_TEMPLATE.format(
             task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
         image='wongwill86/chunkflow:scratch',
         dag=dag
     )
+    print(task.command)
+
+    return task
 
 
 INFERENCE_PARAMETERS = {
     'input_image_source': INPUT_IMAGE_SOURCE,
-    'output_image_source': OUTPUT_IMAGE_SOURCE,
+    'output_destination': OUTPUT_DESTINATION,
     'task_shape': spaceless_list(TASK_SHAPE),
     'overlap': spaceless_list(OVERLAP),
     'patch_shape': spaceless_list(PATCH_SHAPE),
@@ -82,12 +90,12 @@ INFERENCE_PARAMETERS = {
 
 INFERENCE_COMMAND_TEMPLATE = '''
 sh -c "chunkflow --input_image_source {input_image_source} \
-    --output_image_source {output_image_source} \
-    task' + \
+    --output_destination {output_destination} \
+    task \
     --task_offset_coordinates {{task_offset_coordinates}} \
     --task_shape {task_shape} \
     --overlap {overlap} \
-    --intermediate_protocol file:// \
+    --overlap_protocol file:// \
     inference \
     --patch_shape {patch_shape} \
     --inference_framework {inference_framework} \
@@ -100,15 +108,15 @@ sh -c "chunkflow --input_image_source {input_image_source} \
 
 BLEND_PARAMETERS = {
     'input_image_source': INPUT_IMAGE_SOURCE,
-    'output_image_source': OUTPUT_IMAGE_SOURCE,
+    'output_destination': OUTPUT_DESTINATION,
     'task_shape': spaceless_list(TASK_SHAPE),
     'overlap': spaceless_list(OVERLAP),
 }
 
 BLEND_COMMAND_TEMPLATE = '''
 sh -c "chunkflow --input_image_source {input_image_source} \
-    --output_image_source {output_image_source} \
-    task' + \
+    --output_destination {output_destination} \
+    task \
     --task_offset_coordinates {{task_offset_coordinates}} \
     --task_shape {task_shape} \
     --overlap {overlap} \
@@ -136,11 +144,12 @@ dag = DAG(
 inference_tasks = dict()
 blend_tasks = dict()
 for chunk in block.chunk_iterator():
-    print(chunk.unit_index)
     inference_tasks[chunk.unit_index] = create_inference_task(chunk)
     blend_tasks[chunk.unit_index] = create_blend_task(chunk)
 
-for unit_index, blend_task in blend_tasks.items():
-    inference_tasks[unit_index].set_downstream(blend_task)
+for chunk in block.chunk_iterator():
+    blend_task = blend_tasks[chunk.unit_index]
+    inference_tasks[chunk.unit_index].set_downstream(blend_task)
+
     for neighbor_chunk in block.get_all_neighbors(chunk):
         inference_tasks[neighbor_chunk.unit_index].set_downstream(blend_task)
