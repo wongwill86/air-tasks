@@ -1,3 +1,5 @@
+import os
+
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
@@ -6,23 +8,18 @@ from functools import reduce
 
 
 INPUT_IMAGE_SOURCE = 'gs://wwong/sub_pinky40_v11/image'
-OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40test2'
+OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40test2/output'
 
 # BOUNDS = (slice(10240, 14336), slice(10240, 14336), slice(0, 640))
 OFFSET = (0, 40960, 10240)
-TASK_SHAPE = (128, 1024, 1024)
 OVERLAP = (4, 32, 32)
 PATCH_SHAPE = (16, 128, 128)
-BOUNDS = (
-    slice(0, 1 * (128 - 4) + 4),
-    slice(40960, 40960 + 1 * (1024 - 32) + 32),
-    slice(10240, 10240 + 1 * (1024 - 32) + 32),
-)
+TASK_SHAPE = tuple((p - o) * 8 + o for o, p in zip(OVERLAP, PATCH_SHAPE))
 INFERENCE_FRAMEWORK = 'identity'
 BLEND_FAMEWORK = 'average'
 MODEL_PATH = 'none'
 NET_PATH = 'none'
-ACCELERATOR_IDS = 'none'
+ACCELERATOR_IDS = '[]'
 
 
 def underscore_list(items):
@@ -47,11 +44,11 @@ def create_inference_task(chunk):
         ['google-secret.json'],
         mount_point='/usr/local/chunkflow/.cloudvolume/secrets',
         task_id='inference_zyx' + underscore_list(chunk.unit_index),
-        command="sh -c 'stat /usr/local/chunkflow/.cloudvolume/secrets && sleep 120'",
-        # command=INFERENCE_COMMAND_TEMPLATE.format(
-        #     task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
+        command=INFERENCE_COMMAND_TEMPLATE.format(
+            task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
-        image='wongwill86/chunkflow:scratch',
+        image='wongwill86/chunkflow:gosu',
+        environment={'LOCAL_USER_ID': os.getuid()},
         dag=dag
     )
     print(task.command)
@@ -67,12 +64,10 @@ def create_blend_task(count_print_hello):
         command=INFERENCE_COMMAND_TEMPLATE.format(
             task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
-        image='wongwill86/chunkflow:scratch',
+        image='wongwill86/chunkflow:gosu',
+        environment={'LOCAL_USER_ID': os.getuid()},
         dag=dag
     )
-    print(task.command)
-
-    return task
 
 
 INFERENCE_PARAMETERS = {
@@ -136,7 +131,7 @@ default_args = {
     }
 
 
-block = Block(bounds=BOUNDS, chunk_shape=TASK_SHAPE, overlap=OVERLAP)
+block = Block(offset=OFFSET, num_chunks=[1, 1, 1], chunk_shape=TASK_SHAPE, overlap=OVERLAP)
 
 dag = DAG(
     "chunkflow_test", default_args=default_args, schedule_interval=None)
