@@ -47,7 +47,7 @@ def create_inference_task(chunk):
         command=INFERENCE_COMMAND_TEMPLATE.format(
             task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
-        image='wongwill86/chunkflow:gosu',
+        image='wongwill86/chunkflow:scratch',
         environment={'LOCAL_USER_ID': os.getuid()},
         dag=dag
     )
@@ -64,7 +64,7 @@ def create_blend_task(count_print_hello):
         command=INFERENCE_COMMAND_TEMPLATE.format(
             task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
-        image='wongwill86/chunkflow:gosu',
+        image='wongwill86/chunkflow:scratch',
         environment={'LOCAL_USER_ID': os.getuid()},
         dag=dag
     )
