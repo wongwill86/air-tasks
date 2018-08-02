@@ -61,7 +61,7 @@ def create_blend_task(count_print_hello):
         ['google-secret.json'],
         mount_point='/usr/local/chunkflow/.cloudvolume/secrets',
         task_id='blend_zyx' + underscore_list(chunk.unit_index),
-        command=INFERENCE_COMMAND_TEMPLATE.format(
+        command=BLEND_COMMAND_TEMPLATE.format(
             task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
         image='wongwill86/chunkflow:scratch',
