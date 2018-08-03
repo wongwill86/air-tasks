@@ -142,8 +142,12 @@ class DockerConfigurableOperator(DockerOperator):
         for x in stream:
             blk_read, blk_write = calculate_blkio_bytes(x)
             net_r, net_w = calculate_network_bytes(x)
-            mem_current = x["memory_stats"]["usage"]
-            mem_total = x["memory_stats"]["limit"]
+            try:
+                mem_current = x["memory_stats"]["usage"]
+                mem_total = x["memory_stats"]["limit"]
+            except KeyError:
+                mem_current = 0
+                mem_total = 1
 
             try:
                 cpu_percent, cpu_system, cpu_total = calculate_cpu_percent2(x, cpu_total, cpu_system)
