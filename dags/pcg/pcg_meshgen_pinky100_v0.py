@@ -12,7 +12,7 @@ CHUNKEDGRAPH_CHUNKSIZE = [512, 512, 128] # Should be read from ChunkedGraph
 
 MESHBUNDLE_CONFIG_STR = ' '.join("""{
     "chunkedgraph": {
-        "table_id": "pinky100_sv6",
+        "table_id": "pinky100_sv11",
         "instance_id": "pychunkedgraph"
     },
     "meshing": {
