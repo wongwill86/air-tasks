@@ -8,13 +8,16 @@ from functools import reduce
 
 
 INPUT_IMAGE_SOURCE = 'gs://wwong/sub_pinky40_v11/image'
-OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40test2/output'
+OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40test4/output'
 
-# BOUNDS = (slice(10240, 14336), slice(10240, 14336), slice(0, 640))
+BOUNDS = (slice(10240, 14336), slice(10240, 14336), slice(0, 640))
 OFFSET = (0, 40960, 10240)
 OVERLAP = (4, 32, 32)
 PATCH_SHAPE = (16, 128, 128)
-TASK_SHAPE = tuple((p - o) * 8 + o for o, p in zip(OVERLAP, PATCH_SHAPE))
+NUM_PATCHES_PER_TASK = (10, 12, 12)
+TASK_SHAPE = tuple((ps - olap) * num + olap for ps, olap, num in zip(PATCH_SHAPE, OVERLAP, NUM_PATCHES_PER_TASK))
+DATASET_BLOCK = Block(offset=OFFSET, num_chunks=[3, 3, 3], chunk_shape=TASK_SHAPE, overlap=OVERLAP)
+
 INFERENCE_FRAMEWORK = 'identity'
 BLEND_FAMEWORK = 'average'
 MODEL_PATH = 'none'
@@ -90,7 +93,6 @@ sh -c "chunkflow --input_image_source {input_image_source} \
     --task_offset_coordinates {{task_offset_coordinates}} \
     --task_shape {task_shape} \
     --overlap {overlap} \
-    --overlap_protocol file:// \
     inference \
     --patch_shape {patch_shape} \
     --inference_framework {inference_framework} \
@@ -130,21 +132,18 @@ default_args = {
     'retry_exponential_backoff': True,
     }
 
-
-block = Block(offset=OFFSET, num_chunks=[1, 1, 1], chunk_shape=TASK_SHAPE, overlap=OVERLAP)
-
 dag = DAG(
     "chunkflow_test", default_args=default_args, schedule_interval=None)
 
 inference_tasks = dict()
 blend_tasks = dict()
-for chunk in block.chunk_iterator():
+for chunk in DATASET_BLOCK.chunk_iterator():
     inference_tasks[chunk.unit_index] = create_inference_task(chunk)
     blend_tasks[chunk.unit_index] = create_blend_task(chunk)
 
-for chunk in block.chunk_iterator():
+for chunk in DATASET_BLOCK.chunk_iterator():
     blend_task = blend_tasks[chunk.unit_index]
     inference_tasks[chunk.unit_index].set_downstream(blend_task)
 
-    for neighbor_chunk in block.get_all_neighbors(chunk):
+    for neighbor_chunk in DATASET_BLOCK.get_all_neighbors(chunk):
         inference_tasks[neighbor_chunk.unit_index].set_downstream(blend_task)
