@@ -46,7 +46,7 @@ def composite_chunks_op(dag, tags):
         default_args=default_args,
         image=agg_image,
         weight_rule=WeightRule.ABSOLUTE,
-        execution_timeout=timedelta(minutes=30),
+        execution_timeout=timedelta(minutes=60),
         queue="atomic",
         dag=dag
     )
