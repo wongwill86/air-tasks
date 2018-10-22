@@ -1,8 +1,9 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
+from airflow.utils.weight_rule import WeightRule
 
-DAG_ID = 'synaptor_basil2_6'
+DAG_ID = 'synaptor_basil1'
 
 default_args = {
     'owner': 'airflow',
@@ -154,6 +155,7 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -170,6 +172,7 @@ def merge_ccs(dag):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -206,6 +209,7 @@ def asynet_pass(dag, chunk_begin, chunk_end, seg_cvname, wshed_cvname):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="gpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -223,6 +227,7 @@ def merge_edges(dag):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -244,6 +249,7 @@ def remap_ids(dag, chunk_begin, chunk_end):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -251,46 +257,46 @@ def remap_ids(dag, chunk_begin, chunk_end):
 # BBOX DEFINITION
 # This is much more complicated than usual since we're processing
 # the segmentation in 7 different bounding boxes
-# bboxes0 = chunk_bboxes((140000,230000,810),(2000,2000,810),offset=(25000,20000,140), mip=mip)
-# bboxes1 = chunk_bboxes((28000,230000,810),(2000,2000,810),offset=(173000,20000,140), mip=mip)
-# bboxes2 = chunk_bboxes((28000,230000,120),(2000,2000,120),offset=(173000,20000,5), mip=mip)
-# bboxes3 = chunk_bboxes((140000,230000,120),(2000,2000,120),offset=(25000,20000,5), mip=mip)
-# #This one is especially complicated since we need the grid to be "consistent"
-# bboxes4 = (chunk_bboxes((8000,230000,120),(2000,2000,120),offset=(165000,20000,5), mip=mip) +
-#            chunk_bboxes((8000,230000,15),(2000,2000,15),offset=(165000,20000,125), mip=mip) +
-#            chunk_bboxes((8000,230000,810),(2000,2000,810),offset=(165000,20000,140), mip=mip))
-# bboxes5 = chunk_bboxes((140000,230000,15),(2000,2000,15),offset=(25000,20000,125), mip=mip)
-# bboxes6 = chunk_bboxes((28000,230000,15),(2000,2000,15),offset=(173000,20000,125), mip=mip)
+bboxes0 = chunk_bboxes((140000,230000,810),(2000,2000,810),offset=(25000,20000,140), mip=mip)
+bboxes1 = chunk_bboxes((28000,230000,810),(2000,2000,810),offset=(173000,20000,140), mip=mip)
+bboxes2 = chunk_bboxes((28000,230000,120),(2000,2000,120),offset=(173000,20000,5), mip=mip)
+bboxes3 = chunk_bboxes((140000,230000,120),(2000,2000,120),offset=(25000,20000,5), mip=mip)
+#This one is especially complicated since we need the grid to be "consistent"
+bboxes4 = (chunk_bboxes((8000,230000,120),(2000,2000,120),offset=(165000,20000,5), mip=mip) +
+           chunk_bboxes((8000,230000,15),(2000,2000,15),offset=(165000,20000,125), mip=mip) +
+           chunk_bboxes((8000,230000,810),(2000,2000,810),offset=(165000,20000,140), mip=mip))
+bboxes5 = chunk_bboxes((140000,230000,15),(2000,2000,15),offset=(25000,20000,125), mip=mip)
+bboxes6 = chunk_bboxes((28000,230000,15),(2000,2000,15),offset=(173000,20000,125), mip=mip)
 
 #ASYNET BBOXES
-a_mip = asynet_mip+mip
-a_bboxes0 = chunk_bboxes((140000,230000,810),(2000,2000,810),offset=(25000,20000,140), mip=a_mip)
-a_bboxes1 = chunk_bboxes((28000,230000,810),(2000,2000,810),offset=(173000,20000,140), mip=a_mip)
-a_bboxes2 = chunk_bboxes((28000,230000,120),(2000,2000,120),offset=(173000,20000,5), mip=a_mip)
-a_bboxes3 = chunk_bboxes((140000,230000,120),(2000,2000,120),offset=(25000,20000,5), mip=a_mip)
-#This one is especially complicated since we need the grid to be "consistent"
-a_bboxes4 = (chunk_bboxes((8000,230000,120),(2000,2000,120),offset=(165000,20000,5), mip=a_mip) +
-             chunk_bboxes((8000,230000,18),(2000,2000,18),offset=(165000,20000,125), mip=a_mip) +
-             chunk_bboxes((8000,230000,810),(2000,2000,810),offset=(165000,20000,140), mip=a_mip))
-a_bboxes5 = chunk_bboxes((140000,230000,18),(2000,2000,18),offset=(25000,20000,125), mip=a_mip)
-a_bboxes6 = chunk_bboxes((28000,230000,18),(2000,2000,18),offset=(173000,20000,125), mip=a_mip)
+# a_mip = asynet_mip+mip
+# a_bboxes0 = chunk_bboxes((140000,230000,810),(2000,2000,810),offset=(25000,20000,140), mip=a_mip)
+# a_bboxes1 = chunk_bboxes((28000,230000,810),(2000,2000,810),offset=(173000,20000,140), mip=a_mip)
+# a_bboxes2 = chunk_bboxes((28000,230000,120),(2000,2000,120),offset=(173000,20000,5), mip=a_mip)
+# a_bboxes3 = chunk_bboxes((140000,230000,120),(2000,2000,120),offset=(25000,20000,5), mip=a_mip)
+# #This one is especially complicated since we need the grid to be "consistent"
+# a_bboxes4 = (chunk_bboxes((8000,230000,120),(2000,2000,120),offset=(165000,20000,5), mip=a_mip) +
+#              chunk_bboxes((8000,230000,18),(2000,2000,18),offset=(165000,20000,125), mip=a_mip) +
+#              chunk_bboxes((8000,230000,810),(2000,2000,810),offset=(165000,20000,140), mip=a_mip))
+# a_bboxes5 = chunk_bboxes((140000,230000,18),(2000,2000,18),offset=(25000,20000,125), mip=a_mip)
+# a_bboxes6 = chunk_bboxes((28000,230000,18),(2000,2000,18),offset=(173000,20000,125), mip=a_mip)
 
-# cpu_bboxes = bboxes0 + bboxes1 + bboxes2 + bboxes3 + bboxes4 + bboxes5 + bboxes6
+cpu_bboxes = bboxes0 + bboxes1 + bboxes2 + bboxes3 + bboxes4 + bboxes5 + bboxes6
 # bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord, mip=mip)
 # asynet_bboxes = chunk_bboxes(vol_shape, chunk_shape,
                             #  offset=start_coord, mip=asynet_mip+mip)
-# # =============
-# #PART 1: chunk_ccs and merge_ccs for all bboxes
-#
-# step1 = [chunk_ccs(dag, bb[0], bb[1]) for bb in cpu_bboxes]
-#
-# step2 = merge_ccs(dag)
-# for chunk in step1:
-#     chunk.set_downstream(step2)
-#
-# #NOTE TO SELF: NEED TO COPY CLEFT 15-SLICE ID MAPS TO MATCH 18-SLICE CHUNKS
-# # BEFORE RUNNING step3_[4-6]
-#
+# =============
+#PART 1: chunk_ccs and merge_ccs for all bboxes
+
+step1 = [chunk_ccs(dag, bb[0], bb[1]) for bb in cpu_bboxes]
+
+step2 = merge_ccs(dag)
+for chunk in step1:
+    chunk.set_downstream(step2)
+
+#NOTE TO SELF: NEED TO COPY CLEFT 15-SLICE ID MAPS TO MATCH 18-SLICE CHUNKS
+# BEFORE RUNNING step3_[4-6]
+
 # # =============
 # #PART 2: chunk_edges for all bboxes by respective segmentation, and merging
 #
@@ -301,7 +307,7 @@ a_bboxes6 = chunk_bboxes((28000,230000,18),(2000,2000,18),offset=(173000,20000,1
 # step3_3 = [asynet_pass(dag, bb[0], bb[1], seg3_cvname, ws3_cvname) for bb in a_bboxes3]
 # step3_4 = [asynet_pass(dag, bb[0], bb[1], seg4_cvname, ws4_cvname) for bb in a_bboxes4]
 # step3_5 = [asynet_pass(dag, bb[0], bb[1], seg5_cvname, ws5_cvname) for bb in a_bboxes5]
-step3_6 = [asynet_pass(dag, bb[0], bb[1], seg6_cvname, ws6_cvname) for bb in a_bboxes6]
+# step3_6 = [asynet_pass(dag, bb[0], bb[1], seg6_cvname, ws6_cvname) for bb in a_bboxes6]
 #
 # #Might not ever use this, likely running each segment on its own
 # #step3 = step3_0 + step3_1 + step3_2 + step3_3 + step3_4 + step3_5 + step3_6

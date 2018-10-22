@@ -1,8 +1,9 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
+from airflow.utils.weight_rule import WeightRule
 
-DAG_ID = 'synaptor_basil2_5'
+DAG_ID = 'synaptor_basil2_4'
 
 default_args = {
     'owner': 'airflow',
@@ -43,14 +44,14 @@ seg3_cvname = "gs://neuroglancer/basil_v0/basil_full/seg-extra-aug-3"
 ws3_cvname = "gs://neuroglancer/basil_v0/basil_full/ws-extra-aug-3"
 #(165k,20k,**8**)<->(173k,250k,**940**)
 # NOTE: need to split this one into 3 groups of bboxes to keep the grid "consistent"
-seg4_cvname = "gs://neuroglancer/basil_v0/basil_full/seg-extra-aug-4"
-ws4_cvname = "gs://neuroglancer/basil_v0/basil_full/ws-extra-aug-4"
+seg4_cvname = "gs://neuroglancer/basil_v0/basil_full/seg-defect-aug-1"
+ws4_cvname = "gs://neuroglancer/basil_v0/basil_full/ws-defect-aug-1"
 ##(25k,20k,125)<->(165k,250k,940)
-seg5_cvname = "gs://neuroglancer/basil_v0/basil_full/seg-extra-aug-5"
-ws5_cvname = "gs://neuroglancer/basil_v0/basil_full/ws-extra-aug-5"
+seg5_cvname = "gs://neuroglancer/basil_v0/basil_full/seg-defect-aug-2"
+ws5_cvname = "gs://neuroglancer/basil_v0/basil_full/ws-defect-aug-2"
 ##(25k,20k,140)<->(165k,250k,940)
-seg6_cvname = "gs://neuroglancer/basil_v0/basil_full/seg-extra-aug-6"
-ws6_cvname = "gs://neuroglancer/basil_v0/basil_full/ws-extra-aug-6"
+seg6_cvname = "gs://neuroglancer/basil_v0/basil_full/seg-defect-aug-3"
+ws6_cvname = "gs://neuroglancer/basil_v0/basil_full/ws-defect-aug-3"
 
 # DEFINING BBOXES LATER (at bottom)
 max_face_shape = (1000,1000)
@@ -154,6 +155,7 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -170,6 +172,7 @@ def merge_ccs(dag):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -206,6 +209,7 @@ def asynet_pass(dag, chunk_begin, chunk_end, seg_cvname, wshed_cvname):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="gpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -223,6 +227,7 @@ def merge_edges(dag):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -244,6 +249,7 @@ def remap_ids(dag, chunk_begin, chunk_end):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -299,8 +305,8 @@ a_bboxes6 = chunk_bboxes((28000,230000,18),(2000,2000,18),offset=(173000,20000,1
 # step3_1 = [asynet_pass(dag, bb[0], bb[1], seg1_cvname, ws1_cvname) for bb in a_bboxes1]
 # step3_2 = [asynet_pass(dag, bb[0], bb[1], seg2_cvname, ws2_cvname) for bb in a_bboxes2]
 # step3_3 = [asynet_pass(dag, bb[0], bb[1], seg3_cvname, ws3_cvname) for bb in a_bboxes3]
-# step3_4 = [asynet_pass(dag, bb[0], bb[1], seg4_cvname, ws4_cvname) for bb in a_bboxes4]
-step3_5 = [asynet_pass(dag, bb[0], bb[1], seg5_cvname, ws5_cvname) for bb in a_bboxes5]
+step3_4 = [asynet_pass(dag, bb[0], bb[1], seg4_cvname, ws4_cvname) for bb in a_bboxes4]
+# step3_5 = [asynet_pass(dag, bb[0], bb[1], seg5_cvname, ws5_cvname) for bb in a_bboxes5]
 # step3_6 = [asynet_pass(dag, bb[0], bb[1], seg6_cvname, ws6_cvname) for bb in a_bboxes6]
 #
 # #Might not ever use this, likely running each segment on its own

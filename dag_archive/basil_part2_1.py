@@ -1,8 +1,9 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
+from airflow.utils.weight_rule import WeightRule
 
-DAG_ID = 'synaptor_basil2_0'
+DAG_ID = 'synaptor_basil2_1'
 
 default_args = {
     'owner': 'airflow',
@@ -154,6 +155,7 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -170,6 +172,7 @@ def merge_ccs(dag):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -206,6 +209,7 @@ def asynet_pass(dag, chunk_begin, chunk_end, seg_cvname, wshed_cvname):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="gpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -223,6 +227,7 @@ def merge_edges(dag):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -244,6 +249,7 @@ def remap_ids(dag, chunk_begin, chunk_end):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -295,8 +301,8 @@ a_bboxes6 = chunk_bboxes((28000,230000,18),(2000,2000,18),offset=(173000,20000,1
 # #PART 2: chunk_edges for all bboxes by respective segmentation, and merging
 #
 # # STEP 3: asynet pass
-step3_0 = [asynet_pass(dag, bb[0], bb[1], seg0_cvname, ws0_cvname) for bb in a_bboxes0]
-# step3_1 = [asynet_pass(dag, bb[0], bb[1], seg1_cvname, ws1_cvname) for bb in a_bboxes1]
+# step3_0 = [asynet_pass(dag, bb[0], bb[1], seg0_cvname, ws0_cvname) for bb in a_bboxes0]
+step3_1 = [asynet_pass(dag, bb[0], bb[1], seg1_cvname, ws1_cvname) for bb in a_bboxes1]
 # step3_2 = [asynet_pass(dag, bb[0], bb[1], seg2_cvname, ws2_cvname) for bb in a_bboxes2]
 # step3_3 = [asynet_pass(dag, bb[0], bb[1], seg3_cvname, ws3_cvname) for bb in a_bboxes3]
 # step3_4 = [asynet_pass(dag, bb[0], bb[1], seg4_cvname, ws4_cvname) for bb in a_bboxes4]

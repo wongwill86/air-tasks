@@ -1,6 +1,7 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
+from airflow.utils.weight_rule import WeightRule
 
 DAG_ID = 'synaptor_basil2_3'
 
@@ -154,6 +155,7 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -170,6 +172,7 @@ def merge_ccs(dag):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -206,6 +209,7 @@ def asynet_pass(dag, chunk_begin, chunk_end, seg_cvname, wshed_cvname):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="gpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -223,6 +227,7 @@ def merge_edges(dag):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -244,6 +249,7 @@ def remap_ids(dag, chunk_begin, chunk_end):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 

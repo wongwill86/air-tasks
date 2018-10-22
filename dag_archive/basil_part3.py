@@ -1,6 +1,7 @@
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
+from airflow.utils.weight_rule import WeightRule
 
 DAG_ID = 'synaptor_basil3'
 
@@ -27,6 +28,7 @@ dag = DAG(
 img_cvname = "gs://neuroglancer/basil_v0/son_of_alignment/v3.04_cracks_only_normalized_rechunked"
 out_cvname = "gs://neuroglancer/basil_v0/synapticmap/mip1_d2_1175k"
 cleft_cvname = "gs://neuroglancer/basil_v0/clefts"
+final_cvname = "gs://neuroglancer/basil_v0/basil_full/clefts"
 
 #Seg layers for different bboxes
 #(25k,20k,140)<->(165k,250k,940)
@@ -154,6 +156,7 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -170,6 +173,7 @@ def merge_ccs(dag):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -206,6 +210,7 @@ def asynet_pass(dag, chunk_begin, chunk_end, seg_cvname, wshed_cvname):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="gpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -223,6 +228,7 @@ def merge_edges(dag):
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -234,16 +240,18 @@ def remap_ids(dag, chunk_begin, chunk_end):
         ["google-secret.json","aws-secret.json"],
         mount_point="/root/.cloudvolume/secrets",
         task_id="remap_ids" + "_".join(map(str,chunk_begin)),
-        command=("remap_ids {cleft_cvname} {cleft_cvname} {proc_dir_path} " +
+        command=("remap_ids {cleft_cvname} {final_cvname} {proc_dir_path} " +
                       "--chunk_begin {chunk_begin_str} " +
                       "--chunk_end {chunk_end_str}"
                       ).format(cleft_cvname=cleft_cvname,
+                               final_cvname=final_cvname,
                                proc_dir_path=proc_dir_path,
                                chunk_begin_str=chunk_begin_str,
                                chunk_end_str=chunk_end_str),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        weight_rule=WeightRule.ABSOLUTE,
         dag=dag
         )
 
@@ -313,13 +321,13 @@ cpu_bboxes = bboxes0 + bboxes1 + bboxes2 + bboxes3 + bboxes4 + bboxes5 + bboxes6
 # RUNNING PART 3
 
 # =============
-#PART 3: merge_edges across dataset -> remapping
+#PART 3: merge_edges across dataset (locally) -> remapping
 
-step4 = merge_edges(dag)
+#step4 = merge_edges(dag)
 # for chunk in step3:
 #     chunk.set_downstream(step4)
 
 # STEP 5: remap_ids
 step5 = [remap_ids(dag, bb[0], bb[1]) for bb in cpu_bboxes]
-for chunk in step5:
-    step4.set_downstream(chunk)
+#for chunk in step5:
+#    step4.set_downstream(chunk)
