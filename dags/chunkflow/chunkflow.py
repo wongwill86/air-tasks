@@ -8,20 +8,19 @@ from functools import reduce
 
 
 INPUT_IMAGE_SOURCE = 'gs://wwong/sub_pinky40_v11/image'
-OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40test4/output'
+OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40_test_9/output'
 
-BOUNDS = (slice(10240, 14336), slice(10240, 14336), slice(0, 640))
 OFFSET = (0, 40960, 10240)
 OVERLAP = (4, 32, 32)
-PATCH_SHAPE = (16, 128, 128)
-NUM_PATCHES_PER_TASK = (10, 12, 12)
+PATCH_SHAPE = (16, 160, 160)
+NUM_PATCHES_PER_TASK = (2, 3, 4)
 TASK_SHAPE = tuple((ps - olap) * num + olap for ps, olap, num in zip(PATCH_SHAPE, OVERLAP, NUM_PATCHES_PER_TASK))
 DATASET_BLOCK = Block(offset=OFFSET, num_chunks=[3, 3, 3], chunk_shape=TASK_SHAPE, overlap=OVERLAP)
 
-INFERENCE_FRAMEWORK = 'identity'
+INFERENCE_FRAMEWORK = 'pytorch'
 BLEND_FAMEWORK = 'average'
-MODEL_PATH = 'none'
-NET_PATH = 'none'
+MODEL_PATH = 'gs://wwong-net/some/dataset/layer/mito0.py'
+checkpoint_path = 'gs://wwong-net/some/dataset/layer/mito0_220k.chkpt'
 ACCELERATOR_IDS = '[]'
 
 
@@ -82,7 +81,7 @@ INFERENCE_PARAMETERS = {
     'inference_framework': INFERENCE_FRAMEWORK,
     'blend_framework': BLEND_FAMEWORK,
     'model_path': MODEL_PATH,
-    'net_path': NET_PATH,
+    'checkpoint_path': checkpoint_path,
     'accelerator_ids': ACCELERATOR_IDS,
 }
 
@@ -98,7 +97,7 @@ sh -c "chunkflow --input_image_source {input_image_source} \
     --inference_framework {inference_framework} \
     --blend_framework {blend_framework} \
     --model_path {model_path} \
-    --net_path {net_path} \
+    --checkpoint_path {checkpoint_path} \
     --accelerator_ids {accelerator_ids} \
 "
 '''.format(**INFERENCE_PARAMETERS)
