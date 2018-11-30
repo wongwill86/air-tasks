@@ -6,22 +6,50 @@ from airflow.operators.docker_plugin import DockerWithVariablesOperator
 from chunkblocks.models import Block
 from functools import reduce
 
+CHUNKFLOW_IMAGE = 'wongwill86/chunkflow:pznet'
 
 INPUT_IMAGE_SOURCE = 'gs://wwong/sub_pinky40_v11/image'
-OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40_test_9/output'
+ACCELERATOR_IDS = '[]'
 
 OFFSET = (0, 40960, 10240)
 OVERLAP = (4, 32, 32)
-PATCH_SHAPE = (16, 160, 160)
-NUM_PATCHES_PER_TASK = (2, 3, 4)
-TASK_SHAPE = tuple((ps - olap) * num + olap for ps, olap, num in zip(PATCH_SHAPE, OVERLAP, NUM_PATCHES_PER_TASK))
-DATASET_BLOCK = Block(offset=OFFSET, num_chunks=[3, 3, 3], chunk_shape=TASK_SHAPE, overlap=OVERLAP)
+NUM_PATCHES = (4, 3, 3)
+NUM_TASKS = (3, 3, 3)
 
-INFERENCE_FRAMEWORK = 'pytorch'
+INFERENCE_FRAMEWORK = 'identity'
+MODEL_PATH = None
+CHECKPOINT_PATH = None
+PATCH_SHAPE = (16, 160, 160)
+OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40_test_identity/output'
+# Output created using:
+# chunkflow --input_image_source gs://wwong/sub_pinky40_v11/image     --output_destination
+#   gs://wwong/sub_pinky40_test_identity/output   --overlap [4,32,32] --patch_shape [16,160,160] --num_patches
+#   [4,3,3] cloudvolume  --min_mips 2 create
+
+# INFERENCE_FRAMEWORK = 'pytorch'
+# MODEL_PATH = 'gs://wwong-net/some/dataset/layer/mito0.py'
+# CHECKPOINT_PATH = 'gs://wwong-net/some/dataset/layer/mito0_220k.chkpt'
+# PATCH_SHAPE = (16, 160, 160)
+# OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40_test_pytorch/output'
+# # Output created using:
+# # chunkflow --input_image_source gs://wwong/sub_pinky40_v11/image     --output_destination
+# #   gs://wwong/sub_pinky40_test_pytorch/output   --overlap [4,32,32] --patch_shape [16,160,160] --num_patches [4,3,3]
+# #   cloudvolume  --min_mips 2 create
+
+# INFERENCE_FRAMEWORK = 'pznet'
+# MODEL_PATH = 'gs://wwong-net/some/dataset/layer/pinky100-cores2.tar.gz'
+# CHECKPOINT_PATH = None
+# PATCH_SHAPE = (20, 256, 256)
+# OUTPUT_DESTINATION = 'gs://wwong/sub_pinky40_test_pznet/output'
+# # Output created using:
+# # chunkflow --input_image_source gs://wwong/sub_pinky40_v11/image     --output_destination
+# #   gs://wwong/sub_pinky40_test_pznet/output   --overlap [4,32,32] --patch_shape [20,256,256] --num_patches [4,3,3]
+# #   cloudvolume  --min_mips 2 create
+
 BLEND_FAMEWORK = 'average'
-MODEL_PATH = 'gs://wwong-net/some/dataset/layer/mito0.py'
-checkpoint_path = 'gs://wwong-net/some/dataset/layer/mito0_220k.chkpt'
-ACCELERATOR_IDS = '[]'
+
+TASK_SHAPE = tuple((ps - olap) * num + olap for ps, olap, num in zip(PATCH_SHAPE, OVERLAP, NUM_PATCHES))
+DATASET_BLOCK = Block(offset=OFFSET, num_chunks=NUM_TASKS, chunk_shape=TASK_SHAPE, overlap=OVERLAP)
 
 
 def underscore_list(items):
@@ -41,21 +69,17 @@ def default_overlap_name(source_name, mod_index):
 
 
 def create_inference_task(chunk):
-
-    task = DockerWithVariablesOperator(
+    return DockerWithVariablesOperator(
         ['google-secret.json'],
         mount_point='/usr/local/chunkflow/.cloudvolume/secrets',
         task_id='inference_zyx' + underscore_list(chunk.unit_index),
         command=INFERENCE_COMMAND_TEMPLATE.format(
             task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
-        image='wongwill86/chunkflow:scratch',
+        image=CHUNKFLOW_IMAGE,
         environment={'LOCAL_USER_ID': os.getuid()},
         dag=dag
     )
-    print(task.command)
-
-    return task
 
 
 def create_blend_task(count_print_hello):
@@ -66,59 +90,54 @@ def create_blend_task(count_print_hello):
         command=BLEND_COMMAND_TEMPLATE.format(
             task_offset_coordinates=spaceless_list(tuple(s.start for s in chunk.slices))),
         default_args=default_args,
-        image='wongwill86/chunkflow:scratch',
+        image=CHUNKFLOW_IMAGE,
         environment={'LOCAL_USER_ID': os.getuid()},
         dag=dag
     )
 
-
-INFERENCE_PARAMETERS = {
+BASE_PARAMETERS = {
     'input_image_source': INPUT_IMAGE_SOURCE,
     'output_destination': OUTPUT_DESTINATION,
-    'task_shape': spaceless_list(TASK_SHAPE),
-    'overlap': spaceless_list(OVERLAP),
     'patch_shape': spaceless_list(PATCH_SHAPE),
+    'num_patches': spaceless_list(NUM_PATCHES),
+    'overlap': spaceless_list(OVERLAP),
+}
+
+BASE_COMMAND = '''
+sh -c "chunkflow --input_image_source {input_image_source} \
+    --output_destination {output_destination} \
+    --patch_shape {patch_shape} \
+    --num_patches {num_patches} \
+    --overlap {overlap} \
+    task \
+    --task_offset_coordinates {{task_offset_coordinates}} \
+'''.format(**BASE_PARAMETERS)
+
+INFERENCE_PARAMETERS = {
     'inference_framework': INFERENCE_FRAMEWORK,
     'blend_framework': BLEND_FAMEWORK,
-    'model_path': MODEL_PATH,
-    'checkpoint_path': checkpoint_path,
     'accelerator_ids': ACCELERATOR_IDS,
 }
 
 INFERENCE_COMMAND_TEMPLATE = '''
-sh -c "chunkflow --input_image_source {input_image_source} \
-    --output_destination {output_destination} \
-    task \
-    --task_offset_coordinates {{task_offset_coordinates}} \
-    --task_shape {task_shape} \
-    --overlap {overlap} \
+    {base_command} \
     inference \
-    --patch_shape {patch_shape} \
     --inference_framework {inference_framework} \
     --blend_framework {blend_framework} \
-    --model_path {model_path} \
-    --checkpoint_path {checkpoint_path} \
     --accelerator_ids {accelerator_ids} \
-"
-'''.format(**INFERENCE_PARAMETERS)
+'''.format(base_command=BASE_COMMAND, **INFERENCE_PARAMETERS)
 
-BLEND_PARAMETERS = {
-    'input_image_source': INPUT_IMAGE_SOURCE,
-    'output_destination': OUTPUT_DESTINATION,
-    'task_shape': spaceless_list(TASK_SHAPE),
-    'overlap': spaceless_list(OVERLAP),
-}
+if MODEL_PATH is not None:
+    INFERENCE_COMMAND_TEMPLATE = ' '.join([INFERENCE_COMMAND_TEMPLATE, '--model_path', MODEL_PATH])
+if CHECKPOINT_PATH is not None:
+    INFERENCE_COMMAND_TEMPLATE = ' '.join([INFERENCE_COMMAND_TEMPLATE, '--checkpoint_path', CHECKPOINT_PATH])
+INFERENCE_COMMAND_TEMPLATE = INFERENCE_COMMAND_TEMPLATE + '"'
 
 BLEND_COMMAND_TEMPLATE = '''
-sh -c "chunkflow --input_image_source {input_image_source} \
-    --output_destination {output_destination} \
-    task \
-    --task_offset_coordinates {{task_offset_coordinates}} \
-    --task_shape {task_shape} \
-    --overlap {overlap} \
+    {base_command} \
     blend \
 "
-'''.format(**BLEND_PARAMETERS)
+'''.format(base_command=BASE_COMMAND)
 
 default_args = {
     'owner': 'airflow',
