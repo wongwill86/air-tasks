@@ -40,7 +40,7 @@ services:
 
     # single shot initialize the database
     init-db:
-        image: wongwill86/air-tasks:pinkygt
+        image: ranlu/air-tasks:pinky_gt
         restart: on-failure
         depends_on:
             - postgres
@@ -64,7 +64,7 @@ services:
                 condition: on-failure
 
     webserver:
-        image: wongwill86/air-tasks:pinkygt
+        image: ranlu/air-tasks:pinky_gt
         restart: always
         depends_on:
             - init-db
@@ -89,7 +89,7 @@ services:
                 window: 120s
 
     flower:
-        image: wongwill86/air-tasks:pinkygt
+        image: ranlu/air-tasks:pinky_gt
         restart: always
         depends_on:
             - init-db
@@ -104,7 +104,7 @@ services:
                 condition: any
 
     scheduler:
-        image: wongwill86/air-tasks:pinkygt
+        image: ranlu/air-tasks:pinky_gt
         restart: always
         depends_on:
             - init-db
@@ -138,7 +138,7 @@ services:
                 condition: any
 
     worker-worker:
-        image: wongwill86/air-tasks:pinkygt
+        image: ranlu/air-tasks:pinky_gt
         restart: always
         depends_on:
             - init-db
@@ -164,7 +164,7 @@ services:
                 condition: any
 
     worker-atomic:
-        image: wongwill86/air-tasks:pinkygt
+        image: ranlu/air-tasks:pinky_gt
         restart: always
         depends_on:
             - init-db
@@ -190,8 +190,89 @@ services:
             restart_policy:
                 condition: any
 
+    worker-composite:
+        image: ranlu/air-tasks:pinky_gt
+        restart: always
+        depends_on:
+            - init-db
+            - rabbitmq
+        volumes:
+            # Warning mounting dags/plugins not working for autoscaler
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
+            #- ../config:/usr/local/airflow/config
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp:/tmp
+        environment:
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+            - AIRFLOW__CELERY__CELERYD_CONCURRENCY=16
+        command: airflow worker -q composite
+        deploy:
+            mode: global
+            placement:
+                constraints: [ engine.labels.infrakit-role == composite ]
+            restart_policy:
+                condition: any
+
+    worker-composite-atomic:
+        image: ranlu/air-tasks:pinky_gt
+        restart: always
+        depends_on:
+            - init-db
+            - rabbitmq
+        volumes:
+            # Warning mounting dags/plugins not working for autoscaler
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
+            #- ../config:/usr/local/airflow/config
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp:/tmp
+        environment:
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+            - AIRFLOW__CELERY__CELERYD_CONCURRENCY=16
+        command: airflow worker -q atomic
+        deploy:
+            mode: global
+            placement:
+                constraints: [ engine.labels.infrakit-role == composite ]
+            restart_policy:
+                condition: any
+
+    worker-remap:
+        image: ranlu/air-tasks:pinky_gt
+        restart: always
+        depends_on:
+            - init-db
+            - rabbitmq
+        volumes:
+            # Warning mounting dags/plugins not working for autoscaler
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
+            #- ../config:/usr/local/airflow/config
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp:/tmp
+        environment:
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+            - AIRFLOW__CELERY__CELERYD_CONCURRENCY=16
+        command: airflow worker -q remap
+        deploy:
+            mode: global
+            placement:
+                constraints: [ engine.labels.infrakit-role == remap ]
+            restart_policy:
+                condition: any
+
     worker-manager:
-        image: wongwill86/air-tasks:pinkygt
+        image: ranlu/air-tasks:pinky_gt
         restart: always
         depends_on:
             - init-db
