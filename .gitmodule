@@ -1,0 +1,2 @@
+[submodule "cloud"]
+	url = git@github.com:seung-lab/seuron_examples.git
