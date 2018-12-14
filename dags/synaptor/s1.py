@@ -2,12 +2,12 @@ from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
 
-DAG_ID = 'synaptor_s1_test'
+DAG_ID = 'synaptor_s1'
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2018,11,12),
+    'start_date': datetime(2018,11,14),
     'cactchup_by_default': False,
     'retries': 2,
     'retry_delay': timedelta(minutes=20),
@@ -25,12 +25,11 @@ dag = DAG(
 img_cvname = "gs://neuroglancer/s1_v0.1/image"
 seg_cvname = "gs://neuroglancer/s1_v0.1/segmentation_0.2"
 out_cvname = "gs://neuroglancer/s1_v2/psd/cleft_355k"
-cleft_cvname = "gs://neuroglancer/s1_v2/clefts/tests"
+cleft_cvname = "gs://neuroglancer/s1_v2/clefts/full"
 
 # VOLUME COORDS (in mip0)
-start_coord = (8192, 4096, 0)
-vol_shape   = (2048, 2048, 2048)
-#vol_shape   = (12288, 11264, 2048)
+start_coord = (0, 0, 0)
+vol_shape   = (12288, 11264, 2048)
 chunk_shape = (1024, 1024, 1024)
 max_face_shape = (1024, 1024) # in mip 1
 
@@ -51,7 +50,7 @@ patch_sz = (40, 40, 18)
 voxel_res = (12, 12, 30)
 dist_thr = 1000
 
-proc_dir_path = "gs://seunglab/nick/181112_s1_test"
+proc_dir_path = "gs://seunglab/nick/181114_s1"
 # =============
 
 import itertools
