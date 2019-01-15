@@ -19,13 +19,13 @@ CHUNKEDGRAPH_CHUNKSIZE = [512, 512, 128] # Should be read from ChunkedGraph
 
 MESHBUNDLE_CONFIG_STR = ' '.join("""{
     "chunkedgraph": {
-        "table_id": "pinky100_neo1",
+        "table_id": "pinky100_sv16",
         "instance_id": "pychunkedgraph"
     },
     "meshing": {
         "mip": 2,
         "max_simplification_error": 40,
-        "mesh_dir": "mesh_mip_2_err_40_neo1"
+        "mesh_dir": "mesh_mip_2_err_40_sv16"
     }
 }""".split())
 
@@ -81,7 +81,7 @@ mesh_tasks = {}
 knot_tasks = [create_knot_task(dag, 'START')]
 layer_lower_bound = DATASET_LOWER_BOUND
 layer_chunksize = CHUNKEDGRAPH_CHUNKSIZE
-for layer in range(6, 10):
+for layer in range(6, 8):
     mesh_tasks[layer] = []
     knot_tasks.append(create_knot_task(dag, str(layer)))
     layer_chunksize = [2 ** max(0, layer - 2) * x for x in CHUNKEDGRAPH_CHUNKSIZE]
