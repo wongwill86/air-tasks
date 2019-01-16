@@ -20,11 +20,12 @@ agg_image = "ranlu/agglomeration:rg_test"
 cv_path = "/root/.cloudvolume/secrets/"
 config_file = "config_{}.sh".format("rg_test_agg")
 cmd_proto = '/bin/bash -c "cp {}{} {}config.sh && mkdir $AIRFLOW_TMP_DIR/work && cd $AIRFLOW_TMP_DIR/work && {} && rm -rf $AIRFLOW_TMP_DIR/work || {{ rm -rf $AIRFLOW_TMP_DIR/work; exit 111; }}"'
+config_mounts = ['neuroglancer-google-secret.json','google-secret.json', config_file]
 
 def atomic_chunks_op(dag, tags):
     cmdlist = " && ".join(["/root/agg/scripts/atomic_chunk_me.sh {}.json".format(tag) for tag in tags])
     return DockerWithVariablesOperator(
-        ['google-secret.json', config_file],
+        config_mounts,
         host_args={'shm_size': '8G'},
         mount_point=cv_path,
         task_id='atomic_chunk_' + tags[0],
@@ -40,7 +41,7 @@ def atomic_chunks_op(dag, tags):
 def composite_chunks_op(dag, tags):
     cmdlist = " && ".join(["/root/agg/scripts/composite_chunk_me.sh {}.json".format(tag) for tag in tags])
     return DockerWithVariablesOperator(
-        ['google-secret.json', config_file],
+        config_mounts,
         host_args={'shm_size': '8G'},
         mount_point=cv_path,
         task_id='composite_chunk_' + tags[0],
@@ -56,7 +57,7 @@ def composite_chunks_op(dag, tags):
 def composite_chunks_long_op(dag, tags):
     cmdlist = " && ".join(["/root/agg/scripts/composite_chunk_me.sh {}.json".format(tag) for tag in tags])
     return DockerWithVariablesOperator(
-        ['google-secret.json', config_file],
+        config_mounts,
         host_args={'shm_size': '8G'},
         mount_point=cv_path,
         task_id='composite_chunk_' + tags[0],
@@ -72,7 +73,7 @@ def composite_chunks_long_op(dag, tags):
 def remap_chunks_op(dag, tags):
     cmdlist = " && ".join(["/root/ws/scripts/remap_chunk_agg.sh {}.json".format(tag) for tag in tags])
     return DockerWithVariablesOperator(
-        ['google-secret.json', config_file],
+        config_mounts,
         host_args={'shm_size': '8G'},
         mount_point=cv_path,
         task_id='remap_chunk_' + tags[0],
