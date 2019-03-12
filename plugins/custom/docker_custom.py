@@ -146,9 +146,41 @@ class DockerWithVariablesOperator(DockerRemovableContainer):
             return super().execute(context)
 
 
+class DockerWithVariablesMultiMountOperator(DockerRemovableContainer):
+    DEFAULT_MOUNT_POINT = '/run/variables'
+
+    def __init__(self,
+                 variables,
+                 mount_points=DEFAULT_MOUNT_POINT,
+                 *args, **kwargs):
+        self.variables = variables
+
+        if isinstance(mount_point, str):
+            self.mount_points = [mount_points for _ in range(len(variables))]
+        else:
+            assert len(mount_points) == len(self.variables)
+            self.mount_points = mount_points
+
+        super().__init__(*args, **kwargs)
+
+    def execute(self, context):
+        with TemporaryDirectory(prefix='dockervariables') as tmp_var_dir:
+            for (key, mountpt) in zip(self.variables, self.mount_points):
+                value = Variable.get(key)
+                var_filename = os.path.join(tmp_var_dir, key)
+                with open(var_filename, 'w') as value_file:
+                    # import pdb
+                    # pdb.set_trace()
+                    value_file.write(value)
+                self.volumes.append('{0}:{1}'.format(var_filename, mountpt))
+            return super().execute(context)
+
+
 class CustomPlugin(AirflowPlugin):
     name = "docker_plugin"
-    operators = [DockerRemovableContainer, DockerWithVariablesOperator,
+    operators = [DockerRemovableContainer,
+                 DockerWithVariablesOperator,
+                 DockerWithVariablesMultiMountOperator,
                  DockerConfigurableOperator]
     hooks = []
     executors = []
