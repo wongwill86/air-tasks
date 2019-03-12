@@ -57,8 +57,8 @@ services:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             #- ../config:/usr/local/airflow/config
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
@@ -82,8 +82,8 @@ services:
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../config:/usr/local/airflow/config
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         #ports:
             #- "8080:8080"
@@ -120,8 +120,8 @@ services:
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../config:/usr/local/airflow/config
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
@@ -154,8 +154,8 @@ services:
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../config:/usr/local/airflow/config
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
@@ -178,8 +178,8 @@ services:
             - scheduler
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             #- ../config:/usr/local/airflow/config
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
@@ -208,8 +208,8 @@ services:
             - scheduler
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             #- ../config:/usr/local/airflow/config
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
@@ -240,8 +240,8 @@ services:
         volumes:
             # Warning mounting dags/plugins not working for autoscaler
             #- ../config:/usr/local/airflow/config
-            - ../dags/:/usr/local/airflow/dags
-            - ../plugins:/usr/local/airflow/plugins
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
             - /var/run/docker.sock:/var/run/docker.sock
             - /tmp:/tmp
         environment:
