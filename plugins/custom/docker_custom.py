@@ -155,7 +155,7 @@ class DockerWithVariablesMultiMountOperator(DockerRemovableContainer):
                  *args, **kwargs):
         self.variables = variables
 
-        if isinstance(mount_point, str):
+        if isinstance(mount_points, str):
             self.mount_points = [mount_points for _ in range(len(variables))]
         else:
             assert len(mount_points) == len(self.variables)
