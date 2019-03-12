@@ -93,8 +93,8 @@ services:
                 constraints: [ engine.labels.infrakit-role == manager ]
             restart_policy:
                 condition: any
-                delay: 10m
-                window: 120s
+                delay: 3m
+                window: 60s
 
     flower:
         image: wongwill86/air-tasks:nick
