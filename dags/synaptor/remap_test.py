@@ -23,10 +23,11 @@ dag = DAG(
 
 # =============
 # run-specific args
-img_cvname = "gs://neuroglancer/basil_v0/son_of_alignment/v3.04_cracks_only_normalized_rechunked" # noqa
-seg_cvname = "gs://neuroglancer/basil_v0/basil_full/seg-extended-aug"
-out_cvname = "gs://neuroglancer/basil_v0/synapticmap/mip1_d2_1175k"
-cleft_cvname = "gs://neuroglancer/basil_v0/test_clefts"
+img_cvname = "gs://neuroglancer/pinky_training/stitched.img"
+seg_cvname = "gs://neuroglancer/pinky_training/stitched.seg"
+out_cvname = "gs://neuroglancer/nick/pinky/stitched/mip1_d2_1175k_output"
+cleft_cvname = "gs://neuroglancer/synaptor_test/stitched_test"
+cleft_cvname2 = "gs://neuroglancer/synaptor_test/stitched_test2"
 
 # VOLUME COORDS
 start_coord = (0, 0, 0)
