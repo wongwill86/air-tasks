@@ -36,15 +36,35 @@ services:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
-    cloudsql-proxy:
-       image: gcr.io/cloudsql-docker/gce-proxy:1.12
-       restart: always
-       ports:
-           - "5432:5432"
-       command: ./cloud_sql_proxy -instances=neuromancer-seung-import:us-east1:synapsedb=tcp:0.0.0.0:5432
-       deploy:
-           placement:
-               constraints: [ engine.labels.infrakit-role == worker ]
+    task-postgres:
+        image: postgres:9.6-alpine
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_DB=postgres
+        #ports:
+            #- "5432:5432"
+        deploy:
+            placement:
+                constraints: [ engine.labels.infrakit-role == taskdb ]
+        command: postgres -c max_connections=1000 -c shared_buffers=4096MB
+
+    task-pgbouncer:
+        image: brainsam/pgbouncer
+        depends_on:
+            - task-postgres
+        environment:
+            - DB_HOST=postgres
+            - DB_USER=postgres
+            - DB_PASSWORD=postgres
+            - POOL_MODE=transaction
+            - MAX_CLIENT_CONN=1000
+            - DEFAULT_POOL_SIZE=300
+            - MIN_POOL_SIZE=100
+            - CLIENT_IDLE_TIMEOUT=600
+        deploy:
+            placement:
+                constraints: [ engine.labels.infrakit-role == taskdb ]
 
     # single shot initialize the database
     init-db:
