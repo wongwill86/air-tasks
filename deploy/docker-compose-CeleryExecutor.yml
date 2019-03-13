@@ -15,7 +15,7 @@ services:
             - POSTGRES_PASSWORD=airflow
             - POSTGRES_DB=airflow
         #ports:
-            #- "5432:5432"
+        #    - "5432:5432"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -39,11 +39,11 @@ services:
     task-postgres:
         image: postgres:9.6-alpine
         environment:
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=postgres
-            - POSTGRES_DB=postgres
+            - POSTGRES_USER=synaptor
+            - POSTGRES_PASSWORD=synaptor
+            - POSTGRES_DB=synaptor
         #ports:
-            #- "5432:5432"
+        #    - "5432:5432"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == taskdb ]
@@ -53,10 +53,12 @@ services:
         image: brainsam/pgbouncer
         depends_on:
             - task-postgres
+        ports:
+            - "6432:6432"
         environment:
-            - DB_HOST=postgres
-            - DB_USER=postgres
-            - DB_PASSWORD=postgres
+            - DB_HOST=task-postgres
+            - DB_USER=synaptor
+            - DB_PASSWORD=synaptor
             - POOL_MODE=transaction
             - MAX_CLIENT_CONN=1000
             - DEFAULT_POOL_SIZE=300
