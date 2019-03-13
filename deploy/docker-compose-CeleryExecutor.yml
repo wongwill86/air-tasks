@@ -64,7 +64,7 @@ services:
             - CLIENT_IDLE_TIMEOUT=600
         deploy:
             placement:
-                constraints: [ engine.labels.infrakit-role == taskdb ]
+                constraints: [ engine.labels.infrakit-role == taskbouncer ]
 
     # single shot initialize the database
     init-db:
