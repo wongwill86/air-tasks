@@ -19,7 +19,7 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
-        command: postgres -c max_connections=1000 -c shared_buffers=4096MB
+        command: postgres -c max_connections=2000 -c shared_buffers=4096MB
 
     pgbouncer:
         image: brainsam/pgbouncer
@@ -28,26 +28,24 @@ services:
             - DB_USER=airflow
             - DB_PASSWORD=airflow
             - POOL_MODE=transaction
-            - MAX_CLIENT_CONN=1000
+            - MAX_CLIENT_CONN=2000
             - DEFAULT_POOL_SIZE=300
             - MIN_POOL_SIZE=100
-            - CLIENT_IDLE_TIMEOUT=600
+            - CLIENT_IDLE_TIMEOUT=1200
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
 
     task-postgres:
-        image: postgres:9.6-alpine
+        image: postgres:11.2-alpine
         environment:
             - POSTGRES_USER=synaptor
             - POSTGRES_PASSWORD=synaptor
             - POSTGRES_DB=synaptor
-        #ports:
-        #    - "5432:5432"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == taskdb ]
-        command: postgres -c max_connections=1000 -c shared_buffers=4096MB
+        command: postgres -c max_connections=2000 -c shared_buffers=16384MB -c effective_cache_size=32768MB
 
     task-pgbouncer:
         image: brainsam/pgbouncer
@@ -60,13 +58,13 @@ services:
             - DB_USER=synaptor
             - DB_PASSWORD=synaptor
             - POOL_MODE=transaction
-            - MAX_CLIENT_CONN=1000
+            - MAX_CLIENT_CONN=2000
             - DEFAULT_POOL_SIZE=300
             - MIN_POOL_SIZE=100
-            - CLIENT_IDLE_TIMEOUT=600
+            - CLIENT_IDLE_TIMEOUT=1200
         deploy:
             placement:
-                constraints: [ engine.labels.infrakit-role == taskbouncer ]
+                constraints: [ engine.labels.infrakit-role == taskdb ]
 
     # single shot initialize the database
     init-db:
@@ -118,21 +116,6 @@ services:
                 delay: 3m
                 window: 60s
 
-    flower:
-        image: wongwill86/air-tasks:nick
-        restart: always
-        depends_on:
-            - init-db
-            - rabbitmq
-        #ports:
-            #- "5555:5555"
-        command: airflow flower
-        deploy:
-            placement:
-                constraints: [ engine.labels.infrakit-role == manager ]
-            restart_policy:
-                condition: any
-
     scheduler:
         image: wongwill86/air-tasks:nick
         restart: always
@@ -148,19 +131,6 @@ services:
         environment:
             - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
         command: airflow scheduler
-        deploy:
-            placement:
-                constraints: [ engine.labels.infrakit-role == manager ]
-            restart_policy:
-                condition: any
-
-    visualizer:
-        image: dockersamples/visualizer:stable
-        restart: always
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-        #ports:
-            #- "8080:8080"
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
@@ -288,8 +258,6 @@ services:
             - "443:443"
         depends_on:
             - webserver
-            - flower
-            - visualizer
             - rabbitmq
         deploy:
             placement:
@@ -342,24 +310,6 @@ services:
                         if (\\$$is_airflow ~* AB) { \\n
                             rewrite ^\\/*(.*) \\/airflow\\/\\$$1 permanent;\\n
                         }\\n
-                        if (\\$$http_referer ~* \\\".*\\/flower\\/*.*\\\") {\\n
-                            set \\$$is_flower \\\"A\\\";\\n
-                        }\\n
-                        if (\\$$request_uri !~* ^\\/flower\\/.*) {\\n
-                            set \\$$is_flower \\\"\\$${is_flower}B\\\";\\n
-                        }\\n
-                        if (\\$$is_flower = AB) { \\n
-                            rewrite ^\\/*(.*) \\/flower\\/\\$$1 permanent;\\n
-                        }\\n
-                        if (\\$$http_referer ~* \\\".*\\/visualizer\\/*.*\\\") {\\n
-                            set \\$$is_visualizer \\\"A\\\";\\n
-                        }\\n
-                        if (\\$$request_uri !~* ^\\/visualizer\\/.*) {\\n
-                            set \\$$is_visualizer \\\"\\$${is_visualizer}B\\\";\\n
-                        }\\n
-                        if (\\$$is_visualizer = AB) { \\n
-                            rewrite ^\\/*(.*) \\/visualizer\\/\\$$1 permanent;\\n
-                        }\\n
                         if (\\$$http_referer ~* \\\".*\\/rabbitmq\\/*.*\\\") {\\n
                             set \\$$is_rabbitmq \\\"A\\\";\\n
                         }\\n
@@ -375,18 +325,6 @@ services:
                         location ^~ \\/airflow\\/ {\\n
                             proxy_redirect http:\\/\\/\\$$host \\$$scheme:\\/\\/\\$$host;\\n
                             proxy_pass http:\\/\\/webserver:8080\\/;\\n
-                        }\\n
-                        location ^~ \\/flower\\/ {\\n
-                            sub_filter_last_modified on;\\n
-                            sub_filter_once off;\\n
-                            sub_filter_types application\\/javascript;\\n
-                            sub_filter \\\"url_prefix() +\\\" \\\"'\\/flower' +\\\";\\n
-                            proxy_redirect http:\\/\\/\\$$host \\$$scheme:\\/\\/\\$$host;\\n
-                            proxy_pass http:\\/\\/flower:5555\\/;\\n
-                        }\\n
-                        location ^~ \\/visualizer\\/ {\\n
-                            proxy_redirect http:\\/\\/\\$$host \\$$scheme:\\/\\/\\$$host;\\n
-                            proxy_pass http:\\/\\/visualizer:8080\\/;\\n
                         }\\n
                         location ^~ \\/rabbitmq\\/ {\\n
                             proxy_pass http:\\/\\/rabbitmq:15672\\/;\\n

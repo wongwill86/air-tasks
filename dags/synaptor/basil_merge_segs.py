@@ -1,9 +1,13 @@
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.operators.docker_plugin import DockerWithVariablesOperator
-from airflow.operators.docker_plugin import DockerWithVariablesMultiMountOperator
+# from airflow.operators.docker_plugin import DockerWithVariablesOperator
+from airflow.operators.docker_plugin import DockerWithVariablesMultiMountOperator  # noqa
+from airflow.operators.bash_operator import BashOperator
 
-DAG_ID = 'remap_test'
+import itertools
+import operator
+
+DAG_ID = 'basil_merge_segs'
 
 default_args = {
     'owner': 'airflow',
@@ -23,18 +27,19 @@ dag = DAG(
 
 # =============
 # run-specific args
-img_cvname = "gs://neuroglancer/pinky_training/stitched.img"
-seg_cvname = "gs://neuroglancer/pinky_training/stitched.seg"
-out_cvname = "gs://neuroglancer/nick/pinky/stitched/mip1_d2_1175k_output"
-cleft_cvname = "gs://neuroglancer/synaptor_test/stitched_test"
-cleft_cvname2 = "gs://neuroglancer/synaptor_test/stitched_test2"
+img_cvname = "gs://neuroglancer/pinky100_v0/son_of_alignment_v15_rechunked"
+seg_cvname = "gs://neuroglancer/pinky100_v0/seg/lost_no-random/bbox1_0"
+out_cvname = "gs://neuroglancer/pinky100_v0/psd/mip1_d2_1175k"
+cleft_cvname = "gs://neuroglancer/pinky100_v0/cleft_tests/mip1_d2_1175k_temp"
+cleft_out_cvname = "gs://neuroglancer/pinky100_v0/cleft_tests/mip1_d2_1175k"
 
 # VOLUME COORDS
-start_coord = (0, 0, 0)
-vol_shape   = (1024, 1024, 100)
-chunk_shape = (512, 512, 50)
-max_face_shape = (512, 512)
+start_coord = (36192, 30558, 21)
+vol_shape = (86016, 51200, 2136)
+chunk_shape = (2048, 2048, 1068)
+max_face_shape = (1068, 1068)
 
+mip = 1
 base_res = (8, 8, 40)
 asynet_res = (8, 8, 40)
 
@@ -45,16 +50,15 @@ sz_thresh2 = 50
 num_samples = 1
 asyn_dil_param = 5
 patch_sz = (80, 80, 18)
+num_downsamples = 0
 
 dist_thr = 500
 
 proc_url = "PROC_FROM_FILE"
-proc_dir = "gs://seunglab/nick/stitched_test"
-hashmax = 10
+proc_dir = "gs://seunglab/nick/basil_scale_test"
+hashmax = 25
 # =============
-
-import itertools
-import operator
+# Helper functions
 
 
 def chunk_bboxes(vol_size, chunk_size, offset=None, mip=0):
@@ -119,18 +123,20 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
     chunk_begin_str = tup2str(chunk_begin)
     chunk_end_str = tup2str(chunk_end)
     res_str = tup2str(base_res)
+    task_tag = "chunk_ccs_" + "_".join(map(str, chunk_begin))
 
     return DockerWithVariablesMultiMountOperator(
         ["google-secret.json", "proc_url", "boto"],
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
-        task_id="chunk_ccs_" + "_".join(map(str, chunk_begin)),
+        task_id=task_tag,
         command=(f"chunk_ccs {out_cvname} {cleft_cvname} {proc_url}"
                  f" {cc_thresh} {sz_thresh1}"
                  f" --chunk_begin {chunk_begin_str}"
                  f" --chunk_end {chunk_end_str}"
                  f" --mip {res_str} --proc_dir {proc_dir}"
-                 f" --hashmax {hashmax}"),
+                 f" --hashmax {hashmax}"
+                 f" --timing_tag {task_tag}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -141,14 +147,16 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
 def match_contins(dag, i):
 
     faceshape_str = tup2str(max_face_shape)
+    task_tag = f"match_contins_{i}"
 
     return DockerWithVariablesMultiMountOperator(
         ["google-secret.json", "proc_url", "boto"],
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
-        task_id=f"match_contins_{i}",
+        task_id=task_tag,
         command=(f"match_contins {proc_url} {i}"
-                 f" --max_face_shape {faceshape_str}"),
+                 f" --max_face_shape {faceshape_str}"
+                 f" --timing_tag {task_tag}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -158,12 +166,30 @@ def match_contins(dag, i):
 
 def seg_graph_ccs(dag):
 
+    task_tag = "seg_graph_ccs"
     return DockerWithVariablesMultiMountOperator(
         ["google-secret.json", "proc_url", "boto"],
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
-        task_id=f"seg_graph_ccs",
-        command=(f"seg_graph_ccs {proc_url} {hashmax}"),
+        task_id=task_tag,
+        command=(f"seg_graph_ccs {proc_url} {hashmax}"
+                 f" --timing_tag {task_tag}"),
+        default_args=default_args,
+        image="seunglab/synaptor:latest",
+        queue="cpu",
+        dag=dag
+        )
+
+
+def chunk_seg_map(dag):
+
+    task_tag = "chunk_seg_map"
+    return DockerWithVariablesMultiMountOperator(
+        ["google-secret.json", "proc_url", "boto"],
+        mount_points=["/root/.cloudvolume/secrets/google-secret.json",
+                      "/root/proc_url", "/root/.boto"],
+        task_id=task_tag,
+        command=(f"chunk_seg_map {proc_url} --timing_tag {task_tag}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -173,12 +199,15 @@ def seg_graph_ccs(dag):
 
 def merge_seginfo(dag, i):
 
+    task_tag = f"merge_seginfo_{i}"
+
     return DockerWithVariablesMultiMountOperator(
         ["google-secret.json", "proc_url", "boto"],
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
-        task_id=f"merge_seginfo_{i}",
-        command=(f"merge_seginfo {proc_url} {i}"),
+        task_id=task_tag,
+        command=(f"merge_seginfo {proc_url} {i}"
+                 f" --timing_tag {task_tag}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -195,12 +224,14 @@ def chunk_edges(dag, chunk_begin, chunk_end, base_begin, base_end):
     patchsz_str = tup2str(patch_sz)
     res_str = tup2str(asynet_res)
 
+    task_tag = "chunk_edges" + "_".join(map(str, chunk_begin))
+
     return DockerWithVariablesMultiMountOperator(
         ["google-secret.json", "proc_url", "boto"],
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
         host_args={"runtime": "nvidia"},
-        task_id="chunk_edges" + "_".join(map(str, chunk_begin)),
+        task_id=task_tag,
         command=(f"chunk_edges {img_cvname} {cleft_cvname} {seg_cvname}"
                  f" {proc_url} {hashmax}"
                  f" --samples_per_cleft {num_samples}"
@@ -208,9 +239,12 @@ def chunk_edges(dag, chunk_begin, chunk_end, base_begin, base_end):
                  f" --chunk_begin {chunk_begin_str}"
                  f" --chunk_end {chunk_end_str}"
                  f" --patchsz {patchsz_str} --resolution {res_str}"
-                 f" --num_downsamples {asynet_mip}"
+                 f" --num_downsamples {num_downsamples}"
                  f" --base_res_begin {base_begin_str}"
-                 f" --base_res_end {base_end_str}"),
+                 f" --base_res_end {base_end_str}"
+                 f" --proc_dir {proc_dir}"
+                 f" --resolution {res_str}"
+                 f" --timing_tag {task_tag}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="gpu",
@@ -220,12 +254,15 @@ def chunk_edges(dag, chunk_begin, chunk_end, base_begin, base_end):
 
 def pick_edge(dag, i):
 
+    task_tag = f"pick_edge_{i}"
+
     return DockerWithVariablesMultiMountOperator(
         ["google-secret.json", "proc_url", "boto"],
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
-        task_id=f"pick_edge_{i}",
-        command=(f"pick_edge {proc_url} {i}"),
+        task_id=task_tag,
+        command=(f"pick_edge {proc_url} {i}"
+                 f" --timing_tag {task_tag}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -237,13 +274,17 @@ def merge_dups(dag, i):
 
     res_str = " ".join(map(str, base_res))
 
+    task_tag = f"merge_dups_{i}"
+
     return DockerWithVariablesMultiMountOperator(
         ["google-secret.json", "proc_url", "boto"],
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
-        task_id=f"merge_dups_{i}",
+        task_id=task_tag,
         command=(f"merge_dups {proc_url} {i} {dist_thr} {sz_thresh2}"
-                 f" --voxel_res {res_str}"),
+                 f" --voxel_res {res_str}"
+                 f" --timing_tag {task_tag}"
+                 f" --fulldf_proc_url {proc_dir}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -257,15 +298,18 @@ def remap_ids(dag, chunk_begin, chunk_end):
     chunk_end_str = tup2str(chunk_end)
     res_str = tup2str(base_res)
 
+    task_tag = "remap_ids" + "_".join(map(str, chunk_begin))
+
     return DockerWithVariablesMultiMountOperator(
         ["google-secret.json", "proc_url", "boto"],
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
-        task_id="remap_ids" + "_".join(map(str,chunk_begin)),
-        command=(f"remap_ids {cleft_cvname} {cleft_cvname2} {proc_url}"
+        task_id=task_tag,
+        command=(f"remap_ids {cleft_cvname} {cleft_out_cvname} {proc_url}"
                  f" --chunk_begin {chunk_begin_str}"
                  f" --chunk_end {chunk_end_str}"
-                 f" --mip {res_str}"),
+                 f" --mip {res_str}"
+                 f" --timing_tag {task_tag}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -273,44 +317,74 @@ def remap_ids(dag, chunk_begin, chunk_end):
         )
 
 
-bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord)
-asynet_bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord)
+def end_step(dag, i):
+    return BashOperator(
+        task_id=f"end_{i}_step",
+        bash_command="date",
+        queue="cpu",
+        dag=dag)
 
-#step1 = [chunk_ccs(dag, bb[0], bb[1]) for bb in bboxes]
-#for task in step1[:-1]:
-#    task.set_downstream(step1[-1])
-#
-#step2 = [match_contins(dag, i) for i in range(hashmax)]
-#for task in step2[:-1]:
-#    task.set_upstream(step1[-1])
-#    task.set_downstream(step2[-1])
-#
-#step3 = seg_graph_ccs(dag)
-#step3.set_upstream(step2[-1])
-#
-#step4 = [merge_seginfo(dag, i) for i in range(hashmax)]
-#for task in step4[:-1]:
-#    task.set_upstream(step3)
-#    task.set_downstream(step4[-1])
-#
-#step5 = [chunk_edges(dag, abb[0], abb[1], bb[0], bb[1])
-#         for (abb,bb) in zip(asynet_bboxes, bboxes)]
-#for task in step5[:-1]:
-#    task.set_upstream(step4[-1])
-#    task.set_downstream(step5[-1])
-#
-#step6 = [pick_edge(dag, i) for i in range(len(hashmax))]
-#for task in step6[:-1]:
-#    task.set_upstream(step5[-1])
-#    task.set_downstream(step6[-1])
-#
-#step7 = [merge_dups(dag, i) for i in range(len(hashmax))]
-#for task in step7[:-1]:
-#    task.set_upstream(step6[-1])
-#    task.set_downstream(step7[-1])
-#
-#step8 = [remap_ids(dag, bb[0], bb[1]) for bb in bboxes]
-#for task in step8:
-#    task.set_upstream(step7[-1]) 
 
-step1 = [remap_ids(dag, bboxes[0][0], bboxes[0][1])]
+#bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord, mip=mip)
+#asynet_bboxes = chunk_bboxes(vol_shape, chunk_shape,
+#                             offset=start_coord, mip=mip)
+
+## STEP 1: CHUNK CONNECTED COMPONENTS
+#cc_step = [chunk_ccs(dag, bb[0], bb[1]) for bb in bboxes]
+#
+#end_cc_step = end_step(dag, "chunk_ccs")
+#end_cc_step.set_upstream(cc_step)
+
+
+# STEP 2: MATCH CONTINUATIONS
+match_contins_step = [match_contins(dag, i) for i in range(hashmax)]
+
+# end_cc_step.set_downstream(match_contins_step)
+
+
+# STEP 3: SEGMENT GRAPH CONNECTED COMPONENTS
+seg_graph_cc_step = seg_graph_ccs(dag)
+
+seg_graph_cc_step.set_upstream(match_contins_step)
+
+
+
+# STEP 4: CHUNKING SEGMENTATION ID MAP
+chunk_seg_map_step = chunk_seg_map(dag)
+
+chunk_seg_map_step.set_upstream(seg_graph_cc_step)
+
+
+# STEP 5: MERGING SEGMENT INFO
+merge_seginfo_step = [merge_seginfo(dag, i) for i in range(hashmax)]
+end_merge_seginfo_step = end_step(dag, "merge_seginfo")
+
+chunk_seg_map_step.set_downstream(merge_seginfo_step)
+end_merge_seginfo_step.set_upstream(merge_seginfo_step)
+
+
+## STEP 6: CHUNK EDGE ASSIGNMENT
+## random.seed(99999)
+## random.sample(range(len(bboxes)), 170)
+#indices = [493, 1266, 2048, 974, 1454, 1694, 829, 1038, 1660, 828, 245, 1364,
+#           1574, 1123, 1144, 2078, 717, 694, 1317, 861, 1291, 353, 586, 515,
+#           1151, 667, 2096, 1002, 1682, 2061, 569, 1614, 1657, 246, 77, 47,
+#           1723, 367, 238, 1244, 139, 1422, 110, 396, 1627, 1255, 135, 322,
+#           1062, 1832, 789, 1929, 168, 1298, 741, 1415, 1818, 516, 1109, 1761,
+#           852, 1358, 434, 53, 1203, 419, 1338, 1494, 175, 1608, 311, 199,
+#           1583, 979, 1591, 2006, 1172, 1954, 1684, 416, 920, 1975, 815, 1520,
+#           746, 300, 1471, 930, 191, 1025, 1587, 877, 1110, 444, 1441, 745,
+#           567, 792, 236, 308, 1377, 429, 1898, 1408, 1340, 962, 738, 1998,
+#           1786, 554, 31, 385, 1149, 425, 1991, 326, 32, 703, 1530, 1170, 873,
+#           1401, 344, 127, 1434, 1246, 2024, 1329, 1353, 298, 1745, 1985, 105,
+#           681, 1681, 372, 1245, 1313, 1552, 178, 1606, 766, 960, 2009, 605,
+#           455, 1452, 767, 711, 2049, 1675, 1863, 876, 1429, 1696, 1378, 584,
+#           1654, 1481, 710, 836, 801, 291, 1289, 1419, 941, 1435, 592, 376,
+#           1776]
+#bbox_sample = [bboxes[i] for i in indices]
+#asynet_bbox_sample = [asynet_bboxes[i] for i in indices]
+#
+#chunk_edges_step = [chunk_edges(dag, abb[0], abb[1], bb[0], bb[1])
+#                    for (abb, bb) in zip(asynet_bbox_sample, bbox_sample)]
+#
+#end_merge_seginfo_step.set_downstream(chunk_edges_step)
