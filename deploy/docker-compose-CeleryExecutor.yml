@@ -42,6 +42,7 @@ services:
             - POSTGRES_USER=synaptor
             - POSTGRES_PASSWORD=synaptor
             - POSTGRES_DB=synaptor
+        shm_size: 2g
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == taskdb ]
