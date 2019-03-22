@@ -30,8 +30,8 @@ dag = DAG(
 img_cvname = "gs://microns-seunglab/minnie65/single_sections"
 seg_cvname = "gs://neuroglancer/s1_v0.1/segmentation_0.2"
 out_cvname = "gs://microns-seunglab/ranl/minnie65/seg_minnie65_small_0"
-cleft_cvname = "gs://microns-seunglab/clefts/minnie65_test_temp"
-cleft_out_cvname = "gs://microns-seunglab/clefts/minnie65_test"
+cleft_cvname = "gs://microns-seunglab/minnie65/clefts/small_test_temp"
+cleft_out_cvname = "gs://microns-seunglab/minnie65/clefts/small_test"
 
 # VOLUME COORDS
 start_coord = (237120, 222560, 16000)
