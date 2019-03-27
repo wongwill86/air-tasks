@@ -253,6 +253,36 @@ services:
             placement:
                 constraints: [ engine.labels.infrakit-role == graph ]
 
+    worker-dbmessenger:
+        image: wongwill86/air-tasks:nick
+        restart: always
+        depends_on:
+            - scheduler
+        volumes:
+            # Warning mounting dags/plugins not working for autoscaler
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
+            #- ../config:/usr/local/airflow/config
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp:/tmp
+        environment:
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
+            - EXECUTOR=Celery
+            - AIRFLOW_HOME=/usr/local/airflow
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+        command: airflow worker -q dbmessenger
+        deploy:
+            mode: global
+            placement:
+                constraints: [ engine.labels.infrakit-role == dbmessenger ]
+
     worker-manager:
         image: wongwill86/air-tasks:nick
         restart: always
