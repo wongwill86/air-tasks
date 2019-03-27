@@ -192,7 +192,7 @@ def chunk_seg_map(dag):
         command=(f"chunk_seg_map {proc_url} --timing_tag {task_tag}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="cpu",
+        queue="dbmessenger",
         dag=dag
         )
 
@@ -208,7 +208,7 @@ def create_index(dag, tablename, colname):
         command=(f"create_index {proc_url} {tablename} {colname}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="cpu",
+        queue="dbmessenger",
         dag=dag
         )
 
