@@ -19,7 +19,7 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
-        command: postgres -c max_connections=2000 -c shared_buffers=4096MB
+        command: postgres -c max_connections=2000 -c shared_buffers=8GB -c effective_cache_size=16GB
 
     pgbouncer:
         image: brainsam/pgbouncer
@@ -28,9 +28,9 @@ services:
             - DB_USER=airflow
             - DB_PASSWORD=airflow
             - POOL_MODE=transaction
-            - MAX_CLIENT_CONN=2000
-            - DEFAULT_POOL_SIZE=300
-            - MIN_POOL_SIZE=100
+            - MAX_CLIENT_CONN=3000
+            - DEFAULT_POOL_SIZE=500
+            - MIN_POOL_SIZE=200
             - CLIENT_IDLE_TIMEOUT=1200
         deploy:
             placement:
@@ -42,11 +42,10 @@ services:
             - POSTGRES_USER=synaptor
             - POSTGRES_PASSWORD=synaptor
             - POSTGRES_DB=synaptor
-        shm_size: 2g
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == taskdb ]
-        command: postgres -c max_connections=2000 -c shared_buffers=16384MB -c effective_cache_size=32768MB
+        command: postgres -c max_connections=2000 -c shared_buffers=32GB -c effective_cache_size=64GB
 
     task-pgbouncer:
         image: brainsam/pgbouncer
@@ -59,9 +58,9 @@ services:
             - DB_USER=synaptor
             - DB_PASSWORD=synaptor
             - POOL_MODE=transaction
-            - MAX_CLIENT_CONN=2000
-            - DEFAULT_POOL_SIZE=300
-            - MIN_POOL_SIZE=100
+            - MAX_CLIENT_CONN=3000
+            - DEFAULT_POOL_SIZE=500
+            - MIN_POOL_SIZE=200
             - CLIENT_IDLE_TIMEOUT=1200
         deploy:
             placement:
@@ -223,6 +222,36 @@ services:
             mode: global
             placement:
                 constraints: [ engine.labels.infrakit-role == gpu ]
+
+    worker-graph:
+        image: wongwill86/air-tasks:nick
+        restart: always
+        depends_on:
+            - scheduler
+        volumes:
+            # Warning mounting dags/plugins not working for autoscaler
+            #- ../dags/:/usr/local/airflow/dags
+            #- ../plugins:/usr/local/airflow/plugins
+            #- ../config:/usr/local/airflow/config
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /tmp:/tmp
+        environment:
+            - FERNET_KEY=Z3jDcE-i0gRc7-A0ETMDUxd1MuL3Ye0tVcdDl5zmnec=
+            - EXECUTOR=Celery
+            - AIRFLOW_HOME=/usr/local/airflow
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_DEFAULT_REGION
+            - REDIS_HOST=rabbitmq
+            - REDIS_PORT=5672
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+        command: airflow worker -q graph
+        deploy:
+            mode: global
+            placement:
+                constraints: [ engine.labels.infrakit-role == graph ]
 
     worker-manager:
         image: wongwill86/air-tasks:nick

@@ -15,7 +15,7 @@ default_args = {
     'start_date': datetime(2019, 3, 11),
     'cactchup_by_default': False,
     'retries': 2,
-    'retry_delay': timedelta(minutes=20),
+    'retry_delay': timedelta(minutes=10),
     'retry_exponential_backoff': False,
 }
 
@@ -197,6 +197,22 @@ def chunk_seg_map(dag):
         )
 
 
+def create_index(dag, tablename, colname):
+
+    task_tag = f"create_index_{tablename}_{colname}"
+    return DockerWithVariablesMultiMountOperator(
+        ["google-secret.json", "proc_url", "boto"],
+        mount_points=["/root/.cloudvolume/secrets/google-secret.json",
+                      "/root/proc_url", "/root/.boto"],
+        task_id=task_tag,
+        command=(f"create_index {proc_url} {tablename} {colname}"),
+        default_args=default_args,
+        image="seunglab/synaptor:latest",
+        queue="cpu",
+        dag=dag
+        )
+
+
 def merge_seginfo(dag, i):
 
     task_tag = f"merge_seginfo_{i}"
@@ -325,17 +341,6 @@ def end_step(dag, i):
         dag=dag)
 
 
-#bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord, mip=mip)
-#asynet_bboxes = chunk_bboxes(vol_shape, chunk_shape,
-#                             offset=start_coord, mip=mip)
-
-## STEP 1: CHUNK CONNECTED COMPONENTS
-#cc_step = [chunk_ccs(dag, bb[0], bb[1]) for bb in bboxes]
-#
-#end_cc_step = end_step(dag, "chunk_ccs")
-#end_cc_step.set_upstream(cc_step)
-
-
 # STEP 2: MATCH CONTINUATIONS
 match_contins_step = [match_contins(dag, i) for i in range(hashmax)]
 
@@ -349,42 +354,30 @@ seg_graph_cc_step.set_upstream(match_contins_step)
 
 
 
-# STEP 4: CHUNKING SEGMENTATION ID MAP
+# STEP 4: CREATING INDEX FOR DST_ID_HASH
+dst_id_hash_idx_step = create_index(dag, "seg_merge_map", "dst_id_hash")
+
+dst_id_hash_idx_step.set_upstream(seg_graph_cc_step)
+
+
+
+# STEP 5: CHUNKING SEGMENTATION ID MAP
 chunk_seg_map_step = chunk_seg_map(dag)
 
-chunk_seg_map_step.set_upstream(seg_graph_cc_step)
+chunk_seg_map_step.set_upstream(dst_id_hash_idx_step)
 
 
-# STEP 5: MERGING SEGMENT INFO
+# STEP 6: CREATING INDEX FOR CHUNK_TAG
+chunk_tag_idx_step = create_index(dag, "chunked_seg_merge_map", "chunk_tag")
+
+chunk_tag_idx_step.set_upstream(chunk_seg_map_step)
+
+
+
+# STEP 7: MERGING SEGMENT INFO
 merge_seginfo_step = [merge_seginfo(dag, i) for i in range(hashmax)]
 end_merge_seginfo_step = end_step(dag, "merge_seginfo")
 
-chunk_seg_map_step.set_downstream(merge_seginfo_step)
+chunk_tag_idx_step.set_downstream(merge_seginfo_step)
 end_merge_seginfo_step.set_upstream(merge_seginfo_step)
 
-
-## STEP 6: CHUNK EDGE ASSIGNMENT
-## random.seed(99999)
-## random.sample(range(len(bboxes)), 170)
-#indices = [493, 1266, 2048, 974, 1454, 1694, 829, 1038, 1660, 828, 245, 1364,
-#           1574, 1123, 1144, 2078, 717, 694, 1317, 861, 1291, 353, 586, 515,
-#           1151, 667, 2096, 1002, 1682, 2061, 569, 1614, 1657, 246, 77, 47,
-#           1723, 367, 238, 1244, 139, 1422, 110, 396, 1627, 1255, 135, 322,
-#           1062, 1832, 789, 1929, 168, 1298, 741, 1415, 1818, 516, 1109, 1761,
-#           852, 1358, 434, 53, 1203, 419, 1338, 1494, 175, 1608, 311, 199,
-#           1583, 979, 1591, 2006, 1172, 1954, 1684, 416, 920, 1975, 815, 1520,
-#           746, 300, 1471, 930, 191, 1025, 1587, 877, 1110, 444, 1441, 745,
-#           567, 792, 236, 308, 1377, 429, 1898, 1408, 1340, 962, 738, 1998,
-#           1786, 554, 31, 385, 1149, 425, 1991, 326, 32, 703, 1530, 1170, 873,
-#           1401, 344, 127, 1434, 1246, 2024, 1329, 1353, 298, 1745, 1985, 105,
-#           681, 1681, 372, 1245, 1313, 1552, 178, 1606, 766, 960, 2009, 605,
-#           455, 1452, 767, 711, 2049, 1675, 1863, 876, 1429, 1696, 1378, 584,
-#           1654, 1481, 710, 836, 801, 291, 1289, 1419, 941, 1435, 592, 376,
-#           1776]
-#bbox_sample = [bboxes[i] for i in indices]
-#asynet_bbox_sample = [asynet_bboxes[i] for i in indices]
-#
-#chunk_edges_step = [chunk_edges(dag, abb[0], abb[1], bb[0], bb[1])
-#                    for (abb, bb) in zip(asynet_bbox_sample, bbox_sample)]
-#
-#end_merge_seginfo_step.set_downstream(chunk_edges_step)
