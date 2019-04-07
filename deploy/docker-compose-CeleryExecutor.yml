@@ -19,7 +19,7 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == manager ]
-        command: postgres -c max_connections=2000 -c shared_buffers=8GB -c effective_cache_size=16GB
+        command: postgres -c max_connections=3000 -c shared_buffers=16GB -c effective_cache_size=32GB
 
     pgbouncer:
         image: brainsam/pgbouncer
@@ -45,7 +45,7 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == taskdb ]
-        command: postgres -c max_connections=2000 -c shared_buffers=32GB -c effective_cache_size=64GB
+        command: postgres -c max_connections=3000 -c shared_buffers=32GB -c effective_cache_size=64GB
 
     task-pgbouncer:
         image: brainsam/pgbouncer

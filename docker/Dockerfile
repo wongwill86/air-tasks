@@ -47,6 +47,10 @@ RUN cat .git/refs/$(cat .git/HEAD | sed -e's/ref: refs\///g') > version/COMMIT \
     && mv version/COMMIT version/air-tasks.COMMIT.${BASE_DIST}-${BASE_TAG} \
     && mv version/TAGS version/air-tasks.TAGS.${BASE_DIST}-${BASE_TAG}
 
+# Patching celery to disable gossip
+WORKDIR /usr/local/lib/python3.6/site-packages/
+RUN patch -p1 < ${AIRFLOW_HOME}/celery.patch
+
 USER ${AIRFLOW_USER}
 WORKDIR ${AIRFLOW_HOME}
 ENTRYPOINT ["scripts/entrypoint-dood.sh"]

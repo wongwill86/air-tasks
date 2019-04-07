@@ -1,0 +1,56 @@
+diff --git a/celery/worker/consumer/events.py b/celery/worker/consumer/events.py
+index d7b9f00..79bb6bf 100644
+--- a/celery/worker/consumer/events.py
++++ b/celery/worker/consumer/events.py
+@@ -19,9 +19,9 @@ class Events(bootsteps.StartStopStep):
+     requires = (Connection,)
+ 
+     def __init__(self, c,
+-                 task_events=True,
+-                 without_heartbeat=False,
+-                 without_gossip=False,
++                 task_events=False,
++                 without_heartbeat=True,
++                 without_gossip=True,
+                  **kwargs):
+         self.groups = None if task_events else ['worker']
+         self.send_events = (
+diff --git a/celery/worker/consumer/gossip.py b/celery/worker/consumer/gossip.py
+index 8538e7e..0fe9f19 100644
+--- a/celery/worker/consumer/gossip.py
++++ b/celery/worker/consumer/gossip.py
+@@ -36,7 +36,7 @@ class Gossip(bootsteps.ConsumerStep):
+     )
+     compatible_transports = {'amqp', 'redis'}
+ 
+-    def __init__(self, c, without_gossip=False,
++    def __init__(self, c, without_gossip=True,
+                  interval=5.0, heartbeat_interval=2.0, **kwargs):
+         self.enabled = not without_gossip and self.compatible_transport(c.app)
+         self.app = c.app
+diff --git a/celery/worker/consumer/heart.py b/celery/worker/consumer/heart.py
+index 1b5a6d2..06bb57f 100644
+--- a/celery/worker/consumer/heart.py
++++ b/celery/worker/consumer/heart.py
+@@ -21,7 +21,7 @@ class Heart(bootsteps.StartStopStep):
+     requires = (Events,)
+ 
+     def __init__(self, c,
+-                 without_heartbeat=False, heartbeat_interval=None, **kwargs):
++                 without_heartbeat=True, heartbeat_interval=None, **kwargs):
+         self.enabled = not without_heartbeat
+         self.heartbeat_interval = heartbeat_interval
+         c.heart = None
+diff --git a/celery/worker/consumer/mingle.py b/celery/worker/consumer/mingle.py
+index 0ed9dc8..03624e6 100644
+--- a/celery/worker/consumer/mingle.py
++++ b/celery/worker/consumer/mingle.py
+@@ -27,7 +27,7 @@ class Mingle(bootsteps.StartStopStep):
+     requires = (Events,)
+     compatible_transports = {'amqp', 'redis'}
+ 
+-    def __init__(self, c, without_mingle=False, **kwargs):
++    def __init__(self, c, without_mingle=True, **kwargs):
+         self.enabled = not without_mingle and self.compatible_transport(c.app)
+         super(Mingle, self).__init__(
+             c, without_mingle=without_mingle, **kwargs)

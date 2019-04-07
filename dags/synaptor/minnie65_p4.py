@@ -7,15 +7,15 @@ from airflow.operators.bash_operator import BashOperator
 import itertools
 import operator
 
-DAG_ID = 'minnie_small_test'
+DAG_ID = 'minnie65_phase4_merge_edges'
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2019, 3, 21),
+    'start_date': datetime(2019, 4, 7),
     'cactchup_by_default': False,
-    'retries': 2,
-    'retry_delay': timedelta(minutes=15),
+    'retries': 10,
+    'retry_delay': timedelta(minutes=10),
     'retry_exponential_backoff': False,
 }
 
@@ -28,15 +28,16 @@ dag = DAG(
 # =============
 # run-specific args
 img_cvname = "gs://microns-seunglab/minnie65/single_sections"
-seg_cvname = "gs://microns-seunglab/ranl/minnie65/seg_minnie65_small_0"
-out_cvname = "gs://microns-seunglab/psd/minnie65"
-cleft_cvname = "gs://microns-seunglab/minnie65/clefts/small_test_temp"
-cleft_out_cvname = "gs://microns-seunglab/minnie65/clefts/small_test"
+seg_cvname = "gs://microns-seunglab/ranl/minnie65/seg_minnie65_0"
+out_cvname = "gs://microns-seunglab/minnie65/psd"
+cleft_cvname = "gs://microns-seunglab/minnie65/clefts/190407_temp"
+cleft_out_cvname = "gs://microns-seunglab/minnie65/clefts/190407"
 
 # VOLUME COORDS
-start_coord = (237120, 222560, 16000)
-vol_shape = (10240, 10240, 8192)
-chunk_shape = (2048, 2048, 1024)
+start_coord = (63440, 87490, 14883)
+vol_shape = (366080, 253760, 13299)
+chunk_shape = (2080, 2080, 1023)
+max_face_shape = (1040, 1040)
 
 mip = 1
 base_res = (8, 8, 40)
@@ -45,18 +46,17 @@ asynet_res = (8, 8, 40)
 cc_thresh = 0.27
 sz_thresh1 = 25
 sz_thresh2 = 100
-max_face_shape = (1024, 1024)
 
 num_samples = 1
 asyn_dil_param = 5
 patch_sz = (80, 80, 18)
 num_downsamples = 0
 
-dist_thr = 500
+dist_thr = 700
 
 proc_url = "PROC_FROM_FILE"
-proc_dir = "gs://microns-seunglab/nick/190322-minnie_small_test"
-hashmax = 50
+proc_dir = "gs://microns-seunglab/nick/190407"
+hashmax = 400
 # =============
 # Helper functions
 
@@ -118,6 +118,23 @@ def bounds1D(full_width, step_size):
 def tup2str(t): return " ".join(map(str, t))
 
 
+def init_db(dag):
+
+    task_tag = "init_db"
+
+    return DockerWithVariablesMultiMountOperator(
+        ["google-secret.json", "proc_url", "boto"],
+        mount_points=["/root/.cloudvolume/secrets/google-secret.json",
+                      "/root/proc_url", "/root/.boto"],
+        task_id=task_tag,
+        command=(f"init_db {proc_url}"),
+        default_args=default_args,
+        image="seunglab/synaptor:latest",
+        queue="dbmessenger",
+        dag=dag
+        )
+
+
 def chunk_ccs(dag, chunk_begin, chunk_end):
 
     chunk_begin_str = tup2str(chunk_begin)
@@ -135,11 +152,27 @@ def chunk_ccs(dag, chunk_begin, chunk_end):
                  f" --chunk_begin {chunk_begin_str}"
                  f" --chunk_end {chunk_end_str}"
                  f" --mip {res_str} --proc_dir {proc_dir}"
-                 f" --hashmax {hashmax}"
-                 f" --timing_tag {task_tag}"),
+                 f" --hashmax {hashmax}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
+        dag=dag
+        )
+
+
+def dedup_chunk_segs(dag):
+
+    task_tag = "dedup_chunk_segs"
+
+    return DockerWithVariablesMultiMountOperator(
+        ["google-secret.json", "proc_url", "boto"],
+        mount_points=["/root/.cloudvolume/secrets/google-secret.json",
+                      "/root/proc_url", "/root/.boto"],
+        task_id=task_tag,
+        command=(f"dedup_chunk_segs {proc_url}"),
+        default_args=default_args,
+        image="seunglab/synaptor:latest",
+        queue="dbmessenger",
         dag=dag
         )
 
@@ -155,8 +188,7 @@ def match_contins(dag, i):
                       "/root/proc_url", "/root/.boto"],
         task_id=task_tag,
         command=(f"match_contins {proc_url} {i}"
-                 f" --max_face_shape {faceshape_str}"
-                 f" --timing_tag {task_tag}"),
+                 f" --max_face_shape {faceshape_str}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -172,11 +204,10 @@ def seg_graph_ccs(dag):
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
         task_id=task_tag,
-        command=(f"seg_graph_ccs {proc_url} {hashmax}"
-                 f" --timing_tag {task_tag}"),
+        command=(f"seg_graph_ccs {proc_url} {hashmax}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="cpu",
+        queue="graph",
         dag=dag
         )
 
@@ -189,10 +220,26 @@ def chunk_seg_map(dag):
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
         task_id=task_tag,
-        command=(f"chunk_seg_map {proc_url} --timing_tag {task_tag}"),
+        command=(f"chunk_seg_map {proc_url}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
-        queue="cpu",
+        queue="dbmessenger",
+        dag=dag
+        )
+
+
+def create_index(dag, tablename, colname):
+
+    task_tag = f"create_index_{tablename}_{colname}"
+    return DockerWithVariablesMultiMountOperator(
+        ["google-secret.json", "proc_url", "boto"],
+        mount_points=["/root/.cloudvolume/secrets/google-secret.json",
+                      "/root/proc_url", "/root/.boto"],
+        task_id=task_tag,
+        command=(f"create_index {proc_url} {tablename} {colname}"),
+        default_args=default_args,
+        image="seunglab/synaptor:latest",
+        queue="dbmessenger",
         dag=dag
         )
 
@@ -207,7 +254,7 @@ def merge_seginfo(dag, i):
                       "/root/proc_url", "/root/.boto"],
         task_id=task_tag,
         command=(f"merge_seginfo {proc_url} {i}"
-                 f" --timing_tag {task_tag}"),
+                 f" --aux_proc_url {proc_dir}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -243,8 +290,7 @@ def chunk_edges(dag, chunk_begin, chunk_end, base_begin, base_end):
                  f" --base_res_begin {base_begin_str}"
                  f" --base_res_end {base_end_str}"
                  f" --proc_dir {proc_dir}"
-                 f" --resolution {res_str}"
-                 f" --timing_tag {task_tag}"),
+                 f" --resolution {res_str}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="gpu",
@@ -261,8 +307,7 @@ def pick_edge(dag, i):
         mount_points=["/root/.cloudvolume/secrets/google-secret.json",
                       "/root/proc_url", "/root/.boto"],
         task_id=task_tag,
-        command=(f"pick_edge {proc_url} {i}"
-                 f" --timing_tag {task_tag}"),
+        command=(f"pick_edge {proc_url} {i}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -283,7 +328,6 @@ def merge_dups(dag, i):
         task_id=task_tag,
         command=(f"merge_dups {proc_url} {i} {dist_thr} {sz_thresh2}"
                  f" --voxel_res {res_str}"
-                 f" --timing_tag {task_tag}"
                  f" --fulldf_proc_url {proc_dir}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
@@ -308,8 +352,7 @@ def remap_ids(dag, chunk_begin, chunk_end):
         command=(f"remap_ids {cleft_cvname} {cleft_out_cvname} {proc_url}"
                  f" --chunk_begin {chunk_begin_str}"
                  f" --chunk_end {chunk_end_str}"
-                 f" --mip {res_str}"
-                 f" --timing_tag {task_tag}"),
+                 f" --mip {res_str}"),
         default_args=default_args,
         image="seunglab/synaptor:latest",
         queue="cpu",
@@ -325,70 +368,45 @@ def end_step(dag, i):
         dag=dag)
 
 
-bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord, mip=mip)
-asynet_bboxes = chunk_bboxes(vol_shape, chunk_shape,
-                             offset=start_coord, mip=mip)
-
-cc_step = [chunk_ccs(dag, bb[0], bb[1]) for bb in bboxes]
-
-end_cc_step = end_step(dag, "chunk_ccs")
-end_cc_step.set_upstream(cc_step)
-#for task in step1:
-#    task.set_downstream(end1)
+# bboxes = chunk_bboxes(vol_shape, chunk_shape, offset=start_coord, mip=mip)
 
 
-match_contins_step = [match_contins(dag, i) for i in range(hashmax)]
+# # Phase 1
+# cc_step = [chunk_ccs(dag, bb[0], bb[1]) for bb in bboxes]
+#  
+# # Phase 2
+# dedup_step = dedup_chunk_segs(dag)
+# 
+# match_contins_step = [match_contins(dag, i) for i in range(hashmax)]
+# dedup_step.set_downstream(match_contins_step)
+# 
+# seg_graph_cc_step = seg_graph_ccs(dag)
+# seg_graph_cc_step.set_upstream(match_contins_step)
+# 
+# dst_id_hash_idx_step = create_index(dag, "seg_merge_map", "dst_id_hash")
+# dst_id_hash_idx_step.set_upstream(seg_graph_cc_step)
+# 
+# chunk_seg_map_step = chunk_seg_map(dag)
+# chunk_seg_map_step.set_upstream(dst_id_hash_idx_step)
+#  
+# chunk_tag_idx_step = create_index(dag, "chunked_seg_merge_map", "chunk_tag")
+# chunk_tag_idx_step.set_upstream(chunk_seg_map_step)
+# 
+# merge_seginfo_step = [merge_seginfo(dag, i) for i in range(hashmax)]
+# chunk_tag_idx_step.set_downstream(merge_seginfo_step)
+# 
+# # Phase 3
+# chunk_edges_step = [chunk_edges(dag, bb[0], bb[1], bb[0], bb[1]) 
+#                     for bb in bboxes]
 
-end_cc_step.set_downstream(match_contins_step)
-#for task in step2:
-#    task.set_upstream(end1)
-
-
-seg_graph_cc_step = seg_graph_ccs(dag)
-
-seg_graph_cc_step.set_upstream(match_contins_step)
-
-
-chunk_seg_map_step = chunk_seg_map(dag)
-
-chunk_seg_map_step.set_upstream(seg_graph_cc_step)
-
-
-merge_seginfo_step = [merge_seginfo(dag, i) for i in range(hashmax)]
-end_merge_seginfo_step = end_step(dag, "merge_seginfo")
-
-chunk_seg_map_step.set_downstream(merge_seginfo_step)
-end_merge_seginfo_step.set_upstream(merge_seginfo_step)
-#for task in step4[:-1]:
-#    task.set_upstream(step3)
-#    task.set_downstream(end4)
-
-
-chunk_edges_step = [chunk_edges(dag, abb[0], abb[1], bb[0], bb[1])
-                    for (abb, bb) in zip(asynet_bboxes, bboxes)]
-end_chunk_edges_step = end_step(dag, "chunk_edges")
-
-end_merge_seginfo_step.set_downstream(chunk_edges_step)
-end_chunk_edges_step.set_upstream(chunk_edges_step)
-#for task in step5[:-1]:
-#    task.set_upstream(end4)
-#    task.set_downstream(end5)
-
-
+# Phase 4
 pick_edge_step = [pick_edge(dag, i) for i in range(hashmax)]
-end_pick_edge_step = end_step(dag, "pick_edge")
 
-end_chunk_edges_step.set_downstream(pick_edge_step)
+end_pick_edge_step = end_step(dag, "pick_edge")
 end_pick_edge_step.set_upstream(pick_edge_step)
 
-
 merge_dups_step = [merge_dups(dag, i) for i in range(hashmax)]
-end_merge_dups_step = end_step(dag, "merge_dups")
-
 end_pick_edge_step.set_downstream(merge_dups_step)
-end_merge_dups_step.set_upstream(merge_dups_step)
 
-
-remap_step = [remap_ids(dag, bb[0], bb[1]) for bb in bboxes]
-
-end_merge_dups_step.set_downstream(remap_step)
+# # Phase 5
+# remap_step = [remap_ids(dag, bb[0], bb[1]) for bb in bboxes]
