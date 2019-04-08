@@ -19,7 +19,7 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == airflowdb ]
-        command: postgres -c max_connections=3000 -c shared_buffers=64GB -c effective_cache_size=120GB
+        command: postgres -c max_connections=3000 -c shared_buffers=64GB -c effective_cache_size=128GB
 
     pgbouncer:
         image: brainsam/pgbouncer
@@ -45,7 +45,7 @@ services:
         deploy:
             placement:
                 constraints: [ engine.labels.infrakit-role == taskdb ]
-        command: postgres -c max_connections=3000 -c shared_buffers=64GB -c effective_cache_size=120GB
+        command: postgres -c max_connections=3000 -c shared_buffers=64GB -c effective_cache_size=128GB
 
     task-pgbouncer:
         image: brainsam/pgbouncer
